@@ -1,0 +1,5 @@
+.*.sw[po]
+
+bin/
+
+karydia*.pem
