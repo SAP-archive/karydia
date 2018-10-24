@@ -1,0 +1,7 @@
+cli/
+manifests/
+pkg/
+scripts/
+vendor/
+
+karydia*.pem
