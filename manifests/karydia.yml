@@ -1,0 +1,62 @@
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: karydia
+  labels:
+    app: karydia
+  namespace: kube-system
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: karydia
+    spec:
+      containers:
+      - name: karydia
+        image: kinvolk/karydia
+        imagePullPolicy: IfNotPresent
+        command:
+          - karydia
+          - runserver
+          - --tls-cert
+          - /etc/karydia/tls/cert.pem
+          - --tls-key
+          - /etc/karydia/tls/key.pem
+        volumeMounts:
+          - name: karydia-tls
+            mountPath: /etc/karydia/tls
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 33333
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 1
+          failureThreshold: 3
+        ports:
+        - containerPort: 33333
+      volumes:
+        - name: karydia-tls
+          secret:
+            secretName: karydia-tls
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: karydia
+  namespace: kube-system
+  labels:
+    app: karydia
+spec:
+  ports:
+  - port: 443
+    targetPort: 33333
+  selector:
+    app: karydia

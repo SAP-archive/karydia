@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/kinvolk/karydia/pkg/webhook"
 )
 
 type Server struct {
@@ -13,17 +16,27 @@ type Server struct {
 	logger *logrus.Logger
 
 	httpServer *http.Server
+
+	webhook *webhook.Webhook
 }
 
 type Config struct {
 	Addr string
 
 	Logger *logrus.Logger
+
+	TLSConfig *tls.Config
 }
 
 func New(config *Config) (*Server, error) {
+	webHook, err := webhook.New(&webhook.Config{})
+	if err != nil {
+		return nil, err
+	}
+
 	server := &Server{
-		config: config,
+		config:  config,
+		webhook: webHook,
 	}
 
 	if config.Logger == nil {
@@ -37,10 +50,12 @@ func New(config *Config) (*Server, error) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", server.handlerHealthz)
+	mux.HandleFunc("/webhook", server.webhook.Serve)
 
 	httpServer := &http.Server{
-		Addr:    config.Addr,
-		Handler: mux,
+		Addr:      config.Addr,
+		Handler:   mux,
+		TLSConfig: config.TLSConfig,
 	}
 
 	server.httpServer = httpServer
@@ -50,7 +65,7 @@ func New(config *Config) (*Server, error) {
 
 func (s *Server) ListenAndServe() error {
 	s.logger.Infof("Listening on %s", s.config.Addr)
-	return s.httpServer.ListenAndServe()
+	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
