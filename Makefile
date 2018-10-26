@@ -15,3 +15,7 @@ build:
 .PHONY: container
 container: build
 	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME) .
+
+.PHONY: codegen
+codegen:
+	hack/update-codegen.sh

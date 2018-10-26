@@ -1,0 +1,7 @@
+apiVersion: karydia.gardener.cloud/v1alpha1
+kind: KarydiaSecurityPolicy
+metadata:
+  name: example-ksp
+spec:
+  pod:
+    automountServiceAccountToken: "forbidden"
