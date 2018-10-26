@@ -2,24 +2,33 @@ package webhook
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
 )
 
 type Webhook struct {
 	logger *logrus.Logger
+
+	kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
 }
 
 type Config struct {
 	Logger *logrus.Logger
+
+	KSPAdmission *kspadmission.KarydiaSecurityPolicyAdmission
 }
 
 func New(config *Config) (*Webhook, error) {
-	webhook := &Webhook{}
+	webhook := &Webhook{
+		kspAdmission: config.KSPAdmission,
+	}
 
 	if config.Logger == nil {
 		webhook.logger = logrus.New()
@@ -30,6 +39,13 @@ func New(config *Config) (*Webhook, error) {
 	}
 
 	return webhook, nil
+}
+
+func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+	if wh.kspAdmission == nil {
+		return toAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
+	}
+	return wh.kspAdmission.Admit(ar)
 }
 
 func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
@@ -73,17 +89,14 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 		wh.logger.Errorf("failed to decode body: %v", err)
 		responseAdmissionReview.Response = toAdmissionResponse(err)
 	} else {
-		wh.logger.Infof("received admission review request: %+v", requestedAdmissionReview.Request)
-
-		response := v1beta1.AdmissionResponse{}
-		response.Allowed = true
-		responseAdmissionReview.Response = &response
+		wh.logger.Debugf("received admission review request: %+v", requestedAdmissionReview.Request)
+		responseAdmissionReview.Response = wh.admit(requestedAdmissionReview)
 	}
 
 	// Make sure to return the request UID
 	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
 
-	wh.logger.Infof("sending admission review response: %+v", responseAdmissionReview.Response)
+	wh.logger.Debugf("sending admission review response: %+v", responseAdmissionReview.Response)
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
 	if err != nil {
@@ -98,6 +111,7 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 
 func toAdmissionResponse(err error) *v1beta1.AdmissionResponse {
 	return &v1beta1.AdmissionResponse{
+		Allowed: false,
 		Result: &metav1.Status{
 			Message: err.Error(),
 		},

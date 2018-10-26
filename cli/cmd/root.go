@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -26,6 +27,9 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.karydia.yaml)")
+
+	// Workaround for https://github.com/kubernetes/kubernetes/issues/17162
+	flag.CommandLine.Parse([]string{})
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		return viper.BindPFlags(cmd.Flags())
