@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/kinvolk/karydia/pkg/server"
-	"github.com/kinvolk/karydia/pkg/util"
+	"github.com/kinvolk/karydia/pkg/util/tls"
 )
 
 var runserverCmd = &cobra.Command{
@@ -30,7 +30,7 @@ func init() {
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
-	tlsConfig, err := util.CreateTLSConfig(viper.GetString("tls-cert"), viper.GetString("tls-key"))
+	tlsConfig, err := tls.CreateTLSConfig(viper.GetString("tls-cert"), viper.GetString("tls-key"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create TLS config: %v\n", err)
 		os.Exit(1)
