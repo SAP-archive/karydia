@@ -19,3 +19,7 @@ container: build
 .PHONY: codegen
 codegen:
 	hack/update-codegen.sh
+
+.PHONY: test
+test:
+	go test ./...
