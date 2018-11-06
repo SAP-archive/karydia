@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
+	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/controller"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/server"
@@ -31,6 +32,14 @@ func init() {
 	rootCmd.AddCommand(runserverCmd)
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
+
+	// TODO(schu): the '/v1' currently is required since the OPA package
+	// from kubernetes-policy-controller that we use does not include that
+	// in the URL when sending requests.
+	// IMHO it should since the package should set the API version
+	// it's written for.
+	runserverCmd.Flags().String("opa-api-endpoint", "http://127.0.0.1:8181/v1", "Open Policy Agent API endpoint")
+
 	runserverCmd.Flags().String("tls-cert", "cert.pem", "Path to TLS certificate file")
 	runserverCmd.Flags().String("tls-key", "key.pem", "Path to TLS private key file")
 
@@ -69,8 +78,17 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	kspAdmission.SetAuthorizer(rbacAuthorizer)
 	kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
 
+	opaAdmission, err := opaadmission.New(&opaadmission.Config{
+		OPAURL: viper.GetString("opa-api-endpoint"),
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load opa admission: %v\n", err)
+		os.Exit(1)
+	}
+
 	webHook, err := webhook.New(&webhook.Config{
 		KSPAdmission: kspAdmission,
+		OPAAdmission: opaAdmission,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load webhook: %v\n", err)
