@@ -15,6 +15,7 @@ import (
 
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
 	"github.com/kinvolk/karydia/pkg/controller"
+	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/server"
 	"github.com/kinvolk/karydia/pkg/util/tls"
 	"github.com/kinvolk/karydia/pkg/webhook"
@@ -56,6 +57,13 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(controller.KubeInformerFactory())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
+		os.Exit(1)
+	}
+
+	kspAdmission.SetAuthorizer(rbacAuthorizer)
 	kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
 
 	webHook, err := webhook.New(&webhook.Config{

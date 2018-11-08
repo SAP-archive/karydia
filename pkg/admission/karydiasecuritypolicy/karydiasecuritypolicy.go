@@ -11,9 +11,13 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
+	authenticationv1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
 	informers "github.com/kinvolk/karydia/pkg/client/informers/externalversions"
 	listers "github.com/kinvolk/karydia/pkg/client/listers/karydia/v1alpha1"
 )
@@ -23,6 +27,8 @@ var (
 )
 
 type KarydiaSecurityPolicyAdmission struct {
+	authz authorizer.Authorizer
+
 	logger *logrus.Logger
 
 	lister    listers.KarydiaSecurityPolicyLister
@@ -59,6 +65,10 @@ func (k *KarydiaSecurityPolicyAdmission) SetExternalInformerFactory(f informers.
 	k.readyFunc = informer.Informer().HasSynced
 }
 
+func (k *KarydiaSecurityPolicyAdmission) SetAuthorizer(authz authorizer.Authorizer) {
+	k.authz = authz
+}
+
 func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if ignore, err := shouldIgnore(ar); err != nil {
 		return toAdmissionResponse(err)
@@ -70,13 +80,28 @@ func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1be
 	return k.computeSecurityContext(ar, true)
 }
 
+func transformUserInfo(arUserInfo authenticationv1.UserInfo) *user.DefaultInfo {
+	apiserverUserInfo := &user.DefaultInfo{
+		Name:   arUserInfo.Username,
+		UID:    arUserInfo.UID,
+		Groups: arUserInfo.Groups,
+		Extra:  make(map[string][]string),
+	}
+	for k, v := range arUserInfo.Extra {
+		apiserverUserInfo.Extra[k] = v
+	}
+	return apiserverUserInfo
+}
+
 func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.AdmissionReview, specMutationAllowed bool) *v1beta1.AdmissionResponse {
-	policies, err := k.lister.List(labels.Everything())
+	apiserverUserInfo := transformUserInfo(ar.Request.UserInfo)
+	policies, err := k.userPolicies(apiserverUserInfo, ar.Request.Namespace)
 	if err != nil {
 		return toAdmissionResponse(err)
 	}
 
 	if len(policies) == 0 {
+		k.logger.Warnf("no karydia security policy found for user %q in groups %v", ar.Request.UserInfo.Username, ar.Request.UserInfo.Groups)
 		return toAdmissionResponse(fmt.Errorf("no karydia security policy found to validate against"))
 	}
 
@@ -85,14 +110,66 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.Admis
 		return strings.Compare(policies[i].ObjectMeta.Name, policies[j].ObjectMeta.Name) < 0
 	})
 
+	var response *v1beta1.AdmissionResponse
+
 	switch ar.Request.Resource {
 	case resourcePod:
-		return k.computeSecurityContextPod(ar, specMutationAllowed, policies)
+		response = k.computeSecurityContextPod(ar, specMutationAllowed, policies)
+	default:
+		response = &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
 	}
 
-	return &v1beta1.AdmissionResponse{
-		Allowed: true,
+	return response
+
+}
+
+func (k *KarydiaSecurityPolicyAdmission) userPolicies(userInfo user.Info, namespace string) ([]*v1alpha1.KarydiaSecurityPolicy, error) {
+	var userPolicies []*v1alpha1.KarydiaSecurityPolicy
+
+	policies, err := k.lister.List(labels.Everything())
+	if err != nil {
+		return nil, err
 	}
+
+	for _, policy := range policies {
+		if k.isAuthorizedForPolicyInAPIGroup(userInfo, namespace, policy.ObjectMeta.Name, k.authz) {
+			userPolicies = append(userPolicies, policy)
+		}
+	}
+
+	return userPolicies, nil
+}
+
+func (k *KarydiaSecurityPolicyAdmission) isAuthorizedForPolicyInAPIGroup(userInfo user.Info, namespace, policyName string, authz authorizer.Authorizer) bool {
+	if userInfo == nil {
+		return false
+	}
+	attr := authorizer.AttributesRecord{
+		User:            userInfo,
+		Verb:            "use",
+		Namespace:       namespace,
+		Name:            policyName,
+		APIGroup:        "karydia.gardener.cloud",
+		Resource:        "karydiasecuritypolicies",
+		ResourceRequest: true,
+	}
+	decision, reason, err := authz.Authorize(attr)
+	if err != nil {
+		k.logger.Infof("cannot authorize for policy: %v,%v", reason, err)
+	}
+	var decisionStr string
+	switch decision {
+	case authorizer.DecisionDeny:
+		decisionStr = "deny"
+	case authorizer.DecisionAllow:
+		decisionStr = "allow"
+	case authorizer.DecisionNoOpinion:
+		decisionStr = "no opinion"
+	}
+	k.logger.Debugf("policy authorizer decision: %q user: %q groups: %v policy: %q namespace: %q", decisionStr, userInfo.GetName(), userInfo.GetGroups(), policyName, namespace)
+	return (decision == authorizer.DecisionAllow)
 }
 
 func shouldIgnore(ar v1beta1.AdmissionReview) (bool, error) {

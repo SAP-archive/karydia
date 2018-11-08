@@ -12,8 +12,7 @@ import (
 )
 
 func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, specMutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {
-	// TODO(schu): needs more consideration..
-	if ar.Request.Operation != v1beta1.Create || ar.Request.UserInfo.Username == "system:kube-scheduler" {
+	if ar.Request.Operation != v1beta1.Create {
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
@@ -45,8 +44,6 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.Ad
 		if len(patches) > 0 && !specMutationAllowed {
 			continue
 		}
-
-		// TODO(schu): check if user is authorized for policy
 
 		if len(patches) == 0 {
 			// Valid without mutation
