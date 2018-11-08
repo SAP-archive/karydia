@@ -8,6 +8,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	kubeinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
@@ -24,7 +26,10 @@ type Controller struct {
 
 	logger *logrus.Logger
 
+	kubeClientset    *kubernetes.Clientset
 	karydiaClientset clientset.Interface
+
+	kubeInformerFactory kubeinformers.SharedInformerFactory
 
 	karydiaInformerFactory        informers.SharedInformerFactory
 	karydiaSecurityPoliciesLister listers.KarydiaSecurityPolicyLister
@@ -46,11 +51,17 @@ func New(ctx context.Context, config *Config) (*Controller, error) {
 		return nil, fmt.Errorf("error building kubeconfig: %v", err)
 	}
 
+	kubeClientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("error building kubernetes clientset: %v", err)
+	}
+
 	karydiaClientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error building karydia clientset: %v", err)
 	}
 
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 	karydiaInformerFactory := informers.NewSharedInformerFactory(karydiaClientset, resyncInterval)
 
 	karydiaSecurityPolicyInformer := karydiaInformerFactory.Karydia().V1alpha1().KarydiaSecurityPolicies()
@@ -58,7 +69,10 @@ func New(ctx context.Context, config *Config) (*Controller, error) {
 	controller := &Controller{
 		ctx: ctx,
 
+		kubeClientset:    kubeClientset,
 		karydiaClientset: karydiaClientset,
+
+		kubeInformerFactory: kubeInformerFactory,
 
 		karydiaInformerFactory:        karydiaInformerFactory,
 		karydiaSecurityPoliciesLister: karydiaSecurityPolicyInformer.Lister(),
@@ -85,6 +99,10 @@ func New(ctx context.Context, config *Config) (*Controller, error) {
 	return controller, nil
 }
 
+func (c *Controller) KubeInformerFactory() kubeinformers.SharedInformerFactory {
+	return c.kubeInformerFactory
+}
+
 func (c *Controller) KarydiaInformerFactory() informers.SharedInformerFactory {
 	return c.karydiaInformerFactory
 }
@@ -94,6 +112,7 @@ func (c *Controller) Run(threadiness int) error {
 	defer c.workqueue.ShutDown()
 
 	go c.karydiaInformerFactory.Start(c.ctx.Done())
+	go c.kubeInformerFactory.Start(c.ctx.Done())
 
 	if ok := cache.WaitForCacheSync(c.ctx.Done(), c.karydiaSecurityPoliciesSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
