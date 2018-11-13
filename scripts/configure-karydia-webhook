@@ -17,7 +17,7 @@ metadata:
     app: karydia
 webhooks:
   - name: karydia.gardener.cloud
-    failurePolicy: Fail
+    failurePolicy: Ignore
     clientConfig:
       service:
         name: karydia

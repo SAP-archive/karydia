@@ -16,8 +16,6 @@ type Server struct {
 	logger *logrus.Logger
 
 	httpServer *http.Server
-
-	webhook *webhook.Webhook
 }
 
 type Config struct {
@@ -28,15 +26,9 @@ type Config struct {
 	TLSConfig *tls.Config
 }
 
-func New(config *Config) (*Server, error) {
-	webHook, err := webhook.New(&webhook.Config{})
-	if err != nil {
-		return nil, err
-	}
-
+func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 	server := &Server{
-		config:  config,
-		webhook: webHook,
+		config: config,
 	}
 
 	if config.Logger == nil {
@@ -50,7 +42,9 @@ func New(config *Config) (*Server, error) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/healthz", server.handlerHealthz)
-	mux.HandleFunc("/webhook", server.webhook.Serve)
+	if webhook != nil {
+		mux.HandleFunc("/webhook", webhook.Serve)
+	}
 
 	httpServer := &http.Server{
 		Addr:      config.Addr,
