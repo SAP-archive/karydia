@@ -1,0 +1,23 @@
+---
+
+apiVersion: karydia.gardener.cloud/v1alpha1
+kind: KarydiaSecurityPolicy
+metadata:
+  name: example-restrictive
+spec:
+  pod:
+    automountServiceAccountToken: "forbidden"
+    seccompProfile: "docker/default"
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: ksp-example-restrictive
+rules:
+- apiGroups: ['karydia.gardener.cloud']
+  resources: ['karydiasecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+  - example-restrictive

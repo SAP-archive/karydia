@@ -6,13 +6,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
+	"github.com/kinvolk/karydia/pkg/controller"
+	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/server"
 	"github.com/kinvolk/karydia/pkg/util/tls"
+	"github.com/kinvolk/karydia/pkg/webhook"
 )
 
 var runserverCmd = &cobra.Command{
@@ -35,35 +41,100 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		fmt.Fprintf(os.Stderr, "Failed to create TLS config: %v\n", err)
 		os.Exit(1)
 	}
-	s, err := server.New(&server.Config{
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	controller, err := controller.New(ctx, &controller.Config{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load controller: %v\n", err)
+		os.Exit(1)
+	}
+
+	kspAdmission, err := kspadmission.New()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
+		os.Exit(1)
+	}
+
+	rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(controller.KubeInformerFactory())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
+		os.Exit(1)
+	}
+
+	kspAdmission.SetAuthorizer(rbacAuthorizer)
+	kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
+
+	webHook, err := webhook.New(&webhook.Config{
+		KSPAdmission: kspAdmission,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load webhook: %v\n", err)
+		os.Exit(1)
+	}
+
+	serverConfig := &server.Config{
 		Addr:      viper.GetString("addr"),
 		TLSConfig: tlsConfig,
-	})
+	}
+
+	s, err := server.New(serverConfig, webHook)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load server: %v\n", err)
 		os.Exit(1)
 	}
 
-	idleConnsClosed := make(chan struct{})
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := s.ListenAndServe(); err != http.ErrServerClosed {
+			fmt.Fprintf(os.Stderr, "HTTP ListenAndServe error: %v\n", err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+
+		shutdownCtx, cancelShutdownCtx := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelShutdownCtx()
+
+		if err := s.Shutdown(shutdownCtx); err != nil {
+			fmt.Fprintf(os.Stderr, "HTTP Shutdown error: %v\n", err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		if err := controller.Run(2); err != nil {
+			fmt.Fprintf(os.Stderr, "Error running controller: %v\n", err)
+		}
+	}()
+
 	go func() {
 		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, os.Kill)
+		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 		<-sigChan
 
-		ctx, cancelCtx := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelCtx()
+		fmt.Println("Received signal, shutting down gracefully ...")
 
-		if err := s.Shutdown(ctx); err != nil {
-			fmt.Fprintf(os.Stderr, "HTTP Shutdown error: %v\n", err)
-		}
+		cancelCtx()
 
-		close(idleConnsClosed)
+		<-sigChan
+
+		fmt.Println("Received second signal - aborting")
+		os.Exit(1)
 	}()
 
-	if err := s.ListenAndServe(); err != http.ErrServerClosed {
-		fmt.Fprintf(os.Stderr, "HTTP ListenAndServe error: %v", err)
-	}
+	<-ctx.Done()
 
-	<-idleConnsClosed
+	wg.Wait()
 }
