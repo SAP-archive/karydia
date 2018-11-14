@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
 
 func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, specMutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {
@@ -22,7 +23,7 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.Ad
 	pod := corev1.Pod{}
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
-		return toAdmissionResponse(err)
+		return k8sutil.ErrToAdmissionResponse(err)
 	}
 
 	// b, _ := json.MarshalIndent(pod, "", "  ")

@@ -20,6 +20,7 @@ import (
 	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
 	informers "github.com/kinvolk/karydia/pkg/client/informers/externalversions"
 	listers "github.com/kinvolk/karydia/pkg/client/listers/karydia/v1alpha1"
+	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
 
 var (
@@ -71,7 +72,7 @@ func (k *KarydiaSecurityPolicyAdmission) SetAuthorizer(authz authorizer.Authoriz
 
 func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if ignore, err := shouldIgnore(ar); err != nil {
-		return toAdmissionResponse(err)
+		return k8sutil.ErrToAdmissionResponse(err)
 	} else if ignore {
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
@@ -97,12 +98,12 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.Admis
 	apiserverUserInfo := transformUserInfo(ar.Request.UserInfo)
 	policies, err := k.userPolicies(apiserverUserInfo, ar.Request.Namespace)
 	if err != nil {
-		return toAdmissionResponse(err)
+		return k8sutil.ErrToAdmissionResponse(err)
 	}
 
 	if len(policies) == 0 {
 		k.logger.Warnf("no karydia security policy found for user %q in groups %v", ar.Request.UserInfo.Username, ar.Request.UserInfo.Groups)
-		return toAdmissionResponse(fmt.Errorf("no karydia security policy found to validate against"))
+		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy found to validate against"))
 	}
 
 	// Sort policies by name to make order deterministic

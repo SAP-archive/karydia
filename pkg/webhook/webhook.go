@@ -8,9 +8,9 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
+	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
 
 type Webhook struct {
@@ -43,7 +43,7 @@ func New(config *Config) (*Webhook, error) {
 
 func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if wh.kspAdmission == nil {
-		return toAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
+		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
 	}
 	return wh.kspAdmission.Admit(ar)
 }
@@ -87,7 +87,7 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 	deserializer := codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
 		wh.logger.Errorf("failed to decode body: %v", err)
-		responseAdmissionReview.Response = toAdmissionResponse(err)
+		responseAdmissionReview.Response = k8sutil.ErrToAdmissionResponse(err)
 	} else {
 		wh.logger.Debugf("received admission review request: %+v", requestedAdmissionReview.Request)
 		responseAdmissionReview.Response = wh.admit(requestedAdmissionReview)
@@ -106,14 +106,5 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 	if _, err := w.Write(respBytes); err != nil {
 		wh.logger.Errorf("failed to send response: %v", err)
-	}
-}
-
-func toAdmissionResponse(err error) *v1beta1.AdmissionResponse {
-	return &v1beta1.AdmissionResponse{
-		Allowed: false,
-		Result: &metav1.Status{
-			Message: err.Error(),
-		},
 	}
 }
