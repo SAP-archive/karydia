@@ -4,7 +4,6 @@ package karydiasecuritypolicy
 // https://github.com/kubernetes/kubernetes/blob/v1.12.2/plugin/pkg/admission/security/podsecuritypolicy/admission.go
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -20,7 +19,6 @@ import (
 	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
 	informers "github.com/kinvolk/karydia/pkg/client/informers/externalversions"
 	listers "github.com/kinvolk/karydia/pkg/client/listers/karydia/v1alpha1"
-	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
 
 var (
@@ -72,7 +70,10 @@ func (k *KarydiaSecurityPolicyAdmission) SetAuthorizer(authz authorizer.Authoriz
 
 func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if ignore, err := shouldIgnore(ar); err != nil {
-		return k8sutil.ErrToAdmissionResponse(err)
+		k.logger.Errorf("failed to determine if admission request should be ignored: %v", err)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
 	} else if ignore {
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
@@ -98,12 +99,17 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.Admis
 	apiserverUserInfo := transformUserInfo(ar.Request.UserInfo)
 	policies, err := k.userPolicies(apiserverUserInfo, ar.Request.Namespace)
 	if err != nil {
-		return k8sutil.ErrToAdmissionResponse(err)
+		k.logger.Errorf("failed to get karydia security policies for user %q: %v", ar.Request.UserInfo.Username, err)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
 	}
 
 	if len(policies) == 0 {
-		k.logger.Warnf("no karydia security policy found for user %q in groups %v", ar.Request.UserInfo.Username, ar.Request.UserInfo.Groups)
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy found to validate against"))
+		k.logger.Warnf("no karydia security policy found for user %q in groups %v - request will be allowed w/o admission", ar.Request.UserInfo.Username, ar.Request.UserInfo.Groups)
+		return &v1beta1.AdmissionResponse{
+			Allowed: true,
+		}
 	}
 
 	// Sort policies by name to make order deterministic
