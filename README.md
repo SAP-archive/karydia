@@ -26,8 +26,6 @@ kubectl apply -f manifests/karydia.yml
 
 kubectl apply -f manifests/crd-karydia-security-policy.yml
 
-kubectl apply -f manifests/default-karydia-security-policy.yml
-
 ./scripts/configure-karydia-webhook
 ```
 
@@ -50,89 +48,37 @@ you might see a few error messages as above.
 
 ### Demo
 
-With the default `KarydiaSecurityPolicy` applied, creating a regular pod
-should fail:
+If no `KarydiaSecurityPolicy` was created yet or your current user is
+not allowed to use any of the available policies, all requests will be
+allowed by default.
 
 ```
-kubectl run --rm -ti --restart=Never --image busybox busybox
-Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: map[default:[[automount of service account 'default' not allowed]]]
+$ kubectl run --rm -ti --restart=Never --image busybox busybox -- echo hello world
+hello world
+pod "busybox" deleted
 ```
 
-We are not allowed to automount the default service account in a pod.
-
-Let's try again with a distinct service account for the pod:
+Let's add an example policy:
 
 ```
-kubectl create sa testsa
+kubectl apply -f manifests/example-karydia-security-policy.yml
+```
+
+Now the same `kubectl run` command should fail according to the policy:
+
+```
+$ kubectl run --rm -ti --restart=Never --image busybox busybox -- echo hello world
+Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: map[example-restrictive:[automount of service account not allowed]]
+```
+
+Let's try to comply with the KSP:
+
+```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
   name: busybox
-spec:
-  serviceAccountName: "testsa"
-  containers:
-  - image: busybox
-    imagePullPolicy: IfNotPresent
-    name: busybox
-    command: ["sleep", "99999"]
-EOF
-pod/busybox created
-```
-
-That worked:
-
-```
-$ kubectl get pod busybox
-NAME      READY     STATUS    RESTARTS   AGE
-busybox   1/1       Running   0          44s
-```
-
-Let's create a new namespace and a user with [edit](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
-role:
-
-```
-kubectl create ns jane
-kubectl create sa -n jane default
-kubectl create sa -n jane jane
-kubectl create rolebinding -n jane jane-edit --clusterrole=edit --serviceaccount=jane:jane
-```
-
-Try to run a pod:
-
-```
-kubectl --as system:serviceaccount:jane:jane -n jane run --rm -ti --restart=Never --image busybox busybox
-Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: no karydia security policy found to validate against
-```
-
-That didn't work. While the service account has permission to run a pod,
-we have not allowed usage of any `KarydiaSecurityPolicy` yet and by default
-all requests are denied.
-
-Let's add a new KSP and allow service account `jane` to use it:
-
-```
-kubectl apply -f manifests/example-karydia-security-policy.yml
-kubectl create rolebinding -n jane jane-ksp --clusterrole=ksp-example-restrictive --serviceaccount=jane:jane
-```
-
-Again, try to run a pod:
-
-```
-kubectl --as system:serviceaccount:jane:jane -n jane run --rm -ti --restart=Never --image busybox busybox
-Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: map[example-restrictive:[automount of service account not allowed]]
-```
-
-The KSP doesn't allow mounting of a service account token. Let's try again
-without service account token automount:
-
-```
-cat <<EOF | kubectl --as system:serviceaccount:jane:jane apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: busybox
-  namespace: jane
 spec:
   automountServiceAccountToken: false
   containers:
@@ -141,15 +87,22 @@ spec:
     name: busybox
     command: ["sleep", "99999"]
 EOF
-pod/busybox created
 ```
 
-That worked. Also, according to the policy, karydia has not only verified
+That worked:
+
+```
+$ kubectl get pods
+NAME      READY     STATUS    RESTARTS   AGE
+busybox   1/1       Running   0          26s
+```
+
+Also, according to the policy, karydia has not only verified
 that `automountServiceAccountToken` is set to false but also modified the
-pod to use the configured seccomp profile:
+pod to use the configured seccomp profile. You can verify that with:
 
 ```
-kubectl --as system:serviceaccount:jane:jane -n jane get pods busybox -o jsonpath='{.metadata.annotations.seccomp\.security\.alpha\.kubernetes\.io/pod}'
+$ kubectl get pods busybox -o jsonpath='{.metadata.annotations.seccomp\.security\.alpha\.kubernetes\.io/pod}'
 ```
 
 ## Configuration options
