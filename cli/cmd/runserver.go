@@ -33,6 +33,9 @@ func init() {
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 	runserverCmd.Flags().String("tls-cert", "cert.pem", "Path to TLS certificate file")
 	runserverCmd.Flags().String("tls-key", "key.pem", "Path to TLS private key file")
+
+	runserverCmd.Flags().String("kubeconfig", "", "Path to the kubeconfig file")
+	runserverCmd.Flags().String("server", "", "The address and port of the Kubernetes API server")
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
@@ -45,7 +48,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	controller, err := controller.New(ctx, &controller.Config{})
+	controller, err := controller.New(ctx, &controller.Config{viper.GetString("kubeconfig"), viper.GetString("server"), nil})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load controller: %v\n", err)
 		os.Exit(1)
