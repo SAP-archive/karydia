@@ -33,6 +33,9 @@ func init() {
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
+	runserverCmd.Flags().Bool("enable-opa", false, "Enable OPA module")
+	runserverCmd.Flags().Bool("enable-ksp", false, "Enable KSP module")
+
 	// TODO(schu): the '/v1' currently is required since the OPA package
 	// from kubernetes-policy-controller that we use does not include that
 	// in the URL when sending requests.
@@ -63,27 +66,33 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	kspAdmission, err := kspadmission.New()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
-		os.Exit(1)
+	var kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
+	if viper.GetBool("enable-ksp") {
+		kspAdmission, err = kspadmission.New()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
+			os.Exit(1)
+		}
+
+		rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(controller.KubeInformerFactory())
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
+			os.Exit(1)
+		}
+
+		kspAdmission.SetAuthorizer(rbacAuthorizer)
+		kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
 	}
 
-	rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(controller.KubeInformerFactory())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
-		os.Exit(1)
-	}
-
-	kspAdmission.SetAuthorizer(rbacAuthorizer)
-	kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
-
-	opaAdmission, err := opaadmission.New(&opaadmission.Config{
-		OPAURL: viper.GetString("opa-api-endpoint"),
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load opa admission: %v\n", err)
-		os.Exit(1)
+	var opaAdmission *opaadmission.OPAAdmission
+	if viper.GetBool("enable-opa") {
+		opaAdmission, err = opaadmission.New(&opaadmission.Config{
+			OPAURL: viper.GetString("opa-api-endpoint"),
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load opa admission: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	webHook, err := webhook.New(&webhook.Config{

@@ -2,7 +2,6 @@ package webhook
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -54,10 +53,13 @@ func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse 
 			return response
 		}
 	}
-	if wh.kspAdmission == nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
+	if wh.kspAdmission != nil {
+		response := wh.kspAdmission.Admit(ar)
+		if !response.Allowed {
+			return response
+		}
 	}
-	return wh.kspAdmission.Admit(ar)
+	return &v1beta1.AdmissionResponse{Allowed: true}
 }
 
 func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
