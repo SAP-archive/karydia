@@ -50,7 +50,9 @@ func New(config *Config) (*Webhook, error) {
 func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	if wh.opaAdmission != nil {
 		response := wh.opaAdmission.Admit(ar)
-		wh.logger.Infof("OPA admission response: %+v", response)
+		if !response.Allowed {
+			return response
+		}
 	}
 	if wh.kspAdmission == nil {
 		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
