@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package webhook
+package scheme
 
 import (
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
@@ -26,7 +26,7 @@ import (
 )
 
 var scheme = runtime.NewScheme()
-var codecs = serializer.NewCodecFactory(scheme)
+var Codecs = serializer.NewCodecFactory(scheme)
 
 func init() {
 	addToScheme(scheme)
