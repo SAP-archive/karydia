@@ -11,6 +11,7 @@ import (
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
 	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
+	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
 type Webhook struct {
@@ -98,7 +99,7 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 	requestedAdmissionReview := v1beta1.AdmissionReview{}
 	responseAdmissionReview := v1beta1.AdmissionReview{}
 
-	deserializer := codecs.UniversalDeserializer()
+	deserializer := scheme.Codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(body, nil, &requestedAdmissionReview); err != nil {
 		wh.logger.Errorf("failed to decode body: %v", err)
 		responseAdmissionReview.Response = k8sutil.ErrToAdmissionResponse(err)
