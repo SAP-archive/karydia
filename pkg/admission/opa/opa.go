@@ -37,11 +37,6 @@ func New(config *Config) (*OPAAdmission, error) {
 	}, nil
 }
 
-var (
-	resourcePod              = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
-	resourcePersistentVolume = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "persistentvolumes"}
-)
-
 func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	resource := strings.ToLower(ar.Request.Resource.Resource)
 	namespace := strings.ToLower(ar.Request.Namespace)

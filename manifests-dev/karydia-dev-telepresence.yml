@@ -56,7 +56,10 @@ spec:
         image: openpolicyagent/kube-mgmt:0.7
         imagePullPolicy: Always
         args:
+          - "--replicate-cluster=v1/nodes"
           - "--replicate-cluster=v1/namespaces"
+          - "--replicate-cluster=admissionregistration.k8s.io/v1beta1/validatingwebhookconfigurations"
+          - "--replicate-cluster=admissionregistration.k8s.io/v1beta1/mutatingwebhookconfigurations"
           - "--replicate=v1/persistentvolumes"
           - "--replicate=v1/pods"
       volumes:
