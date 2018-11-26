@@ -24,6 +24,8 @@ make container
 
 kubectl apply -f manifests/karydia.yml
 
+kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<manifests/example-default-network-policy.yml)"
+
 kubectl apply -f manifests/crd-karydia-security-policy.yml
 
 ./scripts/configure-karydia-webhook
@@ -123,3 +125,16 @@ spec:
     # If the pod defines a different profile, it will be rejected
     seccompProfile: "docker/default"
 ```
+
+### Default NetworkPolicy
+
+When `--enable-default-network-policy` is set, karydia takes the network policy
+found at `--default-network-policy-configmap` and installs it into all namespaces.
+
+Particular namespaces can be excluded with `--default-network-policy-excludes`.
+
+Please note: an update to `--default-network-policy-configmap` does not update
+previously deployed network policies.
+
+The network policy is expected to be found under `.data.policy` in the
+configmap.
