@@ -17,6 +17,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	karydiaadmission "github.com/kinvolk/karydia/pkg/admission/karydia"
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
 	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/controller"
@@ -37,8 +38,9 @@ func init() {
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
-	runserverCmd.Flags().Bool("enable-opa", false, "Enable OPA module")
-	runserverCmd.Flags().Bool("enable-ksp", false, "Enable KSP module")
+	runserverCmd.Flags().Bool("enable-opa-admission", false, "Enable the OPA admission plugin")
+	runserverCmd.Flags().Bool("enable-ksp-admission", false, "Enable the KarydiaSecurityPolicy admission plugin")
+	runserverCmd.Flags().Bool("enable-karydia-admission", false, "Enable the Karydia admission plugin")
 
 	// TODO(schu): the '/v1' currently is required since the OPA package
 	// from kubernetes-policy-controller that we use does not include that
@@ -62,10 +64,11 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	var (
 		enableController           bool
 		enableDefaultNetworkPolicy = viper.GetBool("enable-default-network-policy")
-		enableKSP                  = viper.GetBool("enable-ksp")
-		enableOPA                  = viper.GetBool("enable-opa")
+		enableKSPAdmission         = viper.GetBool("enable-ksp-admission")
+		enableOPAAdmission         = viper.GetBool("enable-opa-admission")
+		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
 	)
-	if enableDefaultNetworkPolicy || enableKSP {
+	if enableDefaultNetworkPolicy || enableKSPAdmission {
 		enableController = true
 	}
 
@@ -91,6 +94,18 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create clientset: %v\n", err)
 		os.Exit(1)
+	}
+
+	if enableKarydiaAdmission {
+		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
+			KubeClientset: kubeClientset,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
+			os.Exit(1)
+		}
+
+		webHook.RegisterAdmissionPlugin(karydiaAdmission)
 	}
 
 	var defaultNetworkPolicy *networkingv1.NetworkPolicy
@@ -131,7 +146,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if enableKSP {
+	if enableKSPAdmission {
 		kspAdmission, err := kspadmission.New()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
@@ -150,7 +165,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		webHook.RegisterAdmissionPlugin(kspAdmission)
 	}
 
-	if enableOPA {
+	if enableOPAAdmission {
 		opaAdmission, err := opaadmission.New(&opaadmission.Config{
 			OPAURL: viper.GetString("opa-api-endpoint"),
 		})

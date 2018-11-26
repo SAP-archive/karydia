@@ -36,7 +36,7 @@ kubectl apply -f manifests-dev/karydia-dev-telepresence.yml
 Start karydia on your laptop:
 ```
 telepresence --namespace kube-system --deployment karydia --expose 33333:8000 --also-proxy opa --run-shell
-bin/karydia runserver --enable-opa --tls-cert karydia.pem --tls-key karydia-key.pem --kubeconfig $KUBECONFIG --opa-api-endpoint http://$OPA_SERVICE_HOST/v1
+bin/karydia runserver --enable-opa-admission --tls-cert karydia.pem --tls-key karydia-key.pem --kubeconfig $KUBECONFIG --opa-api-endpoint http://$OPA_SERVICE_HOST/v1
 ```
 
 ## Get OPA data
