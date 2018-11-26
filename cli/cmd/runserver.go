@@ -6,12 +6,16 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
 	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
@@ -48,9 +52,23 @@ func init() {
 
 	runserverCmd.Flags().String("kubeconfig", "", "Path to the kubeconfig file")
 	runserverCmd.Flags().String("server", "", "The address and port of the Kubernetes API server")
+
+	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
+	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
+	runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
+	var (
+		enableController           bool
+		enableDefaultNetworkPolicy = viper.GetBool("enable-default-network-policy")
+		enableKSP                  = viper.GetBool("enable-ksp")
+		enableOPA                  = viper.GetBool("enable-opa")
+	)
+	if enableDefaultNetworkPolicy || enableKSP {
+		enableController = true
+	}
+
 	tlsConfig, err := tls.CreateTLSConfig(viper.GetString("tls-cert"), viper.GetString("tls-key"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to create TLS config: %v\n", err)
@@ -60,32 +78,73 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	controller, err := controller.New(ctx, &controller.Config{viper.GetString("kubeconfig"), viper.GetString("server"), nil})
+	kubeConfig := viper.GetString("kubeconfig")
+	kubeServer := viper.GetString("server")
+
+	kubeClientset, err := k8sutil.Clientset(kubeServer, kubeConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load controller: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to create clientset: %v\n", err)
 		os.Exit(1)
 	}
 
+	var defaultNetworkPolicy *networkingv1.NetworkPolicy
+	if enableDefaultNetworkPolicy {
+		defaultNetworkPolicyIdentifier := viper.GetString("default-network-policy-configmap")
+		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
+		if len(group) < 2 {
+			fmt.Fprintf(os.Stderr, "default-network-policy-configmap must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+			os.Exit(1)
+		}
+		namespace := group[0]
+		name := group[1]
+		networkPolicyConfigmap, err := kubeClientset.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to get default network policy configmap %q in namespace %q: %v\n", name, namespace, err)
+			os.Exit(1)
+		}
+		var policy networkingv1.NetworkPolicy
+		if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
+			os.Exit(1)
+		}
+		defaultNetworkPolicy = &policy
+	}
+
+	var ctrler *controller.Controller
+	if enableController {
+		ctrler, err = controller.New(ctx, &controller.Config{
+			DefaultNetworkPolicy:         defaultNetworkPolicy,
+			DefaultNetworkPolicyExcludes: viper.GetStringSlice("default-network-policy-excludes"),
+
+			Kubeconfig: kubeConfig,
+			MasterURL:  kubeServer,
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to load controller: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	var kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
-	if viper.GetBool("enable-ksp") {
+	if enableKSP {
 		kspAdmission, err = kspadmission.New()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
 			os.Exit(1)
 		}
 
-		rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(controller.KubeInformerFactory())
+		rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(ctrler.KubeInformerFactory())
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
 			os.Exit(1)
 		}
 
 		kspAdmission.SetAuthorizer(rbacAuthorizer)
-		kspAdmission.SetExternalInformerFactory(controller.KarydiaInformerFactory())
+		kspAdmission.SetExternalInformerFactory(ctrler.KarydiaInformerFactory())
 	}
 
 	var opaAdmission *opaadmission.OPAAdmission
-	if viper.GetBool("enable-opa") {
+	if enableOPA {
 		opaAdmission, err = opaadmission.New(&opaadmission.Config{
 			OPAURL: viper.GetString("opa-api-endpoint"),
 		})
@@ -139,14 +198,16 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		}
 	}()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	if enableController {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-		if err := controller.Run(2); err != nil {
-			fmt.Fprintf(os.Stderr, "Error running controller: %v\n", err)
-		}
-	}()
+			if err := ctrler.Run(2); err != nil {
+				fmt.Fprintf(os.Stderr, "Error running controller: %v\n", err)
+			}
+		}()
+	}
 
 	go func() {
 		sigChan := make(chan os.Signal, 1)

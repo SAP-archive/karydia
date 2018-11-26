@@ -1,0 +1,11 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  labels:
+    app: karydia
+  name: karydia-default-network-policy
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress

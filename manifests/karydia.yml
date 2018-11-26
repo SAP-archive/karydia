@@ -25,6 +25,7 @@ spec:
           - /etc/karydia/tls/cert.pem
           - --tls-key
           - /etc/karydia/tls/key.pem
+          - --enable-default-network-policy
         volumeMounts:
           - name: karydia-tls
             mountPath: /etc/karydia/tls
