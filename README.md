@@ -12,7 +12,7 @@ Then the following commands can be used to install karydia as a mutating
 webhook plus a default `KarydiaSecurityPolicy`:
 
 ```
-minikube start --kubernetes-version v1.12.2
+minikube start --kubernetes-version v1.12.3
 
 rm karydia*pem
 ./scripts/create-karydia-certificate
