@@ -27,6 +27,9 @@ data:
   parameters.rego: |
     package parameters
     clusterName = "foo"
+    podCIDR =  "100.96.0.0/24"
+    nodeCIDR =  "10.250.0.0/16"
+    restrictedEndpointCIDR =  {"10.242.0.0/16", "10.243.0.0/16", "169.254.169.254/32"}
     forbiddenPrefix = "nonono"
   default-policy-matches.rego: |
     package k8s
@@ -69,6 +72,37 @@ data:
         diskPrefix = sprintf("%s-", [clusterName])
         requestedDisk := matched_object.spec.gcePersistentDisk.pdName
         not startswith(matched_object.spec.gcePersistentDisk.pdName, diskPrefix)
+    }
+  invalid-pod-ip.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.pods
+    import data.parameters.podCIDR
+    import data.parameters.nodeCIDR
+    deny[{
+        "id": "invalid-pod-ip",
+        "resource": {"kind": "pods", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use pod IP %q", [requestedIP])},
+    }] {
+        matches[["pods", namespace, name, matched_object]]
+        requestedIP = matched_object.status.podIP
+        requestedIP != ""
+        net.cidr_overlap(podCIDR, requestedIP, false)  # pods with hostNetwork=false
+        net.cidr_overlap(nodeCIDR, requestedIP, false) # pods with hostNetwork=true
+    }
+  invalid-endpoint-ip.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.endpoints
+    import data.parameters.restrictedEndpointCIDR
+    deny[{
+        "id": "invalid-endpoint-ip",
+        "resource": {"kind": "endpoints", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use endpoint IP %q", [requestedIP])},
+    }] {
+        matches[["endpoints", namespace, name, matched_object]]
+        requestedIP = matched_object.subsets[_].addresses[_].ip
+        net.cidr_overlap(restrictedEndpointCIDR[_], requestedIP, true)
     }
   test-pod.rego: |
     package admission
@@ -125,6 +159,8 @@ spec:
           - "/etc/opa-policies/default-kubernetes-matches.rego"
           - "/etc/opa-policies/no-foreign-nodes.rego"
           - "/etc/opa-policies/no-foreign-volumes.rego"
+          - "/etc/opa-policies/invalid-pod-ip.rego"
+          - "/etc/opa-policies/invalid-endpoint-ip.rego"
           - "/etc/opa-policies/test-pod.rego"
         ports:
         - containerPort: 8181
@@ -141,6 +177,7 @@ spec:
           - "--replicate-cluster=admissionregistration.k8s.io/v1beta1/mutatingwebhookconfigurations"
           - "--replicate=v1/persistentvolumes"
           - "--replicate=v1/pods"
+          - "--replicate=v1/endpoints"
       volumes:
         - name: karydia-tls
           secret:
