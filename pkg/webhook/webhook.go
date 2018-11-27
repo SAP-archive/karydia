@@ -2,7 +2,6 @@ package webhook
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"k8s.io/api/admission/v1beta1"
 
 	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
+	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
 
@@ -17,17 +17,22 @@ type Webhook struct {
 	logger *logrus.Logger
 
 	kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
+
+	opaAdmission *opaadmission.OPAAdmission
 }
 
 type Config struct {
 	Logger *logrus.Logger
 
 	KSPAdmission *kspadmission.KarydiaSecurityPolicyAdmission
+
+	OPAAdmission *opaadmission.OPAAdmission
 }
 
 func New(config *Config) (*Webhook, error) {
 	webhook := &Webhook{
 		kspAdmission: config.KSPAdmission,
+		opaAdmission: config.OPAAdmission,
 	}
 
 	if config.Logger == nil {
@@ -42,10 +47,19 @@ func New(config *Config) (*Webhook, error) {
 }
 
 func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	if wh.kspAdmission == nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("no karydia security policy admission handler set"))
+	if wh.opaAdmission != nil {
+		response := wh.opaAdmission.Admit(ar)
+		if !response.Allowed {
+			return response
+		}
 	}
-	return wh.kspAdmission.Admit(ar)
+	if wh.kspAdmission != nil {
+		response := wh.kspAdmission.Admit(ar)
+		if !response.Allowed {
+			return response
+		}
+	}
+	return &v1beta1.AdmissionResponse{Allowed: true}
 }
 
 func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
