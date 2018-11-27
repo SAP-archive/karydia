@@ -32,7 +32,7 @@ kubectl apply -f manifests/crd-karydia-security-policy.yml
 Take a quick look at the logs to see if karydia started:
 
 ```
-kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f
+kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 
 time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
 E1109 10:47:50.413218       1 reflector.go:134] github.com/kinvolk/karydia/pkg/client/informers/externalversions/factory.go:117: Failed to list *v1alpha1.KarydiaSecurityPolicy: the server could not find the requested resource (get karydiasecuritypolicies.karydia.gardener.cloud)
