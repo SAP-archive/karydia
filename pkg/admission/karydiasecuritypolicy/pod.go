@@ -10,6 +10,7 @@ import (
 
 	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
+	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
 func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, specMutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {
@@ -21,7 +22,7 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.Ad
 
 	raw := ar.Request.Object.Raw
 	pod := corev1.Pod{}
-	deserializer := codecs.UniversalDeserializer()
+	deserializer := scheme.Codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
 		return k8sutil.ErrToAdmissionResponse(err)
 	}
