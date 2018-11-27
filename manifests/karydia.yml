@@ -36,10 +36,10 @@ spec:
             port: 33333
             scheme: HTTPS
           initialDelaySeconds: 10
-          periodSeconds: 30
+          periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-          failureThreshold: 3
+          failureThreshold: 2
         ports:
         - containerPort: 33333
       - name: opa
