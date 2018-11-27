@@ -78,6 +78,12 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
+	webHook, err := webhook.New(&webhook.Config{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load webhook: %v\n", err)
+		os.Exit(1)
+	}
+
 	kubeConfig := viper.GetString("kubeconfig")
 	kubeServer := viper.GetString("server")
 
@@ -125,9 +131,8 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	var kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
 	if enableKSP {
-		kspAdmission, err = kspadmission.New()
+		kspAdmission, err := kspadmission.New()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
 			os.Exit(1)
@@ -141,26 +146,20 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 		kspAdmission.SetAuthorizer(rbacAuthorizer)
 		kspAdmission.SetExternalInformerFactory(ctrler.KarydiaInformerFactory())
+
+		webHook.RegisterAdmissionPlugin(kspAdmission)
 	}
 
-	var opaAdmission *opaadmission.OPAAdmission
 	if enableOPA {
-		opaAdmission, err = opaadmission.New(&opaadmission.Config{
+		opaAdmission, err := opaadmission.New(&opaadmission.Config{
 			OPAURL: viper.GetString("opa-api-endpoint"),
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load opa admission: %v\n", err)
 			os.Exit(1)
 		}
-	}
 
-	webHook, err := webhook.New(&webhook.Config{
-		KSPAdmission: kspAdmission,
-		OPAAdmission: opaAdmission,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load webhook: %v\n", err)
-		os.Exit(1)
+		webHook.RegisterAdmissionPlugin(opaAdmission)
 	}
 
 	serverConfig := &server.Config{
