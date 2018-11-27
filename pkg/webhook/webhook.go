@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -12,6 +13,10 @@ import (
 	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 )
+
+type AdmissionPlugin interface {
+	Admit(v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
+}
 
 type Webhook struct {
 	logger *logrus.Logger
@@ -47,17 +52,25 @@ func New(config *Config) (*Webhook, error) {
 }
 
 func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	if wh.opaAdmission != nil {
-		response := wh.opaAdmission.Admit(ar)
+	var responseWithPatches *v1beta1.AdmissionResponse
+	for _, ap := range []AdmissionPlugin{wh.opaAdmission, wh.kspAdmission} {
+		if ap == nil {
+			continue
+		}
+		response := ap.Admit(ar)
 		if !response.Allowed {
 			return response
+		}
+		if response.Patch != nil && responseWithPatches == nil {
+			responseWithPatches = response
+			continue
+		}
+		if response.Patch != nil {
+			return k8sutil.ErrToAdmissionResponse(fmt.Errorf("cannot admit with patches, request is patched already"))
 		}
 	}
-	if wh.kspAdmission != nil {
-		response := wh.kspAdmission.Admit(ar)
-		if !response.Allowed {
-			return response
-		}
+	if responseWithPatches != nil {
+		return responseWithPatches
 	}
 	return &v1beta1.AdmissionResponse{Allowed: true}
 }
