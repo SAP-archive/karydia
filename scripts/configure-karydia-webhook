@@ -26,8 +26,16 @@ webhooks:
       caBundle: {{CA_BUNDLE}}
     rules:
       # https://github.com/kubernetes/kubernetes/blob/v1.12.1/staging/src/k8s.io/api/admissionregistration/v1beta1/types.go
-      - operations: [ "*" ]
+      - operations:
+        - CREATE
+        - UPDATE
         apiGroups: ["*"]
         apiVersions: ["*"]
-        resources: ["*/*"]
+        resources:
+        - nodes
+        - namespaces
+        - pods
+        - persistentvolumes
+        - validatingwebhookconfigurations
+        - mutatingwebhookconfigurations
 EOF

@@ -1,0 +1,120 @@
+#!/bin/bash
+
+set -euo pipefail
+
+export OPA_IP=$(kubectl get svc -n kube-system opa -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+if [[ -z "${CLUSTER_NAME}" ]]; then
+  echo "ERROR: \$CLUSTER_NAME not set - aborting" >&2
+  exit 1
+fi
+
+
+PolicyMatchPolicy='
+package k8s
+import data.kubernetes.policies
+
+# Matches provides an abstraction to find policies that match the (name). 
+policymatches[[name, policy]] {
+    policy := policies[name]
+}
+'
+
+KubernetesPolicy='
+package k8s
+import data.kubernetes
+
+matches[[kind, namespace, name, resource]] {
+    resource := kubernetes[kind][namespace][name]
+}
+'
+
+PolicyNoForeignNodes='
+package admission
+
+import data.k8s.matches
+import data.kubernetes.nodes
+
+clusterName = "'${CLUSTER_NAME}'"
+
+deny[{
+    "id": "no-foreign-nodes",
+    "resource": {"kind": "nodes", "namespace": "", "name": name},
+    "resolution": {"message" : sprintf("cannot use foreign node %q", [requestedNode])},
+}] {
+    matches[["nodes", "", name, matched_object]]
+    nodePrefix = sprintf("%s-", [clusterName])
+    requestedNode := matched_object.metadata.name
+    not startswith(matched_object.metadata.name, nodePrefix)
+}
+'
+
+PolicyNoForeignVolumes='
+package admission
+
+import data.k8s.matches
+import data.kubernetes.persistentvolumes
+
+clusterName = "'${CLUSTER_NAME}'"
+
+deny[{
+    "id": "no-foreign-volumes",
+    "resource": {"kind": "persistentvolumes", "namespace": namespace, "name": name},
+    "resolution": {"message" : sprintf("cannot use foreign volume %q", [requestedDisk])},
+}] {
+    matches[["persistentvolumes", namespace, name, matched_object]]
+    diskPrefix = sprintf("%s-", [clusterName])
+    requestedDisk := matched_object.spec.gcePersistentDisk.pdName
+    not startswith(matched_object.spec.gcePersistentDisk.pdName, diskPrefix)
+}
+'
+
+# FIXME(alban): does not work:
+# https://github.com/kinvolk/karydia/issues/14
+PolicyNoWebhookInControlPlane='
+package admission
+
+import data.k8s.matches
+import data.kubernetes.mutatingwebhookconfigurations
+
+deny[{
+    "id": "no-webhook-in-control-plane",
+    "resource": {"kind": "mutatingwebhookconfigurations", "namespace": "", "name": name},
+    "resolution": {"message" : sprintf("webhook cannot use URL %q", [requestedURL])},
+}] {
+    matches[["persistentvolumes", "", name, matched_object]]
+    URLPrefix = "https://169.254.169.254"
+    requestedURL := matched_object.webhooks.clientConfig.URL
+    not startswith(matched_object.spec.gcePersistentDisk.pdName, URLPrefix)
+}
+'
+
+PolicyTestPod='
+package admission
+
+import data.k8s.matches
+import data.kubernetes.pods
+
+forbiddenPrefix = "no"
+
+deny[{
+    "id": "test-pod",
+    "resource": {"kind": "pods", "namespace": namespace, "name": name},
+    "resolution": {"message" : sprintf("cannot use pod name %q", [requestedName])},
+}] {
+    matches[["pods", namespace, name, matched_object]]
+    namePrefix = sprintf("%s-", [forbiddenPrefix])
+    requestedName := matched_object.metadata.name
+    startswith(matched_object.metadata.name, namePrefix)
+}
+'
+
+curl -XPUT -d "$PolicyMatchPolicy"		http://$OPA_IP/v1/policies/default-policy-matches
+curl -XPUT -d "$KubernetesPolicy"		http://$OPA_IP/v1/policies/default-kubernetes-matches
+curl -XPUT -d "$PolicyNoForeignNodes"		http://$OPA_IP/v1/policies/no-foreign-nodes
+curl -XPUT -d "$PolicyNoForeignVolumes"		http://$OPA_IP/v1/policies/no-foreign-volumes
+curl -XPUT -d "$PolicyNoWebhookInControlPlane"	http://$OPA_IP/v1/policies/no-webhook-in-control-plane
+curl -XPUT -d "$PolicyTestPod"			http://$OPA_IP/v1/policies/test-pod
+
+curl http://$OPA_IP/v1/policies?pretty=true
+
