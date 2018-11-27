@@ -11,3 +11,16 @@ spec:
     plural: karydiasecuritypolicies
     shortNames:
       - ksp
+  validation:
+    # Documentation for all possible settings can be found here:
+    # https://github.com/kinvolk/karydia#karydiasecuritypolicy
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            pod:
+              properties:
+                automountServiceAccountToken:
+                  type: string
+                seccompProfile:
+                  type: string
