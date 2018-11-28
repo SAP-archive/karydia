@@ -35,6 +35,8 @@ webhooks:
         - nodes
         - namespaces
         - pods
+        - pods/status
+        - endpoints
         - persistentvolumes
         - validatingwebhookconfigurations
         - mutatingwebhookconfigurations

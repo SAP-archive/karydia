@@ -33,11 +33,6 @@ kubectl apply -f manifests-dev/karydia-dev-telepresence.yml
 ./scripts/configure-karydia-webhook
 ```
 
-Install some examples of policies
-```
-./scripts/push-opa-policies
-```
-
 Start karydia on your laptop:
 ```
 telepresence --namespace kube-system --deployment karydia --expose 33333:8000 --also-proxy opa --run-shell
