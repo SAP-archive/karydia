@@ -63,7 +63,7 @@ metadata:
 spec:
   groups:
   - system:authenticated
-  request: '$(base64 "${tmp_dir}/karydia.csr" | tr -d '\n')'
+  request: '$(base64 "${tmp_dir}/karydia.csr" | tr -d '\r\n')'
   usages:
   - digital signature
   - key encipherment
