@@ -37,77 +37,27 @@ Take a quick look at the logs to see if karydia started:
 kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 
 time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
-E1109 10:47:50.413218       1 reflector.go:134] github.com/kinvolk/karydia/pkg/client/informers/externalversions/factory.go:117: Failed to list *v1alpha1.KarydiaSecurityPolicy: the server could not find the requested resource (get karydiasecuritypolicies.karydia.gardener.cloud)
-E1109 10:47:51.440790       1 reflector.go:134] github.com/kinvolk/karydia/pkg/client/informers/externalversions/factory.go:117: Failed to list *v1alpha1.KarydiaSecurityPolicy: the server could not find the requested resource (get karydiasecuritypolicies.karydia.gardener.cloud)
-E1109 10:47:52.458124       1 reflector.go:134] github.com/kinvolk/karydia/pkg/client/informers/externalversions/factory.go:117: Failed to list *v1alpha1.KarydiaSecurityPolicy: the server could not find the requested resource (get karydiasecuritypolicies.karydia.gardener.cloud)
-time="2018-11-09T10:47:56Z" level=info msg="Enqueuing \"default\""
-time="2018-11-09T10:47:56Z" level=info msg="Successfully synced \"default\""
 [...]
 ```
 
-Since it can take a moment for the `KarydiaSecurityPolicy` CRD to be available,
-you might see a few error messages as above.
-
 ### Demo
 
-If no `KarydiaSecurityPolicy` was created yet or your current user is
-not allowed to use any of the available policies, all requests will be
-allowed by default.
-
-```
-$ kubectl run --rm -ti --restart=Never --image busybox busybox -- echo hello world
-hello world
-pod "busybox" deleted
-```
-
-Let's add an example policy:
-
-```
-kubectl apply -f manifests/example-karydia-security-policy.yml
-```
-
-Now the same `kubectl run` command should fail according to the policy:
-
-```
-$ kubectl run --rm -ti --restart=Never --image busybox busybox -- echo hello world
-Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: map[example-restrictive:[automount of service account not allowed]]
-```
-
-Let's try to comply with the KSP:
-
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
-metadata:
-  name: busybox
-spec:
-  automountServiceAccountToken: false
-  containers:
-  - image: busybox
-    imagePullPolicy: IfNotPresent
-    name: busybox
-    command: ["sleep", "99999"]
-EOF
-```
-
-That worked:
-
-```
-$ kubectl get pods
-NAME      READY     STATUS    RESTARTS   AGE
-busybox   1/1       Running   0          26s
-```
-
-Also, according to the policy, karydia has not only verified
-that `automountServiceAccountToken` is set to false but also modified the
-pod to use the configured seccomp profile. You can verify that with:
-
-```
-$ kubectl get pods busybox -o jsonpath='{.metadata.annotations.seccomp\.security\.alpha\.kubernetes\.io/pod}'
-```
+Please see [docs/karydia-demo.md](docs/karydia-demo.md) for a demo of some karydia features.
 
 ## Configuration options
+
+### karydia admission
+
+If enabled (`--enable-karydia-admission`), karydia acts as an admission plugin
+to enforce certain settings with the goal of hardening a cluster setup.
+
+Currently, the following settings are available to be set per namespace
+as namespace annotations:
+
+| Name | Type | Possible values |
+|---|---|---|
+|karydia.gardener.cloud/automountServiceAccountToken|string|"forbidden" or "non-default"|
+|karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. "runtime/default" or "localhost/my-profile"|
 
 ### KarydiaSecurityPolicy
 
