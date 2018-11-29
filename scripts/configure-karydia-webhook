@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-ca_bundle="$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\n')"
+ca_bundle="$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\r\n')"
 if [[ -z "${ca_bundle}" ]]; then
   echo "ERROR: extension-apiserver-authentication config map with CA bundle not found - aborting" >&2
   exit 1
