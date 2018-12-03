@@ -9,18 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 
+	"github.com/kinvolk/karydia/pkg/admission"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
-type AdmissionPlugin interface {
-	Admit(v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
-}
-
 type Webhook struct {
 	logger *logrus.Logger
 
-	admissionPlugins []AdmissionPlugin
+	admissionPlugins []admission.AdmissionPlugin
 }
 
 type Config struct {
@@ -43,7 +40,7 @@ func New(config *Config) (*Webhook, error) {
 	return webhook, nil
 }
 
-func (wh *Webhook) RegisterAdmissionPlugin(p AdmissionPlugin) {
+func (wh *Webhook) RegisterAdmissionPlugin(p admission.AdmissionPlugin) {
 	wh.admissionPlugins = append(wh.admissionPlugins, p)
 }
 
