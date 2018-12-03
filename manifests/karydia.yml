@@ -26,6 +26,7 @@ spec:
           - --tls-key
           - /etc/karydia/tls/key.pem
           - --enable-default-network-policy
+          - --enable-karydia-admission
         volumeMounts:
           - name: karydia-tls
             mountPath: /etc/karydia/tls
@@ -35,10 +36,10 @@ spec:
             port: 33333
             scheme: HTTPS
           initialDelaySeconds: 10
-          periodSeconds: 30
+          periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 1
-          failureThreshold: 3
+          failureThreshold: 2
         ports:
         - containerPort: 33333
       - name: opa
