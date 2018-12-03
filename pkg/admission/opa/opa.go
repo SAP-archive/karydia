@@ -37,7 +37,7 @@ func New(config *Config) (*OPAAdmission, error) {
 	}, nil
 }
 
-func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	resource := strings.ToLower(ar.Request.Resource.Resource)
 	namespace := strings.ToLower(ar.Request.Namespace)
 	name := strings.ToLower(ar.Request.Name)
@@ -67,7 +67,7 @@ func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionRespo
 	}
 	logger.Infof("OPA query response:\n%+v", resp)
 
-	allowed, reason, patchBytes, err := createPatchFromOPAResult(resp)
+	allowed, reason, patchBytes, err := createPatchFromOPAResult(resp, mutationAllowed)
 	if err != nil {
 		logger.Errorf("cannot handle OPA response: %v", err)
 		return &v1beta1.AdmissionResponse{Allowed: allowed}
@@ -86,7 +86,7 @@ func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionRespo
 }
 
 // Borrowed from https://github.com/Azure/kubernetes-policy-controller/blob/master/pkg/server/server.go
-func createPatchFromOPAResult(result []map[string]interface{}) (bool, string, []byte, error) {
+func createPatchFromOPAResult(result []map[string]interface{}, mutationAllowed bool) (bool, string, []byte, error) {
 	var msg string
 	bs, err := json.Marshal(result)
 	if err != nil {
@@ -107,7 +107,7 @@ func createPatchFromOPAResult(result []map[string]interface{}) (bool, string, []
 	validPatches := map[string]types.PatchOperation{}
 	for _, v := range allViolations {
 		patchCount := len(v.Resolution.Patches)
-		if patchCount == 0 {
+		if !mutationAllowed || patchCount == 0 {
 			valid = false
 			reason.Reason = append(reason.Reason, v.Resolution.Message)
 			continue
