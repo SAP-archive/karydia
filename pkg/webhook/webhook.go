@@ -2,38 +2,34 @@ package webhook
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 
-	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
-	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
+type AdmissionPlugin interface {
+	Admit(v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
+}
+
 type Webhook struct {
 	logger *logrus.Logger
 
-	kspAdmission *kspadmission.KarydiaSecurityPolicyAdmission
-
-	opaAdmission *opaadmission.OPAAdmission
+	admissionPlugins []AdmissionPlugin
 }
 
 type Config struct {
 	Logger *logrus.Logger
-
-	KSPAdmission *kspadmission.KarydiaSecurityPolicyAdmission
-
-	OPAAdmission *opaadmission.OPAAdmission
 }
 
 func New(config *Config) (*Webhook, error) {
 	webhook := &Webhook{
-		kspAdmission: config.KSPAdmission,
-		opaAdmission: config.OPAAdmission,
+		logger: config.Logger,
 	}
 
 	if config.Logger == nil {
@@ -47,18 +43,27 @@ func New(config *Config) (*Webhook, error) {
 	return webhook, nil
 }
 
+func (wh *Webhook) RegisterAdmissionPlugin(p AdmissionPlugin) {
+	wh.admissionPlugins = append(wh.admissionPlugins, p)
+}
+
 func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
-	if wh.opaAdmission != nil {
-		response := wh.opaAdmission.Admit(ar)
+	var responseWithPatches *v1beta1.AdmissionResponse
+	for _, ap := range wh.admissionPlugins {
+		response := ap.Admit(ar)
 		if !response.Allowed {
 			return response
+		}
+		if response.Patch != nil && responseWithPatches == nil {
+			responseWithPatches = response
+			continue
+		}
+		if response.Patch != nil {
+			return k8sutil.ErrToAdmissionResponse(fmt.Errorf("cannot admit with patches, request is patched already"))
 		}
 	}
-	if wh.kspAdmission != nil {
-		response := wh.kspAdmission.Admit(ar)
-		if !response.Allowed {
-			return response
-		}
+	if responseWithPatches != nil {
+		return responseWithPatches
 	}
 	return &v1beta1.AdmissionResponse{Allowed: true}
 }
