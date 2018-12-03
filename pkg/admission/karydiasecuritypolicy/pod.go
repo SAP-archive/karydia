@@ -13,7 +13,7 @@ import (
 	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
-func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, specMutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {
+func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, mutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {
 	if ar.Request.Operation != v1beta1.Create {
 		return &v1beta1.AdmissionResponse{
 			Allowed: true,
@@ -43,7 +43,7 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.Ad
 			continue
 		}
 
-		if len(patches) > 0 && !specMutationAllowed {
+		if len(patches) > 0 && !mutationAllowed {
 			continue
 		}
 
@@ -54,7 +54,7 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.Ad
 			}
 		}
 
-		if specMutationAllowed && acceptedWithPatches == nil {
+		if mutationAllowed && acceptedWithPatches == nil {
 			patchesStr := strings.Join(patches, ",")
 			patchType := v1beta1.PatchTypeJSONPatch
 

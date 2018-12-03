@@ -43,7 +43,12 @@ func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 
 	mux.HandleFunc("/healthz", server.handlerHealthz)
 	if webhook != nil {
-		mux.HandleFunc("/webhook", webhook.Serve)
+		mux.HandleFunc("/webhook/validating", func(w http.ResponseWriter, r *http.Request) {
+			webhook.Serve(w, r, false)
+		})
+		mux.HandleFunc("/webhook/mutating", func(w http.ResponseWriter, r *http.Request) {
+			webhook.Serve(w, r, true)
+		})
 	}
 
 	httpServer := &http.Server{
