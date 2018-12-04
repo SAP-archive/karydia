@@ -24,3 +24,20 @@ Please see [docs/demo.md](docs/demo.md) for a demo of some karydia features.
 ## Features and configuration options
 
 See [features](docs/features.md).
+
+## Testing
+
+### Integration tests
+
+```
+minikube start --kubernetes-version v1.12.3
+eval $(minikube docker-env)
+make container
+make e2e-test
+```
+
+### Unit tests
+
+```
+make test
+```
