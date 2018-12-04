@@ -1,5 +1,3 @@
----
-
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -58,19 +56,3 @@ spec:
         - name: karydia-tls
           secret:
             secretName: karydia-tls
-
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: karydia
-  namespace: kube-system
-  labels:
-    app: karydia
-spec:
-  ports:
-  - port: 443
-    targetPort: 33333
-  selector:
-    app: karydia
