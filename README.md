@@ -22,7 +22,8 @@ eval $(minikube docker-env)
 
 make container
 
-kubectl apply -f manifests/karydia.yml
+kubectl apply -f manifests/deployment.yml
+kubectl apply -f manifests/service.yml
 
 kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<manifests/example-default-network-policy.yml)"
 
