@@ -1,6 +1,9 @@
 IMAGE_REPO=karydia
 IMAGE_NAME=karydia
 
+KUBERNETES_SERVER ?= ""
+KUBECONFIG_PATH ?= "$(HOME)/.kube/config"
+
 VERSION=$(shell git describe --tags --always --dirty)
 
 .PHONY: all
@@ -22,4 +25,8 @@ codegen:
 
 .PHONY: test
 test:
-	go test ./...
+	go test $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
+
+.PHONY: e2e-test
+e2e-test:
+	go test -v ./tests/e2e/... --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)
