@@ -9,18 +9,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 
+	"github.com/kinvolk/karydia/pkg/admission"
 	"github.com/kinvolk/karydia/pkg/k8sutil"
 	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
 )
 
-type AdmissionPlugin interface {
-	Admit(v1beta1.AdmissionReview) *v1beta1.AdmissionResponse
-}
-
 type Webhook struct {
 	logger *logrus.Logger
 
-	admissionPlugins []AdmissionPlugin
+	admissionPlugins []admission.AdmissionPlugin
 }
 
 type Config struct {
@@ -43,14 +40,14 @@ func New(config *Config) (*Webhook, error) {
 	return webhook, nil
 }
 
-func (wh *Webhook) RegisterAdmissionPlugin(p AdmissionPlugin) {
+func (wh *Webhook) RegisterAdmissionPlugin(p admission.AdmissionPlugin) {
 	wh.admissionPlugins = append(wh.admissionPlugins, p)
 }
 
-func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (wh *Webhook) admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	var responseWithPatches *v1beta1.AdmissionResponse
 	for _, ap := range wh.admissionPlugins {
-		response := ap.Admit(ar)
+		response := ap.Admit(ar, mutationAllowed)
 		if !response.Allowed {
 			return response
 		}
@@ -68,7 +65,7 @@ func (wh *Webhook) admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse 
 	return &v1beta1.AdmissionResponse{Allowed: true}
 }
 
-func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
+func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request, mutationAllowed bool) {
 	if r.Method != "POST" {
 		wh.logger.Errorf("received unexpected %s request, expecting POST", r.Method)
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -110,7 +107,7 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request) {
 		responseAdmissionReview.Response = k8sutil.ErrToAdmissionResponse(err)
 	} else {
 		wh.logger.Debugf("received admission review request: %+v", requestedAdmissionReview.Request)
-		responseAdmissionReview.Response = wh.admit(requestedAdmissionReview)
+		responseAdmissionReview.Response = wh.admit(requestedAdmissionReview, mutationAllowed)
 	}
 
 	// Make sure to return the request UID

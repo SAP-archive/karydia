@@ -68,7 +68,7 @@ func (k *KarydiaSecurityPolicyAdmission) SetAuthorizer(authz authorizer.Authoriz
 	k.authz = authz
 }
 
-func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	if ignore, err := shouldIgnore(ar); err != nil {
 		k.logger.Errorf("failed to determine if admission request should be ignored: %v", err)
 		return &v1beta1.AdmissionResponse{
@@ -79,7 +79,7 @@ func (k *KarydiaSecurityPolicyAdmission) Admit(ar v1beta1.AdmissionReview) *v1be
 			Allowed: true,
 		}
 	}
-	return k.computeSecurityContext(ar, true)
+	return k.computeSecurityContext(ar, mutationAllowed)
 }
 
 func transformUserInfo(arUserInfo authenticationv1.UserInfo) *user.DefaultInfo {
@@ -95,7 +95,7 @@ func transformUserInfo(arUserInfo authenticationv1.UserInfo) *user.DefaultInfo {
 	return apiserverUserInfo
 }
 
-func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.AdmissionReview, specMutationAllowed bool) *v1beta1.AdmissionResponse {
+func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	apiserverUserInfo := transformUserInfo(ar.Request.UserInfo)
 	policies, err := k.userPolicies(apiserverUserInfo, ar.Request.Namespace)
 	if err != nil {
@@ -121,7 +121,7 @@ func (k *KarydiaSecurityPolicyAdmission) computeSecurityContext(ar v1beta1.Admis
 
 	switch ar.Request.Resource {
 	case resourcePod:
-		response = k.computeSecurityContextPod(ar, specMutationAllowed, policies)
+		response = k.computeSecurityContextPod(ar, mutationAllowed, policies)
 	default:
 		response = &v1beta1.AdmissionResponse{
 			Allowed: true,
