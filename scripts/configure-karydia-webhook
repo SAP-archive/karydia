@@ -10,6 +10,40 @@ fi
 
 cat <<EOF | sed -e "s|{{CA_BUNDLE}}|${ca_bundle}|g" | kubectl apply -f -
 apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: karydia-webhook
+  labels:
+    app: karydia
+webhooks:
+  - name: karydia.gardener.cloud
+    failurePolicy: Ignore
+    clientConfig:
+      service:
+        name: karydia
+        namespace: kube-system
+        path: "/webhook/validating"
+      caBundle: {{CA_BUNDLE}}
+    rules:
+      # https://github.com/kubernetes/kubernetes/blob/v1.12.1/staging/src/k8s.io/api/admissionregistration/v1beta1/types.go
+      - operations:
+        - CREATE
+        - UPDATE
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources:
+        - nodes
+        - namespaces
+        - pods
+        - pods/status
+        - endpoints
+        - persistentvolumes
+        - validatingwebhookconfigurations
+        - mutatingwebhookconfigurations
+EOF
+
+cat <<EOF | sed -e "s|{{CA_BUNDLE}}|${ca_bundle}|g" | kubectl apply -f -
+apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
   name: karydia-webhook
@@ -22,7 +56,7 @@ webhooks:
       service:
         name: karydia
         namespace: kube-system
-        path: "/webhook"
+        path: "/webhook/mutating"
       caBundle: {{CA_BUNDLE}}
     rules:
       # https://github.com/kubernetes/kubernetes/blob/v1.12.1/staging/src/k8s.io/api/admissionregistration/v1beta1/types.go

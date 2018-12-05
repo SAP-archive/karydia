@@ -43,7 +43,7 @@ func New(config *Config) (*KarydiaAdmission, error) {
 	}, nil
 }
 
-func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	if ignore, err := shouldIgnore(ar); err != nil {
 		k.logger.Errorf("failed to determine if admission request should be ignored: %v", err)
 		return &v1beta1.AdmissionResponse{
@@ -59,7 +59,7 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionR
 
 	switch ar.Request.Resource {
 	case resourcePod:
-		response = k.AdmitPod(ar, true)
+		response = k.AdmitPod(ar, mutationAllowed)
 	default:
 		response = &v1beta1.AdmissionResponse{
 			Allowed: true,
@@ -69,7 +69,7 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview) *v1beta1.AdmissionR
 	return response
 }
 
-func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, specMutationAllowed bool) *v1beta1.AdmissionResponse {
+func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	var patches, validationErrors []string
 
 	raw := ar.Request.Object.Raw
@@ -104,7 +104,7 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, specMutationAllo
 	seccompProfile, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if doCheck {
 		seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-		if !ok {
+		if !ok && mutationAllowed {
 			if len(pod.ObjectMeta.Annotations) == 0 {
 				// If no annotation object exists yet, we have
 				// to create it. Otherwise we will encounter
