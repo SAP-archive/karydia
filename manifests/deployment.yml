@@ -12,6 +12,7 @@ spec:
       labels:
         app: karydia
     spec:
+      serviceAccount: karydia
       containers:
       - name: karydia
         image: karydia/karydia
