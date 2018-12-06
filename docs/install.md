@@ -27,6 +27,7 @@ eval $(minikube docker-env)
 
 make container
 
+kubectl apply -f manifests/rbac.yml
 kubectl apply -f manifests/deployment.yml
 kubectl apply -f manifests/service.yml
 
@@ -57,6 +58,7 @@ rm karydia*pem
 ./scripts/create-karydia-certificate
 ./scripts/create-karydia-tls-secret
 
+kubectl apply -f manifests/rbac.yml
 kubectl apply -f manifests/deployment.yml
 kubectl apply -f manifests/service.yml
 
