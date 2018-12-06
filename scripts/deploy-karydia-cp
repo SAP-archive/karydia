@@ -1,0 +1,287 @@
+#!/bin/bash
+
+set -euo pipefail
+
+readonly namespace="${NAMESPACE:-}"
+readonly clustername="${CLUSTERNAME:-}"
+readonly podcidr="${PODCIDR:-}"
+readonly nodecidr="${NODECIDR:-}"
+readonly restrictedendpointcidr="${RESTRICTEDENDPOINTCIDR:-}"
+
+if [[ -z "${namespace}" ]]; then
+  echo "ERROR: unknown shoot namespace - aborting" >&2
+  echo "export NAMESPACE=shoot--foo--bar" >&2
+  exit 1
+fi
+
+if [[ -z "${clustername}" ]]; then
+  echo "ERROR: unknown shoot clustername - aborting" >&2
+  echo "export CLUSTERNAME=shoot--foo--bar" >&2
+  exit 1
+fi
+
+if [[ -z "${podcidr}" ]]; then
+  echo "ERROR: unknown shoot pod cidr - aborting" >&2
+  echo "export PODCIDR=100.96.0.0/24" >&2
+  exit 1
+fi
+
+if [[ -z "${nodecidr}" ]]; then
+  echo "ERROR: unknown shoot node cidr - aborting" >&2
+  echo "export NODECIDR=10.250.0.0/16" >&2
+  exit 1
+fi
+
+if [[ -z "${restrictedendpointcidr}" ]]; then
+  echo "ERROR: unknown shoot restricted cidr - aborting" >&2
+  echo 'export RESTRICTEDENDPOINTCIDR='\''{"10.242.0.0/16", "10.243.0.0/16", "169.254.169.254/32"}'\''' >&2
+  exit 1
+fi
+
+cmd=apply
+if [[ "$@" == "delete" ]]; then
+  cmd=delete
+fi
+
+cat <<EOF | sed -e "s|{{NAMESPACE}}|${namespace}|g" -e "s|{{CLUSTERNAME}}|${clustername}|g" -e "s|{{PODCIDR}}|${podcidr}|g" -e "s|{{NODECIDR}}|${nodecidr}|g" -e "s|{{RESTRICTEDENDPOINTCIDR}}|${restrictedendpointcidr}|g" | kubectl ${cmd} -n ${namespace} -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: karydia
+  namespace: {{NAMESPACE}}
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia
+  namespace: {{NAMESPACE}}
+subjects:
+- kind: ServiceAccount
+  namespace: {{NAMESPACE}}
+  name: karydia
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+apiVersion: v1
+data:
+  parameters.rego: |
+    package parameters
+    clusterName = "{{CLUSTERNAME}}"
+    podCIDR =  "{{PODCIDR}}"
+    nodeCIDR =  "{{NODECIDR}}"
+    restrictedEndpointCIDR =  {{RESTRICTEDENDPOINTCIDR}}
+    forbiddenPrefix = "nonono"
+  default-policy-matches.rego: |
+    package k8s
+    import data.kubernetes.policies
+    policymatches[[name, policy]] {
+        policy := policies[name]
+    }
+  default-kubernetes-matches.rego: |
+    package k8s
+    import data.kubernetes
+    matches[[kind, namespace, name, resource]] {
+        resource := kubernetes[kind][namespace][name]
+    }
+  no-foreign-nodes.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.nodes
+    import data.parameters.clusterName
+    deny[{
+        "id": "no-foreign-nodes",
+        "resource": {"kind": "nodes", "namespace": "", "name": name},
+        "resolution": {"message" : sprintf("cannot use foreign node %q", [requestedNode])},
+    }] {
+        matches[["nodes", "", name, matched_object]]
+        nodePrefix = sprintf("%s-", [clusterName])
+        requestedNode := matched_object.metadata.name
+        not startswith(matched_object.metadata.name, nodePrefix)
+    }
+  no-foreign-volumes.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.persistentvolumes
+    import data.parameters.clusterName
+    deny[{
+        "id": "no-foreign-volumes",
+        "resource": {"kind": "persistentvolumes", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use foreign volume %q", [requestedDisk])},
+    }] {
+        matches[["persistentvolumes", namespace, name, matched_object]]
+        diskPrefix = sprintf("%s-", [clusterName])
+        requestedDisk := matched_object.spec.gcePersistentDisk.pdName
+        not startswith(matched_object.spec.gcePersistentDisk.pdName, diskPrefix)
+    }
+  invalid-pod-ip.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.pods
+    import data.parameters.podCIDR
+    import data.parameters.nodeCIDR
+    deny[{
+        "id": "invalid-pod-ip",
+        "resource": {"kind": "pods", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use pod IP %q", [requestedIP])},
+    }] {
+        matches[["pods", namespace, name, matched_object]]
+        requestedIP = matched_object.status.podIP
+        requestedIP != ""
+        net.cidr_overlap(podCIDR, requestedIP, false)  # pods with hostNetwork=false
+        net.cidr_overlap(nodeCIDR, requestedIP, false) # pods with hostNetwork=true
+    }
+  invalid-endpoint-ip.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.endpoints
+    import data.parameters.restrictedEndpointCIDR
+    deny[{
+        "id": "invalid-endpoint-ip",
+        "resource": {"kind": "endpoints", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use endpoint IP %q", [requestedIP])},
+    }] {
+        matches[["endpoints", namespace, name, matched_object]]
+        requestedIP = matched_object.subsets[_].addresses[_].ip
+        net.cidr_overlap(restrictedEndpointCIDR[_], requestedIP, true)
+    }
+  test-pod.rego: |
+    package admission
+    import data.k8s.matches
+    import data.kubernetes.pods
+    import data.parameters.forbiddenPrefix
+    deny[{
+        "id": "test-pod",
+        "resource": {"kind": "pods", "namespace": namespace, "name": name},
+        "resolution": {"message" : sprintf("cannot use pod name %q", [requestedName])},
+    }] {
+        matches[["pods", namespace, name, matched_object]]
+        namePrefix = sprintf("%s-", [forbiddenPrefix])
+        requestedName := matched_object.metadata.name
+        startswith(matched_object.metadata.name, namePrefix)
+    }
+kind: ConfigMap
+metadata:
+  name: opa-policies
+  namespace: {{NAMESPACE}}
+
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: karydia
+  namespace: {{NAMESPACE}}
+  labels:
+    app: karydia
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: karydia
+    spec:
+      serviceAccount: karydia
+      containers:
+      - name: karydia
+        image: karydia/karydia
+        imagePullPolicy: IfNotPresent
+        command:
+          - karydia
+          - runserver
+          - --tls-cert
+          - /etc/karydia/tls/cert.pem
+          - --tls-key
+          - /etc/karydia/tls/key.pem
+          - --enable-opa-admission
+        volumeMounts:
+          - name: karydia-tls
+            mountPath: /etc/karydia/tls
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 33333
+            scheme: HTTPS
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+          failureThreshold: 2
+        ports:
+        - containerPort: 33333
+      - name: opa
+        image: openpolicyagent/opa:0.10.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - "run"
+          - "--server"
+          - "--addr=http://127.0.0.1:8181"
+          - "/etc/opa-policies/parameters.rego"
+          - "/etc/opa-policies/default-policy-matches.rego"
+          - "/etc/opa-policies/default-kubernetes-matches.rego"
+          - "/etc/opa-policies/no-foreign-nodes.rego"
+          - "/etc/opa-policies/no-foreign-volumes.rego"
+          - "/etc/opa-policies/invalid-pod-ip.rego"
+          - "/etc/opa-policies/invalid-endpoint-ip.rego"
+          - "/etc/opa-policies/test-pod.rego"
+        volumeMounts:
+        - name: opa-policies
+          mountPath: /etc/opa-policies
+      - name: kube-mgmt
+        image: openpolicyagent/kube-mgmt:0.7
+        imagePullPolicy: Always
+        args:
+          - "--replicate-cluster=v1/pods"
+      volumes:
+        - name: karydia-tls
+          secret:
+            secretName: karydia-tls
+        - name: opa-policies
+          configMap:
+            name: opa-policies
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: karydia
+  namespace: {{NAMESPACE}}
+  labels:
+    app: karydia
+spec:
+  ports:
+  - port: 443
+    targetPort: 33333
+  selector:
+    app: karydia
+
+---
+
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+  name: kube-apiserver-karydia
+  namespace: {{NAMESPACE}}
+spec:
+  egress:
+  - ports:
+    - port: 33333
+      protocol: TCP
+    to:
+    - podSelector:
+        matchLabels:
+          app: karydia
+  podSelector:
+    matchLabels:
+      app: kubernetes
+      role: apiserver
+  policyTypes:
+  - Egress
+
+EOF
