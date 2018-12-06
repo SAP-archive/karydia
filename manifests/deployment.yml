@@ -25,6 +25,7 @@ spec:
           - /etc/karydia/tls/key.pem
           - --enable-default-network-policy
           - --enable-karydia-admission
+          - --enable-opa-admission
         volumeMounts:
           - name: karydia-tls
             mountPath: /etc/karydia/tls
