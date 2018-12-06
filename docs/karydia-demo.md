@@ -83,3 +83,42 @@ pod and added an annotation for seccomp:
 ```
 kubectl get pods busybox -o jsonpath='{.metadata.annotations.seccomp\.security\.alpha\.kubernetes\.io/pod}'
 ```
+## default network policies
+
+Let's start with creating a new namespace and attempt to send network traffic:
+
+```
+kubectl create namespace test51
+kubectl run --rm -n test51 -ti --restart=Never --image appropriate/curl test1 -- curl http://www.google.com
+curl: (6) Could not resolve host: www.google.com
+```
+
+The traffic was stopped by the network policy automatically installed by karydia in the new network namespace:
+```
+$ kubectl -n test51 get networkpolicy -o yaml
+NAME                             POD-SELECTOR   AGE
+karydia-default-network-policy   <none>         2m22s
+```
+
+This helps to set up sensible default. It can however be removed:
+```
+$ kubectl delete -n test51 networkpolicy karydia-default-network-policy
+networkpolicy.extensions "karydia-default-network-policy" deleted
+$ kubectl run --rm -n test51 -ti --restart=Never --image appropriate/curl test1 -- curl http://www.google.com
+(html content)
+```
+
+## OPA
+
+For demo purposes, we have an OPA policy that blocks pods named with the prefix "nonono":
+```
+$ kubectl run --rm -ti --restart=Never --image busybox nonono-busybox -- echo hello world
+Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: ["cannot use pod name \"nonono-busybox\""]
+```
+
+However, other names are allowed:
+```
+$ kubectl run --rm -ti --restart=Never --image busybox allowed-busybox -- echo hello world
+hello world
+pod "allowed-busybox" deleted
+```
