@@ -6,6 +6,9 @@ frequently).
 If you want to follow the demo, set up a new test cluster and deploy
 karydia.
 
+![](demos/seccomp/seccomp.gif)
+
+
 ## karydia admission plugin
 
 Let's start with running a pod in the default namespace:
