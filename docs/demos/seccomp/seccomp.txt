@@ -1,0 +1,12 @@
+[alban@neptune karydia]$ kubectl create namespace demo1
+namespace/demo1 created
+[alban@neptune karydia]$ # Let's see if seccomp is enabled
+[alban@neptune karydia]$ kubectl run -ti --restart=Never -n demo1 --image busybox test1 -- cat /proc/self/status | grep Seccomp
+Seccomp:	0
+[alban@neptune karydia]$ # 0 = SECCOMP_MODE_DISABLED
+[alban@neptune karydia]$ # karydia, please enforce seccomp in this namespace
+[alban@neptune karydia]$ kubectl annotate ns demo1 karydia.gardener.cloud/seccompProfile=runtime/default
+namespace/demo1 annotated
+[alban@neptune karydia]$ kubectl run -ti --restart=Never -n demo1 --image busybox test2 -- cat /proc/self/status | grep Seccomp
+Seccomp:	2
+[alban@neptune karydia]$ # 2: SECCOMP_MODE_FILTER :-)
