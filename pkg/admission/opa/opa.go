@@ -42,9 +42,9 @@ func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *
 	namespace := strings.ToLower(ar.Request.Namespace)
 	name := strings.ToLower(ar.Request.Name)
 	if name == "" {
-		// For example new pods created by a replicaset don't
+		// For example, new pods created by a replicaset don't
 		// have a name yet during the 'create' operation. Set
-		// and use a random name then during admission then.
+		// and use a random name during admission then.
 		name = randStr(10)
 	}
 
