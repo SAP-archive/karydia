@@ -113,6 +113,16 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request, mutationAllowed
 	// Make sure to return the request UID
 	responseAdmissionReview.Response.UID = requestedAdmissionReview.Request.UID
 
+	wh.logger.Infof("admission review request: UID=%v Operation=%v Kind=%v Namespace=%v Name=%v Resource=%v UserInfo=%+v Allowed=%v Patched=%v",
+		requestedAdmissionReview.Request.UID,
+		requestedAdmissionReview.Request.Operation,
+		requestedAdmissionReview.Request.Kind,
+		requestedAdmissionReview.Request.Namespace,
+		requestedAdmissionReview.Request.Name,
+		requestedAdmissionReview.Request.Resource,
+		requestedAdmissionReview.Request.UserInfo,
+		responseAdmissionReview.Response.Allowed,
+		len(responseAdmissionReview.Response.Patch) != 0)
 	wh.logger.Debugf("sending admission review response: %+v", responseAdmissionReview.Response)
 
 	respBytes, err := json.Marshal(responseAdmissionReview)
