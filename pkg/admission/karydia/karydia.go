@@ -79,11 +79,11 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to decode object: %v", err))
 	}
 
-	namespacePod := pod.ObjectMeta.Namespace
-	if namespacePod == "" {
-		namespacePod = "default"
+	namespaceRequest := ar.Request.Namespace
+	if namespaceRequest == "" {
+		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("received request with empty namespace"))
 	}
-	namespace, err := k.kubeClientset.CoreV1().Namespaces().Get(namespacePod, metav1.GetOptions{})
+	namespace, err := k.kubeClientset.CoreV1().Namespaces().Get(namespaceRequest, metav1.GetOptions{})
 	if err != nil {
 		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to determine pod's namespace: %v", err))
 	}
