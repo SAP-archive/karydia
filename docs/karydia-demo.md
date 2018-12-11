@@ -8,6 +8,8 @@ karydia.
 
 ![](demos/seccomp/seccomp.gif)
 
+Other demos:
+- [automount-service-automount-token](demos/automount-service-account-token/automount-service-account-token.md)
 
 ## karydia admission plugin
 
