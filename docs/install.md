@@ -99,10 +99,10 @@ export KUBECONFIG=$KUBECONFIG_SHOOT
 
 export KUBECONFIG=$KUBECONFIG_SEED
 NAMESPACE=$SHOOT_NS ./scripts/create-karydia-tls-secret
-NAMESPACE=$SHOOT_NS ./scripts/deploy-karydia-cp
-RESTRICTEDENDPOINTCIDR='{"10.242.0.0/16", "10.243.0.0/16", "169.254.169.254/32"}' NODECIDR=10.250.0.0/19 PODCIDR=100.96.0.0/11 CLUSTERNAME=$SHOOT_NS NAMESPACE=$SHOOT_NS ./scripts/deploy-karydia-cp
+NAMESPACE=$SHOOT_NS ./contrib/gardener/scripts/deploy-karydia-cp
+RESTRICTEDENDPOINTCIDR='{"10.242.0.0/16", "10.243.0.0/16", "169.254.169.254/32"}' NODECIDR=10.250.0.0/19 PODCIDR=100.96.0.0/11 CLUSTERNAME=$SHOOT_NS NAMESPACE=$SHOOT_NS ./contrib/gardener/scripts/deploy-karydia-cp
 
 export KUBECONFIG=$KUBECONFIG_SHOOT
-./scripts/configure-karydia-webhook-cp
+./contrib/gardener/scripts/configure-karydia-webhook-cp
 ```
 
