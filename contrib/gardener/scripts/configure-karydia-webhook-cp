@@ -1,0 +1,71 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ca_bundle="$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\r\n')"
+if [[ -z "${ca_bundle}" ]]; then
+  echo "ERROR: extension-apiserver-authentication config map with CA bundle not found - aborting" >&2
+  exit 1
+fi
+
+cat <<EOF | sed -e "s|{{CA_BUNDLE}}|${ca_bundle}|g" | kubectl apply -f -
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: karydia-webhook-cp
+  labels:
+    app: karydia
+webhooks:
+  - name: karydia.gardener.cloud
+    failurePolicy: Ignore
+    clientConfig:
+      url: https://karydia/webhook/validating
+      caBundle: {{CA_BUNDLE}}
+    rules:
+      # https://github.com/kubernetes/kubernetes/blob/v1.12.1/staging/src/k8s.io/api/admissionregistration/v1beta1/types.go
+      - operations:
+        - CREATE
+        - UPDATE
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources:
+        - nodes
+        - namespaces
+        - pods
+        - pods/status
+        - endpoints
+        - persistentvolumes
+        - validatingwebhookconfigurations
+        - mutatingwebhookconfigurations
+EOF
+
+cat <<EOF | sed -e "s|{{CA_BUNDLE}}|${ca_bundle}|g" | kubectl apply -f -
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: karydia-webhook-cp
+  labels:
+    app: karydia
+webhooks:
+  - name: karydia.gardener.cloud
+    failurePolicy: Ignore
+    clientConfig:
+      url: https://karydia/webhook/mutating
+      caBundle: {{CA_BUNDLE}}
+    rules:
+      # https://github.com/kubernetes/kubernetes/blob/v1.12.1/staging/src/k8s.io/api/admissionregistration/v1beta1/types.go
+      - operations:
+        - CREATE
+        - UPDATE
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources:
+        - nodes
+        - namespaces
+        - pods
+        - pods/status
+        - endpoints
+        - persistentvolumes
+        - validatingwebhookconfigurations
+        - mutatingwebhookconfigurations
+EOF

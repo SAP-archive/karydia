@@ -1,4 +1,4 @@
-IMAGE_REPO=kinvolk
+IMAGE_REPO=karydia
 IMAGE_NAME=karydia
 
 VERSION=$(shell git describe --tags --always --dirty)
