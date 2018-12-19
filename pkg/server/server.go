@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/kinvolk/karydia"
 	"github.com/kinvolk/karydia/pkg/webhook"
 )
 
@@ -63,6 +64,7 @@ func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 }
 
 func (s *Server) ListenAndServe() error {
+	s.logger.Infof("karydia server version: %s", karydia.Version)
 	s.logger.Infof("Listening on %s", s.config.Addr)
 	return s.httpServer.ListenAndServeTLS("", "")
 }
