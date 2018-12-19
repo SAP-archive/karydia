@@ -6,16 +6,97 @@ metadata:
 
 ---
 
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view-ksp
+rules:
+- apiGroups: ["karydia.gardener.cloud"]
+  resources: ["karydiasecuritypolicies"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-networkpolicies
+rules:
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "watch", "list", "create", "patch", "update"]
+
+---
+
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: karydia
-  namespace: kube-system
+  name: karydia-view
 subjects:
 - kind: ServiceAccount
   namespace: kube-system
   name: karydia
 roleRef:
   kind: ClusterRole
-  name: cluster-admin
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-networkpolicies
+subjects:
+- kind: ServiceAccount
+  namespace: kube-system
+  name: karydia
+roleRef:
+  kind: ClusterRole
+  name: karydia-networkpolicies
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view-ksp
+subjects:
+- kind: ServiceAccount
+  namespace: kube-system
+  name: karydia
+roleRef:
+  kind: ClusterRole
+  name: karydia-view-ksp
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Define role for OPA/kube-mgmt to update configmaps with policy status.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: opa
+  name: configmap-modifier
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["update", "patch"]
+
+---
+
+# Grant OPA/kube-mgmt role defined above.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: opa
+  name: opa-configmap-modifier
+subjects:
+- kind: ServiceAccount
+  namespace: kube-system
+  name: karydia
+roleRef:
+  kind: Role
+  name: configmap-modifier
   apiGroup: rbac.authorization.k8s.io
