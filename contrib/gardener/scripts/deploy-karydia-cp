@@ -189,7 +189,7 @@ spec:
       serviceAccount: karydia
       containers:
       - name: karydia
-        image: karydia/karydia
+        image: karydia/karydia:0.1.0
         imagePullPolicy: IfNotPresent
         command:
           - karydia
