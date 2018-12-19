@@ -2,16 +2,16 @@
 
 Status: alpha, work in progress
 
-karydia is a security add-on to Kubernets to help with good security practices
-and assist administrators in keeping their clusters safe. Is is implemented as
+karydia is a security add-on to Kubernetes to help with good security practices
+and assist administrators in keeping their clusters safe. karydia is implemented as
 [webhook admission
-controllers](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 and configurable through its command line interface and Kubernetes resources.
 
 While it has been written with [Gardener](https://gardener.cloud/) in mind, it
 can be used on any Kubernetes cluster.
 
-![](karydia-architecture.png)
+![](docs/images/karydia-architecture.png)
 
 ## Installing karydia
 
