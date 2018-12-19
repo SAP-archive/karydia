@@ -9,7 +9,7 @@ all: build
 .PHONY: build
 build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/karydia \
-		-ldflags "-s -X github.com/kinvolk/karydia/cli/cmd.version=$(VERSION)" \
+		-ldflags "-s -X github.com/kinvolk/karydia.Version=$(VERSION)" \
 		cli/main.go
 
 .PHONY: container
