@@ -1,0 +1,128 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view-ksp
+rules:
+- apiGroups: ["karydia.gardener.cloud"]
+  resources: ["karydiasecuritypolicies"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-networkpolicies
+rules:
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["get", "watch", "list", "create", "patch", "update"]
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view
+subjects:
+- kind: User
+  name: system:karydia
+  apiGroup: rbac.authorization.k8s.io
+- kind: User
+  name: system:kubemgmt
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-networkpolicies
+subjects:
+- kind: User
+  name: system:karydia
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: karydia-networkpolicies
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view-ksp
+subjects:
+- kind: User
+  name: system:karydia
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: karydia-view-ksp
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Define role for OPA/kube-mgmt to update configmaps with policy status.
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: opa
+  name: configmap-modifier
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["update", "patch"]
+
+---
+
+# Grant OPA/kube-mgmt role defined above.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: opa
+  name: opa-configmap-modifier
+subjects:
+- kind: User
+  name: system:kubemgmt
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: configmap-modifier
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Define role for OPA/kube-mgmt to cache the resources
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubemgmt-cacher
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "persistentvolumes", "pods", "endpoints"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+# Grant OPA/kube-mgmt role defined above.
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubemgmt-cacher
+subjects:
+- kind: User
+  name: system:kubemgmt
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: kubemgmt-cacher
+  apiGroup: rbac.authorization.k8s.io
