@@ -879,6 +879,7 @@
   input-imports = [
     "github.com/Azure/kubernetes-policy-controller/pkg/opa",
     "github.com/Azure/kubernetes-policy-controller/pkg/policies/types",
+    "github.com/ghodss/yaml",
     "github.com/mitchellh/go-homedir",
     "github.com/open-policy-agent/opa/util",
     "github.com/sirupsen/logrus",
@@ -888,6 +889,7 @@
     "k8s.io/api/admissionregistration/v1beta1",
     "k8s.io/api/authentication/v1",
     "k8s.io/api/core/v1",
+    "k8s.io/api/networking/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/labels",
@@ -904,6 +906,7 @@
     "k8s.io/client-go/discovery/fake",
     "k8s.io/client-go/informers",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/listers/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/testing",
     "k8s.io/client-go/tools/cache",
