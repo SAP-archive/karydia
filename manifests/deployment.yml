@@ -43,7 +43,7 @@ spec:
         ports:
         - containerPort: 33333
       - name: opa
-        image: openpolicyagent/opa:0.10.1
+        image: openpolicyagent/opa:0.10.2
         imagePullPolicy: IfNotPresent
         args:
           - "run"
