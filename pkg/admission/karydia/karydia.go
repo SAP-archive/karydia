@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	resourceNamespace = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	resourcePod       = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	resourcePod = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	kindPod     = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
 )
 
 type KarydiaAdmission struct {
@@ -54,10 +54,9 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 
 	var response *v1beta1.AdmissionResponse
 
-	switch ar.Request.Resource {
-	case resourcePod:
+	if ar.Request.Kind == kindPod && ar.Request.Resource == resourcePod {
 		response = k.AdmitPod(ar, mutationAllowed)
-	default:
+	} else {
 		response = &v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
