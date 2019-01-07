@@ -38,6 +38,7 @@ kubectl apply -f manifests/crd-karydia-security-policy.yml
 Create a service account with cluster-admin permissions and deploy karydia:
 
 ```
+kubectl apply -f manifests/namespace.yml
 kubectl apply -f manifests/rbac.yml
 kubectl apply -f manifests/deployment.yml
 kubectl apply -f manifests/service.yml
