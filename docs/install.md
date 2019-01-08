@@ -117,7 +117,7 @@ kubectl --kubeconfig=$KUBECONFIG_SEED -n $SHOOT_NS get configmap secvictic.infra
 - the CIDR used by pods. You can find it with:
 
 ```
-kubectl get deploy -n $SHOOT_NS kube-controller-manager -o yaml|grep cluster-cidr
+kubectl --kubeconfig=$KUBECONFIG_SEED get deploy -n $SHOOT_NS kube-controller-manager -o yaml|grep cluster-cidr
         - --cluster-cidr=100.96.0.0/11
 ```
 
