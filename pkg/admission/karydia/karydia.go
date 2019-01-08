@@ -72,16 +72,22 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	pod := corev1.Pod{}
 	deserializer := scheme.Codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to decode object: %v", err))
+		e := fmt.Errorf("failed to decode object: %v", err)
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
 	namespaceRequest := ar.Request.Namespace
 	if namespaceRequest == "" {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("received request with empty namespace"))
+		e := fmt.Errorf("received request with empty namespace")
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 	namespace, err := k.kubeClientset.CoreV1().Namespaces().Get(namespaceRequest, metav1.GetOptions{})
 	if err != nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to determine pod's namespace: %v", err))
+		e := fmt.Errorf("failed to determine pod's namespace: %v", err)
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
 	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
