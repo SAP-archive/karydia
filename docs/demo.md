@@ -110,7 +110,9 @@ $ kubectl run --rm -n test51 -ti --restart=Never --image appropriate/curl test1 
 
 ## OPA
 
-For demo purposes, we have an OPA policy that blocks pods named with the prefix "nonono":
+For demo purposes, an OPA policy that blocks pods named with the prefix "nonono" [can be installed](open-policy-agent-admission.md).
+
+Then, this pod will be blocked:
 ```
 $ kubectl run --rm -ti --restart=Never --image busybox nonono-busybox -- echo hello world
 Error from server (InternalError): Internal error occurred: admission webhook "karydia.gardener.cloud" denied the request: ["cannot use pod name \"nonono-busybox\""]
