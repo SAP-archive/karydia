@@ -24,10 +24,16 @@ type KarydiaAdmission struct {
 	logger *logrus.Logger
 
 	kubeClientset *kubernetes.Clientset
+
+	policy *Policy
 }
 
 type Config struct {
 	KubeClientset *kubernetes.Clientset
+}
+
+type Policy struct {
+	DisableAutomountServiceAccountToken bool
 }
 
 type patch struct {
@@ -44,7 +50,7 @@ func (p *patch) String() (string, error) {
 	return string(data), nil
 }
 
-func New(config *Config) (*KarydiaAdmission, error) {
+func New(config *Config, policy *Policy) (*KarydiaAdmission, error) {
 	logger := logrus.New()
 	logger.Level = logrus.InfoLevel
 
@@ -52,6 +58,8 @@ func New(config *Config) (*KarydiaAdmission, error) {
 		logger: logger,
 
 		kubeClientset: config.KubeClientset,
+
+		policy: policy,
 	}, nil
 }
 

@@ -9,7 +9,10 @@ import (
 )
 
 func (k *KarydiaAdmission) admitPodAutomountServiceAccountToken(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]patch, []string, error) {
-	var validationErrors []string
+	var (
+		patches          []patch
+		validationErrors []string
+	)
 
 	if ignore, err := shouldIgnore(ar); err != nil {
 		return nil, nil, fmt.Errorf("failed to determine if admission request should be ignored: %v", err)
@@ -26,18 +29,26 @@ func (k *KarydiaAdmission) admitPodAutomountServiceAccountToken(ar v1beta1.Admis
 		return nil, nil, fmt.Errorf("failed to determine pod's namespace: %v", err)
 	}
 
-	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if doCheck {
-		if automountServiceAccountToken == "forbidden" {
-			if doesAutomountServiceAccountToken(pod) {
+	if doesAutomountServiceAccountToken(pod) {
+		if k.policy.DisableAutomountServiceAccountToken {
+			patches = append(patches, patch{
+				Op:    "replace",
+				Path:  "/spec/automountServiceAccountToken",
+				Value: false,
+			})
+		}
+
+		automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+		if doCheck {
+			if automountServiceAccountToken == "forbidden" {
 				validationErrors = append(validationErrors, "automount of service account not allowed")
-			}
-		} else if automountServiceAccountToken == "non-default" {
-			if doesAutomountServiceAccountToken(pod) && pod.Spec.ServiceAccountName == "default" {
-				validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+			} else if automountServiceAccountToken == "non-default" {
+				if pod.Spec.ServiceAccountName == "default" {
+					validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+				}
 			}
 		}
 	}
 
-	return nil, validationErrors, nil
+	return patches, validationErrors, nil
 }

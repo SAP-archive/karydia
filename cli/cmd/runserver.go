@@ -58,6 +58,8 @@ func init() {
 	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
 	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
 	runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
+
+	runserverCmd.Flags().Bool("karydia-admission-disable-automount-service-account-token", true, "Whether to set `automountServiceaAccountToken` to `false` by default (can be overwritten on a per-namespace basis)")
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
@@ -97,9 +99,14 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if enableKarydiaAdmission {
-		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
-			KubeClientset: kubeClientset,
-		})
+		karydiaAdmission, err := karydiaadmission.New(
+			&karydiaadmission.Config{
+				KubeClientset: kubeClientset,
+			},
+			&karydiaadmission.Policy{
+				DisableAutomountServiceAccountToken: viper.GetBool("karydia-admission-disable-automount-service-account-token"),
+			},
+		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
 			os.Exit(1)
