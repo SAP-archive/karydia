@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	resourceNamespace = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "namespaces"}
-	resourcePod       = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	resourcePod = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
+	kindPod     = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
 )
 
 type KarydiaAdmission struct {
@@ -54,10 +54,9 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 
 	var response *v1beta1.AdmissionResponse
 
-	switch ar.Request.Resource {
-	case resourcePod:
+	if ar.Request.Kind == kindPod && ar.Request.Resource == resourcePod {
 		response = k.AdmitPod(ar, mutationAllowed)
-	default:
+	} else {
 		response = &v1beta1.AdmissionResponse{
 			Allowed: true,
 		}
@@ -73,16 +72,22 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	pod := corev1.Pod{}
 	deserializer := scheme.Codecs.UniversalDeserializer()
 	if _, _, err := deserializer.Decode(raw, nil, &pod); err != nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to decode object: %v", err))
+		e := fmt.Errorf("failed to decode object: %v", err)
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
 	namespaceRequest := ar.Request.Namespace
 	if namespaceRequest == "" {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("received request with empty namespace"))
+		e := fmt.Errorf("received request with empty namespace")
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 	namespace, err := k.kubeClientset.CoreV1().Namespaces().Get(namespaceRequest, metav1.GetOptions{})
 	if err != nil {
-		return k8sutil.ErrToAdmissionResponse(fmt.Errorf("failed to determine pod's namespace: %v", err))
+		e := fmt.Errorf("failed to determine pod's namespace: %v", err)
+		k.logger.Errorf("%v", e)
+		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
 	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
