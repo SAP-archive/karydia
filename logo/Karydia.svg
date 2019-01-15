@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="329px" height="329px" viewBox="0 0 329 329" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.6 (67491) - http://www.bohemiancoding.com/sketch -->
+    <title>Karydia</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path d="M1.03278332,194.424978 L17.6206641,76.7075933 C18.3726807,71.37084 21.4764641,66.6518569 26.0789475,63.8476439 L119.023066,7.21841217 C120.87525,6.08990876 122.916141,5.30543919 125.047339,4.90282555 L151,-2.84217094e-14 L151,318 L94.1534312,318 C86.7884085,318 79.8688296,314.472897 75.5416941,308.513077 L5.37705418,211.874401 C1.722338,206.840713 0.16480668,200.584652 1.03278332,194.424978 Z" id="path-1"></path>
+        <linearGradient x1="21.00973%" y1="11.5003783%" x2="141.023695%" y2="80.3749051%" id="linearGradient-3">
+            <stop stop-color="#FAFCFA" offset="0%"></stop>
+            <stop stop-color="#AFD0B0" offset="100%"></stop>
+        </linearGradient>
+        <path d="M150.345703,103.011728 C135.723097,98.6210938 148.608315,45.39167 135.723097,53.9921875 C122.83788,62.592705 115.335747,58.0300593 103.283547,66.6305768 C91.6735158,74.9155602 100.249463,88.6594505 97.4076225,103.011728 C97.2691557,103.711033 75.0107422,112.953551 75.0107422,129.061759 C75.0107422,145.169967 79.9374917,142.242309 79.9374917,162.0482 C79.9374917,187.743011 78.1685745,180.043667 83.8403932,194.80366 C89.5122119,209.563652 99.7357564,200.186201 103.283547,214.179759 C108.391769,234.32813 112.270512,264.553551 128.730399,251.416588 C143.086031,239.959072 135.723097,210.721385 135.723097,175.42406 C135.723097,168.977609 147.146386,147.678792 147.146386,162.0482 C147.146386,176.136991 139.066484,210.632812 150.345703,210.632812 C160.094107,141.812512 160.094107,105.938818 150.345703,103.011728 Z" id="path-4"></path>
+        <filter x="-15.7%" y="-5.5%" width="131.5%" height="112.9%" filterUnits="objectBoundingBox" id="filter-5">
+            <feMorphology radius="0.5" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="2" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feColorMatrix values="0 0 0 0 0.563280493   0 0 0 0 0.660289116   0 0 0 0 0.569747735  0 0 0 1 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <linearGradient x1="18.3609441%" y1="-21.2909404%" x2="68.0618616%" y2="142.329366%" id="linearGradient-6">
+            <stop stop-color="#009F76" offset="0%"></stop>
+            <stop stop-color="#007053" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Karydia" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="logo" transform="translate(9.000000, 5.000000)">
+            <g id="Shape">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <use id="Mask" fill="#03946F" xlink:href="#path-1"></use>
+                <polygon fill="#000000" fill-rule="nonzero" opacity="0.200459166" mask="url(#mask-2)" points="-167.46875 215.07087 95.3515625 46 106.167969 206.196591 150.554688 306 60.96875 350.207031"></polygon>
+            </g>
+            <path d="M158.173828,312.376953 L152.882813,28.8144531 C87.4492188,31.3515625 42.1835938,74.7226563 42.1835938,160 C42.1835938,245.277344 96.8769531,272.460938 158.173828,312.376953 Z" id="Oval" fill="#EFF6F0"></path>
+            <path d="M150.746659,286.957031 L150.746659,41 C105.857705,41 60.96875,80.7073067 60.96875,154.625366 C60.96875,228.543425 97.6624024,247.249725 150.746659,286.957031 Z" id="Oval" fill="#C3DCC3"></path>
+            <g id="Oval">
+                <use fill="black" fill-opacity="1" filter="url(#filter-5)" xlink:href="#path-4"></use>
+                <use fill="url(#linearGradient-3)" fill-rule="evenodd" xlink:href="#path-4"></use>
+            </g>
+            <path d="M199.103955,2.90446975 L244,30.1640852 L150,46 L150,0 L188.72403,-1.42108547e-14 C192.384608,-1.4883292e-14 195.974979,1.00464352 199.103955,2.90446975 Z" id="Polygon" fill="#04BF8F"></path>
+            <path d="M303.526858,110 L311.196969,172.66305 C311.72254,176.956841 311.077824,181.312859 309.331018,185.270325 L269.363311,275.81897 C268.067468,278.754762 265.918767,281.233056 263.196298,282.931952 L207,318 L238.623722,196.507362 L303.526858,110 Z" id="Polygon" fill="#015D46"></path>
+            <polygon id="Polygon" fill="#007053" points="150.16748 145.291504 239 196.641193 207.998693 318 149.160156 318"></polygon>
+            <polygon id="Polygon" fill="url(#linearGradient-6)" points="150 44.0465498 244.161231 30 303.467773 110.439453 239.112045 198 150 146.621031"></polygon>
+            <path d="M150.746659,0 L150.746659,317.64251" id="Line" stroke="#015D46" stroke-width="2" opacity="0.650553385" stroke-linejoin="bevel"></path>
+        </g>
+    </g>
+</svg>
