@@ -38,37 +38,38 @@ if [[ -z "${restrictedendpointcidr}" ]]; then
   exit 1
 fi
 
+kubemgmt_kubeconfig_bundle="$(cat kubemgmt-cp.kubeconfig | base64 | tr -d '\r\n')"
+if [[ -z "${kubemgmt_kubeconfig_bundle}" ]]; then
+  echo "ERROR: kube-mgmt kubeconfig not found - aborting" >&2
+  exit 1
+fi
+
+karydia_kubeconfig_bundle="$(cat karydia-cp.kubeconfig | base64 | tr -d '\r\n')"
+if [[ -z "${karydia_kubeconfig_bundle}" ]]; then
+  echo "ERROR: karydia kubeconfig not found - aborting" >&2
+  exit 1
+fi
+
 cmd=apply
 if [[ "$@" == "delete" ]]; then
   cmd=delete
 fi
 
-cat <<EOF | sed -e "s|{{NAMESPACE}}|${namespace}|g" -e "s|{{CLUSTERNAME}}|${clustername}|g" -e "s|{{PODCIDR}}|${podcidr}|g" -e "s|{{NODECIDR}}|${nodecidr}|g" -e "s|{{RESTRICTEDENDPOINTCIDR}}|${restrictedendpointcidr}|g" | kubectl ${cmd} -n ${namespace} -f -
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: karydia
-  namespace: {{NAMESPACE}}
-
----
-
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: karydia
-  namespace: {{NAMESPACE}}
-subjects:
-- kind: ServiceAccount
-  namespace: {{NAMESPACE}}
-  name: karydia
-roleRef:
-  kind: ClusterRole
-  name: cluster-admin
-  apiGroup: rbac.authorization.k8s.io
-
----
+sed \
+	-e "s|{{KUBEMGMT_KUBECONFIG_BUNDLE}}|${kubemgmt_kubeconfig_bundle}|g" \
+	-e "s|{{KARYDIA_KUBECONFIG_BUNDLE}}|${karydia_kubeconfig_bundle}|g" \
+	-e "s|{{NAMESPACE}}|${namespace}|g" \
+	-e "s|{{CLUSTERNAME}}|${clustername}|g" \
+	-e "s|{{PODCIDR}}|${podcidr}|g" \
+	-e "s|{{NODECIDR}}|${nodecidr}|g" \
+	-e "s|{{RESTRICTEDENDPOINTCIDR}}|${restrictedendpointcidr}|g" \
+	<<EOF | kubectl ${cmd} -n ${namespace} -f -
 
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opa-policies
+  namespace: {{NAMESPACE}}
 data:
   parameters.rego: |
     package parameters
@@ -165,10 +166,28 @@ data:
         requestedName := matched_object.metadata.name
         startswith(matched_object.metadata.name, namePrefix)
     }
-kind: ConfigMap
+
+---
+
+apiVersion: v1
+kind: Secret
 metadata:
-  name: opa-policies
+  name: kube-mgmt-kubeconfig
   namespace: {{NAMESPACE}}
+type: Opaque
+data:
+  kubeconfig: {{KUBEMGMT_KUBECONFIG_BUNDLE}}
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: karydia-kubeconfig
+  namespace: {{NAMESPACE}}
+type: Opaque
+data:
+  kubeconfig: {{KARYDIA_KUBECONFIG_BUNDLE}}
 
 ---
 
@@ -186,7 +205,8 @@ spec:
       labels:
         app: karydia
     spec:
-      serviceAccount: karydia
+      serviceAccount: default
+      automountServiceAccountToken: false
       containers:
       - name: karydia
         image: karydia/karydia:0.1.0
@@ -194,6 +214,8 @@ spec:
         command:
           - karydia
           - runserver
+          - --kubeconfig
+          - /etc/karydia/kubeconfig/kubeconfig
           - --tls-cert
           - /etc/karydia/tls/cert.pem
           - --tls-key
@@ -202,6 +224,8 @@ spec:
         volumeMounts:
           - name: karydia-tls
             mountPath: /etc/karydia/tls
+          - name: karydia-kubeconfig
+            mountPath: /etc/karydia/kubeconfig
         livenessProbe:
           httpGet:
             path: /healthz
@@ -236,7 +260,17 @@ spec:
         image: openpolicyagent/kube-mgmt:0.7
         imagePullPolicy: Always
         args:
-          - "--replicate-cluster=v1/pods"
+          - "--kubeconfig=/var/lib/kube-mgmt/kubeconfig"
+          - "--replicate-cluster=v1/nodes"
+          - "--replicate-cluster=v1/namespaces"
+          - "--replicate-cluster=admissionregistration.k8s.io/v1beta1/validatingwebhookconfigurations"
+          - "--replicate-cluster=admissionregistration.k8s.io/v1beta1/mutatingwebhookconfigurations"
+          - "--replicate=v1/persistentvolumes"
+          - "--replicate=v1/pods"
+          - "--replicate=v1/endpoints"
+        volumeMounts:
+        - mountPath: /var/lib/kube-mgmt
+          name: kube-mgmt-kubeconfig
       volumes:
         - name: karydia-tls
           secret:
@@ -244,6 +278,14 @@ spec:
         - name: opa-policies
           configMap:
             name: opa-policies
+        - name: kube-mgmt-kubeconfig
+          secret:
+            defaultMode: 420
+            secretName: kube-mgmt-kubeconfig
+        - name: karydia-kubeconfig
+          secret:
+            defaultMode: 420
+            secretName: karydia-kubeconfig
 
 ---
 
