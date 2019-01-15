@@ -110,7 +110,8 @@ Ensure you know:
 - the CIDR used by nodes. You can find it with:
 
 ```
-kubectl --kubeconfig=$KUBECONFIG_SEED -n $SHOOT_NS get configmap secvictic.infra.tf-config -o yaml | grep ip_cidr_range
+NAME=bar
+kubectl --kubeconfig=$KUBECONFIG_SEED -n $SHOOT_NS get configmap $NAME.infra.tf-config -o yaml | grep ip_cidr_range
       ip_cidr_range = "10.250.0.0/19"
 ```
 
@@ -123,17 +124,41 @@ kubectl --kubeconfig=$KUBECONFIG_SEED get deploy -n $SHOOT_NS kube-controller-ma
 
 - the CIDRs used in the seed cluster that you don't want the shoot cluster to meddle.
 
+Delete files from previous installation:
 ```
-rm karydia*pem
+rm *.pem *-cp.kubeconfig
+```
 
+Save the certificate authority of the shoot cluster in a file. You could get it from the kubeconfig:
+```
+export KUBECONFIG=$KUBECONFIG_SHOOT
+kubectl config view --raw=true -o jsonpath='{.clusters[?(@.name == "'$SHOOT_NS'")].cluster.certificate-authority-data}' | base64 -d > ca.pem
+```
+
+Generate the karydia certificate and the kubeconfig used by each container of the karydia pod:
+```
 export KUBECONFIG=$KUBECONFIG_SHOOT
 ./scripts/create-karydia-certificate
+SUBJECT_NAME=karydia  NAMESPACE=$SHOOT_NS CA=ca.pem ./contrib/gardener/scripts/create-karydia-kubeconfig-cp
+SUBJECT_NAME=kubemgmt NAMESPACE=$SHOOT_NS CA=ca.pem ./contrib/gardener/scripts/create-karydia-kubeconfig-cp
+```
 
+Install resources on the shoot:
+```
+export KUBECONFIG=$KUBECONFIG_SHOOT
+kubectl apply -f manifests/namespace.yml
+kubectl apply -f contrib/gardener/manifests/rbac-cp.yml
+```
+
+Install components on the seed:
+```
 export KUBECONFIG=$KUBECONFIG_SEED
 NAMESPACE=$SHOOT_NS ./scripts/create-karydia-tls-secret
-NAMESPACE=$SHOOT_NS ./contrib/gardener/scripts/deploy-karydia-cp
 RESTRICTEDENDPOINTCIDR='{"10.242.0.0/16", "10.243.0.0/16", "169.254.169.254/32"}' NODECIDR=10.250.0.0/19 PODCIDR=100.96.0.0/11 CLUSTERNAME=$SHOOT_NS NAMESPACE=$SHOOT_NS ./contrib/gardener/scripts/deploy-karydia-cp
+```
 
+Install the admission controller configuration:
+```
 export KUBECONFIG=$KUBECONFIG_SHOOT
 ./contrib/gardener/scripts/configure-karydia-webhook-cp
 ```
