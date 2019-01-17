@@ -4,7 +4,7 @@
 |---------|-----------|-----------------------------------|--------|
 | Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-configmap` <br/> `--default-network-policy-excludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
 | Open Policy Agent | `--enable-opa-admission` | None | Implemented |
-| Karydia Admission <br/> - seccomp <br/> - service account token automount | `--enable-karydia-admission` | Annotations on namespaces | Implemented |
+| Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | Annotations on namespaces | Implemented |
 
 ## Default NetworkPolicy
 
