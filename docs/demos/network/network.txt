@@ -1,0 +1,6 @@
+[alban@neptune karydia]$ kubectl create namespace network-test
+namespace/network-test created
+[alban@neptune karydia]$ kubectl get networkpolicies -n network-test
+NAME                             POD-SELECTOR   AGE
+karydia-default-network-policy   <none>         4s
+[alban@neptune karydia]$ 
