@@ -66,7 +66,7 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 }
 
 func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
-	var patches, validationErrors []string
+	var collectedPatches, collectedValidationErrors []string
 
 	raw := ar.Request.Object.Raw
 	pod := corev1.Pod{}
@@ -77,56 +77,25 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
-	namespaceRequest := ar.Request.Namespace
-	if namespaceRequest == "" {
-		e := fmt.Errorf("received request with empty namespace")
-		k.logger.Errorf("%v", e)
-		return k8sutil.ErrToAdmissionResponse(e)
-	}
-	namespace, err := k.kubeClientset.CoreV1().Namespaces().Get(namespaceRequest, metav1.GetOptions{})
-	if err != nil {
-		e := fmt.Errorf("failed to determine pod's namespace: %v", err)
-		k.logger.Errorf("%v", e)
-		return k8sutil.ErrToAdmissionResponse(e)
-	}
-
-	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if doCheck {
-		if automountServiceAccountToken == "forbidden" {
-			if doesAutomountServiceAccountToken(&pod) {
-				validationErrors = append(validationErrors, "automount of service account not allowed")
-			}
-		} else if automountServiceAccountToken == "non-default" {
-			if doesAutomountServiceAccountToken(&pod) && pod.Spec.ServiceAccountName == "default" {
-				validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
-			}
+	type HandlerFunc func(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]string, []string, error)
+	for _, f := range []HandlerFunc{
+		k.admitPodAutomountServiceAccountToken,
+		k.admitPodSeccompProfile,
+	} {
+		patches, validationErrors, err := f(ar, mutationAllowed, &pod)
+		if err != nil {
+			k.logger.Errorf("%v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
 		}
+		collectedPatches = append(collectedPatches, patches...)
+		collectedValidationErrors = append(collectedValidationErrors, validationErrors...)
 	}
 
-	seccompProfile, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if doCheck {
-		seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-		if !ok && mutationAllowed {
-			if len(pod.ObjectMeta.Annotations) == 0 {
-				// If no annotation object exists yet, we have
-				// to create it. Otherwise we will encounter
-				// the following error:
-				// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
-				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", seccompProfile))
-			} else {
-				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", seccompProfile))
-			}
-		} else if seccompPod != seccompProfile {
-			validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", seccompProfile)
-			validationErrors = append(validationErrors, validationErrorMsg)
-		}
-	}
-
-	if len(validationErrors) > 0 {
+	if len(collectedValidationErrors) > 0 {
 		return &v1beta1.AdmissionResponse{
 			Allowed: false,
 			Result: &metav1.Status{
-				Message: fmt.Sprintf("%+v", validationErrors),
+				Message: fmt.Sprintf("%+v", collectedValidationErrors),
 			},
 		}
 	}
@@ -135,8 +104,8 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 		Allowed: true,
 	}
 
-	if len(patches) > 0 {
-		patchesStr := strings.Join(patches, ",")
+	if len(collectedPatches) > 0 {
+		patchesStr := strings.Join(collectedPatches, ",")
 		patchType := v1beta1.PatchTypeJSONPatch
 
 		response.Patch = []byte(fmt.Sprintf("[%s]", patchesStr))
