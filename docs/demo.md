@@ -10,6 +10,7 @@ karydia.
 
 Other demos:
 - [automount-service-automount-token](demos/automount-service-account-token/automount-service-account-token.md)
+- [network policies](demos/network/network.md)
 
 ## karydia admission plugin
 
