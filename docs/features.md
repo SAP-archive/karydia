@@ -2,7 +2,7 @@
 
 | Feature | CLI flags | Control with Kubernetes resources | Status |
 |---------|-----------|-----------------------------------|--------|
-| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-configmap` <br/> `--default-network-policy-excludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
+| Default Network Policy ([demo](demos/network/network.md))| `--enable-default-network-policy` <br/> `--default-network-policy-configmap` <br/> `--default-network-policy-excludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
 | Open Policy Agent | `--enable-opa-admission` | None | Implemented |
 | Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | Annotations on namespaces | Implemented |
 
