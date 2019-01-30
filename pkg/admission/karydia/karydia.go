@@ -1,6 +1,7 @@
 package karydia
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -27,6 +28,20 @@ type KarydiaAdmission struct {
 
 type Config struct {
 	KubeClientset *kubernetes.Clientset
+}
+
+type patch struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value"`
+}
+
+func (p *patch) String() (string, error) {
+	data, err := json.Marshal(p)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func New(config *Config) (*KarydiaAdmission, error) {
@@ -66,7 +81,10 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 }
 
 func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
-	var collectedPatches, collectedValidationErrors []string
+	var (
+		collectedPatches          []patch
+		collectedValidationErrors []string
+	)
 
 	raw := ar.Request.Object.Raw
 	pod := corev1.Pod{}
@@ -77,7 +95,7 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 		return k8sutil.ErrToAdmissionResponse(e)
 	}
 
-	type HandlerFunc func(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]string, []string, error)
+	type HandlerFunc func(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]patch, []string, error)
 	for _, f := range []HandlerFunc{
 		k.admitPodAutomountServiceAccountToken,
 		k.admitPodSeccompProfile,
@@ -105,7 +123,17 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	}
 
 	if len(collectedPatches) > 0 {
-		patchesStr := strings.Join(collectedPatches, ",")
+		collectedPatchesStr := make([]string, len(collectedPatches))
+		for i, p := range collectedPatches {
+			str, err := p.String()
+			if err != nil {
+				e := fmt.Errorf("failed to marshal patch: %v", err)
+				k.logger.Errorf("%v", e)
+				return k8sutil.ErrToAdmissionResponse(e)
+			}
+			collectedPatchesStr[i] = str
+		}
+		patchesStr := strings.Join(collectedPatchesStr, ",")
 		patchType := v1beta1.PatchTypeJSONPatch
 
 		response.Patch = []byte(fmt.Sprintf("[%s]", patchesStr))

@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func (k *KarydiaAdmission) admitPodAutomountServiceAccountToken(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]string, []string, error) {
+func (k *KarydiaAdmission) admitPodAutomountServiceAccountToken(ar v1beta1.AdmissionReview, mutationAllowed bool, pod *corev1.Pod) ([]patch, []string, error) {
 	var validationErrors []string
 
 	if ignore, err := shouldIgnore(ar); err != nil {
