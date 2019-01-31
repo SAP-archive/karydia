@@ -76,10 +76,10 @@ Follow the installation instructions above.
 After that, you can repeat the following commands to rebuild and test changes:
 
 ```
-kubectl delete -f manifests/karydia.yml || true
+kubectl delete -n kube-system deployment karydia || true
 eval $(minikube docker-env)
 make container
-kubectl apply -f manifests/karydia.yml
+cat manifests/deployment.yml | sed -e 's|image: karydia/karydia.*|image: karydia/karydia|' | kubectl apply -f -
 ```
 
 These steps allow you to test new code without having to push the container
