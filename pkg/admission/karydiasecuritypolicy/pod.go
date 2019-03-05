@@ -8,9 +8,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
-	"github.com/kinvolk/karydia/pkg/k8sutil"
-	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/k8sutil/scheme"
 )
 
 func (k *KarydiaSecurityPolicyAdmission) computeSecurityContextPod(ar v1beta1.AdmissionReview, mutationAllowed bool, policies []*v1alpha1.KarydiaSecurityPolicy) *v1beta1.AdmissionResponse {

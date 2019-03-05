@@ -22,7 +22,7 @@ import (
 	podv1 "k8s.io/kubernetes/pkg/api/v1/pod"
 	utilpointer "k8s.io/utils/pointer"
 
-	"github.com/kinvolk/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/k8sutil"
 )
 
 type Framework struct {

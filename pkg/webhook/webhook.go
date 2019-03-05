@@ -9,9 +9,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 
-	"github.com/kinvolk/karydia/pkg/admission"
-	"github.com/kinvolk/karydia/pkg/k8sutil"
-	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
+	"github.com/karydia/karydia/pkg/admission"
+	"github.com/karydia/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/k8sutil/scheme"
 )
 
 type Webhook struct {

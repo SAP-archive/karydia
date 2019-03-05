@@ -16,9 +16,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/workqueue"
 
-	clientset "github.com/kinvolk/karydia/pkg/client/clientset/versioned"
-	informers "github.com/kinvolk/karydia/pkg/client/informers/externalversions"
-	listers "github.com/kinvolk/karydia/pkg/client/listers/karydia/v1alpha1"
+	clientset "github.com/karydia/karydia/pkg/client/clientset/versioned"
+	informers "github.com/karydia/karydia/pkg/client/informers/externalversions"
+	listers "github.com/karydia/karydia/pkg/client/listers/karydia/v1alpha1"
 )
 
 const resyncInterval = 30 * time.Second

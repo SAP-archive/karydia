@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/kinvolk/karydia/pkg/apis/karydia"
+	"github.com/karydia/karydia/pkg/apis/karydia"
 )
 
 // SchemeGroupVersion is group version used to register these objects

@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/kinvolk/karydia"
-	"github.com/kinvolk/karydia/pkg/webhook"
+	"github.com/karydia/karydia"
+	"github.com/karydia/karydia/pkg/webhook"
 )
 
 type Server struct {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/kinvolk/karydia"
+	"github.com/karydia/karydia"
 )
 
 var versionCmd = &cobra.Command{

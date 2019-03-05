@@ -10,8 +10,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/kinvolk/karydia/pkg/k8sutil"
-	"github.com/kinvolk/karydia/pkg/k8sutil/scheme"
+	"github.com/karydia/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/k8sutil/scheme"
 )
 
 var (

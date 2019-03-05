@@ -13,7 +13,7 @@ import (
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/kinvolk/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/k8sutil"
 
 	"github.com/open-policy-agent/opa/util"
 )
