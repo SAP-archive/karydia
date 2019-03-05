@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+# For the test step concourse will set the following environment variables:
+# SOURCE_PATH - path to component repository root directory.
+
+if [[ -z "${SOURCE_PATH}" ]]; then
+  export SOURCE_PATH="$(readlink -f "$(dirname ${0})/..")"
+else
+  export SOURCE_PATH="$(readlink -f "${SOURCE_PATH}")"
+fi
+
+pushd ${SOURCE_PATH}
+
+make all
+cp bin/karydia ${CC_ROOT_DIR}/${BIN_PATH}
