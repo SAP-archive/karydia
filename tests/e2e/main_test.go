@@ -8,7 +8,7 @@ import (
 
 	"testing"
 
-	"github.com/kinvolk/karydia/tests/e2e/framework"
+	"github.com/karydia/karydia/tests/e2e/framework"
 )
 
 var f *framework.Framework

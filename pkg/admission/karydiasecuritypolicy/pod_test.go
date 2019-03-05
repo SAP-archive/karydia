@@ -5,7 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
-	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 )
 
 func TestValidatePod(t *testing.T) {

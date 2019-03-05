@@ -13,7 +13,7 @@ spec:
       - ksp
   validation:
     # Documentation for all possible settings can be found here:
-    # https://github.com/kinvolk/karydia#karydiasecuritypolicy
+    # https://github.com/karydia/karydia#karydiasecuritypolicy
     openAPIV3Schema:
       properties:
         spec:

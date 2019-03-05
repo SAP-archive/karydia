@@ -16,9 +16,9 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/kinvolk/karydia/pkg/apis/karydia/v1alpha1"
-	informers "github.com/kinvolk/karydia/pkg/client/informers/externalversions"
-	listers "github.com/kinvolk/karydia/pkg/client/listers/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	informers "github.com/karydia/karydia/pkg/client/informers/externalversions"
+	listers "github.com/karydia/karydia/pkg/client/listers/karydia/v1alpha1"
 )
 
 var (

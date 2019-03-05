@@ -17,14 +17,14 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	karydiaadmission "github.com/kinvolk/karydia/pkg/admission/karydia"
-	kspadmission "github.com/kinvolk/karydia/pkg/admission/karydiasecuritypolicy"
-	opaadmission "github.com/kinvolk/karydia/pkg/admission/opa"
-	"github.com/kinvolk/karydia/pkg/controller"
-	"github.com/kinvolk/karydia/pkg/k8sutil"
-	"github.com/kinvolk/karydia/pkg/server"
-	"github.com/kinvolk/karydia/pkg/util/tls"
-	"github.com/kinvolk/karydia/pkg/webhook"
+	karydiaadmission "github.com/karydia/karydia/pkg/admission/karydia"
+	kspadmission "github.com/karydia/karydia/pkg/admission/karydiasecuritypolicy"
+	opaadmission "github.com/karydia/karydia/pkg/admission/opa"
+	"github.com/karydia/karydia/pkg/controller"
+	"github.com/karydia/karydia/pkg/k8sutil"
+	"github.com/karydia/karydia/pkg/server"
+	"github.com/karydia/karydia/pkg/util/tls"
+	"github.com/karydia/karydia/pkg/webhook"
 )
 
 var runserverCmd = &cobra.Command{

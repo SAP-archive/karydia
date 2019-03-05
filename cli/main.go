@@ -1,6 +1,6 @@
 package main
 
-import "github.com/kinvolk/karydia/cli/cmd"
+import "github.com/karydia/karydia/cli/cmd"
 
 func main() {
 	cmd.Execute()
