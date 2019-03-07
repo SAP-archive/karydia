@@ -9,10 +9,5 @@ karydia:
               image: 'eu.grc.io/gardener-project/karydia/karydia'
               dockerfile: 'Dockerfile'
               tag_as_latest: True
-              inputs:
-                steps:
-                  build: ~   # copy results of step 'build' over source tree
       steps:
         test: ~
-        build:
-          output_dir: bin
