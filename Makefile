@@ -30,7 +30,7 @@ build:
 		cli/main.go
 
 .PHONY: container
-container: build
+container:
 	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME) .
 
 .PHONY: codegen

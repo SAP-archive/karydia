@@ -13,4 +13,3 @@ fi
 
 cd ${SOURCE_PATH}
 
-make test
