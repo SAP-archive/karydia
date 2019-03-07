@@ -1,0 +1,71 @@
+#!/bin/bash
+# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+set -e
+
+# Setup
+WATCH_FILE=$(basename "$1")'-dev'
+OUT_FORMAT='%-23s\t%-4s\t%-6s\t%-11s\t%-18s\t%-8s\n'
+LOG_ENDING='.log'
+LOG_SELF=$(basename "$0")"$LOG_ENDING"
+LOG_FILE=$(basename "$1")"$LOG_ENDING"
+MAX_CYCLES=10
+
+
+# Start
+
+## run separate process with passed parameters (e.g. $1:'/usr/local/bin/karydia', $2:'runserver', $3:'--tls-cert', ...) if executable (from $1) exists otherwise exit
+[ -e "$1" ] && (nohup "$1" "${@:2}" > "$LOG_FILE" &) || exit 1
+
+## log passed parameters to STDOUT and file (e.g. 'hotswap.log')
+touch "$LOG_SELF"
+echo "$1"' '"${@:2}" | tee "$LOG_SELF"
+printf '\n'"$OUT_FORMAT" 'DATE' 'TYPE' 'USER' 'FILE' 'MESSAGE' 'EVENTS' | tee -a "$LOG_SELF"
+
+
+# Watch
+
+## listen on events in directory of executable (from $1)
+inotifywait -q -m -e create,moved_to $(dirname "$1") |
+while read -r dir event file
+do
+
+  ## check if triggered event belongs to specific watched file (e.g. 'karydia-dev')
+  if [ "$file" == "$WATCH_FILE" ]
+  then
+    msg=''; cnt=1
+
+    ## wait till all processes freed watched file (e.g. 'kubectl cp') otherwise exit after some time
+    while [ $(fuser "$dir$WATCH_FILE" 2> /dev/null | wc -w) -gt 0 ]; do sleep 1 && ((cnt++)) && ((cnt>=$MAX_CYCLES+2)) && exit 1; done
+
+    ## kill / send 'SIGTERM' to processes who are using main file (e.g. '/usr/local/bin/karydia')
+    lsof | grep "$1" | awk '{print $1}' | sort -nu | xargs kill &> /dev/null; msg+='killed'; cnt=1
+
+    ## wait till all processes ended who used main file (e.g. '/usr/local/bin/karydia') otherwise exit after some time
+    while [ $(lsof | grep "$1" | awk '{print $1}' | sort -nu | wc -w) -gt 0 ]; do sleep 1 && ((cnt++)) && ((cnt>=$MAX_CYCLES+2)) && exit 1; done
+
+    ## move watched file to main file (as new main file)
+    mv -f "$dir$WATCH_FILE" "$1"
+
+    ## run separate process with passed parameters (e.g. $1:'/usr/local/bin/karydia', $2:'runserver', $3:'--tls-cert', ...) if executable (from $1) exists otherwise exit
+    [ -e "$1" ] && (nohup "$1" "${@:2}" > "$LOG_FILE" &) || exit 1; msg+=' & restarted'; cnt=1
+
+    ## log activity to STDOUT and file (e.g. 'hotswap.log')
+    touch "$LOG_SELF"
+    printf "$OUT_FORMAT" "$(date +'%F %T %Z')" 'INFO' "$(whoami)" "$file" "$msg" "$event" | tee -a "$LOG_SELF"
+
+  fi
+done
+

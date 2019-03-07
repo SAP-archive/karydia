@@ -3,3 +3,5 @@
 bin/
 
 karydia*.pem
+
+manifests/deployment-dev.yml
