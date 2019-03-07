@@ -1,7 +1,9 @@
-cli/
+.ci/
+contrib/
+docs/
+logo/
+manifests-dev/
 manifests/
-pkg/
 scripts/
-vendor/
 
 karydia*.pem

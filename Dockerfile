@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+FROM golang:1.12.0 as build-stage
+RUN mkdir -p /go/src/github.com/karydia/karydia/
+WORKDIR /go/src/github.com/karydia/karydia/
+COPY ./ ./
+RUN make
+
 FROM k8s.gcr.io/debian-base-amd64:0.4.0
-
-COPY bin/karydia /usr/local/bin/karydia
-
+COPY --from=build-stage /go/src/github.com/karydia/karydia/ /usr/local/bin/karydia
 USER 65534:65534
-
 CMD ["karydia"]
+

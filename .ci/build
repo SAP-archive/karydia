@@ -13,5 +13,3 @@ fi
 
 pushd ${SOURCE_PATH}
 
-make all
-cp bin/karydia ${CC_ROOT_DIR}/${BIN_PATH}
