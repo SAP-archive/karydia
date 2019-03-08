@@ -103,11 +103,13 @@ func validatePod(policy *v1alpha1.KarydiaSecurityPolicy, pod *corev1.Pod) ([]str
 
 	if policy.Spec.Pod.AutomountServiceAccountToken == "forbidden" {
 		if doesAutomountServiceAccountToken(pod) {
-			validationErrors = append(validationErrors, "automount of service account not allowed")
+			//validationErrors = append(validationErrors, "automount of service account not allowed")
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
 		}
 	} else if policy.Spec.Pod.AutomountServiceAccountToken == "non-default" {
 		if doesAutomountServiceAccountToken(pod) && pod.Spec.ServiceAccountName == "default" {
-			validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+			//validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
 		}
 	}
 

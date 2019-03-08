@@ -36,15 +36,14 @@ func TestValidatePod(t *testing.T) {
 	policy := &v1alpha1.KarydiaSecurityPolicy{
 		Spec: v1alpha1.KarydiaSecurityPolicySpec{
 			Pod: v1alpha1.Pod{
-				AutomountServiceAccountToken: "forbidden",
-				SeccompProfile:               "docker/default",
+				SeccompProfile: "docker/default",
 			},
 		},
 	}
 
 	patches, validationErrors = validatePod(policy, pod)
-	if len(validationErrors) != 1 {
-		t.Errorf("expected 1 validation errors but got: %+v", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validation errors but got: %+v", validationErrors)
 	}
 	if len(patches) != 1 {
 		t.Errorf("expected 1 patch but got: %+v", patches)
@@ -55,7 +54,7 @@ func TestValidatePod(t *testing.T) {
 	}
 
 	patches, validationErrors = validatePod(policy, pod)
-	if len(validationErrors) != 2 {
+	if len(validationErrors) != 1 {
 		t.Errorf("expected 2 validation errors but got: %+v", validationErrors)
 	}
 	if len(patches) != 0 {
