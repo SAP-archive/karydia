@@ -108,11 +108,13 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	if doCheck {
 		if automountServiceAccountToken == "forbidden" {
 			if doesAutomountServiceAccountToken(&pod) {
-				validationErrors = append(validationErrors, "automount of service account not allowed")
+				//validationErrors = append(validationErrors, "automount of service account not allowed")
+				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
 			}
 		} else if automountServiceAccountToken == "non-default" {
 			if doesAutomountServiceAccountToken(&pod) && pod.Spec.ServiceAccountName == "default" {
-				validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+				//validationErrors = append(validationErrors, "automount of service account not allowed")
+				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
 			}
 		}
 	}
