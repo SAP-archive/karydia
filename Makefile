@@ -14,6 +14,7 @@
 
 IMAGE_REPO=karydia
 IMAGE_NAME=karydia
+DEV_POSTFIX=-dev
 
 KUBERNETES_SERVER ?= ""
 KUBECONFIG_PATH ?= "$(HOME)/.kube/config"
@@ -32,6 +33,14 @@ build:
 .PHONY: container
 container:
 	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME) .
+
+.PHONY: container-dev
+container-dev:
+	docker build -f Dockerfile.dev --target dev-image -t $(IMAGE_REPO)/$(IMAGE_NAME)$(DEV_POSTFIX) .
+
+.PHONY: deploy-dev
+deploy-dev:
+	kubectl cp bin/karydia kube-system/$(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
 
 .PHONY: codegen
 codegen:

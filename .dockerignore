@@ -1,9 +1,9 @@
 .ci/
+bin/
 contrib/
 docs/
 logo/
 manifests-dev/
 manifests/
-scripts/
 
 karydia*.pem
