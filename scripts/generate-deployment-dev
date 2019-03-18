@@ -14,11 +14,7 @@
 # limitations under the License.
 
 # This script is only for development. It generates the dev deployment yaml with a dev container from the prod deployment yaml.
-# This dev deployment yaml replaces the default deployment yaml and thus should  ease and speed up (local) development.
-########################################################### ATTENTION ############################################################
-# Due to different behaviors of 'yq (https://github.com/mikefarah/yq)' per operating system type (e.g. 'darwin', 'linux') this   #
-# script is currently restricted to 'darwin'. [yq version: 2.2.1, go version: 1.12, 2019/03/15]                                  #
-########################################################### ATTENTION ############################################################
+# This dev deployment yaml replaces the default deployment yaml and thus should ease and speed up (local) development.
 
 set -e
 
@@ -38,11 +34,6 @@ ERR_MSG_PREFIX='ERROR'
 ## prod image and dev image need to be passed
 [ -z "$PROD_IMAGE" ] || [ -z "$DEV_IMAGE" ] && \
   echo "$ERR_MSG_PREFIX Usage: $0 PROD_DOCKER_IMAGE DEV_DOCKER_IMAGE" >&2 && \
-  exit 1
-
-## operating system must match
-[[ "$OSTYPE" != 'darwin'* ]] && \
-  echo "$ERR_MSG_PREFIX OS type not supported (only 'darwin')" >&2 && \
   exit 1
 
 ## yq must be available
@@ -71,14 +62,16 @@ do
     cmd=$(yq r "$DEV_YAML" "spec.template.spec.containers.$i.command")				# get prod command list
     size="$(cat <<EOF | wc -l
 $cmd
-EOF)"												# get size of prod command list
+EOF
+)"												# get size of prod command list
     yq d -i "$DEV_YAML" "spec.template.spec.containers.$i.command"				# delete prod command list
     yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.0" -- "$DEV_CMD_FIRST"	# set first command of dev command list
     for ((j=0;j<$size;j++))
     do
       c="$(cat <<EOF | yq r - $j
 $cmd
-EOF)"												# get each command of prod command list
+EOF
+)"												# get each command of prod command list
       [ "$c" == "$CMD_MAIN_BIN" ] && c="$DEV_CMD_BIN_LOCATION$c"				# if command equals main binary add location
       yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.$((j+1))" -- "$c"		# add command to dev command list
     done
