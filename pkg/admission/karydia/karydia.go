@@ -106,17 +106,7 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 
 	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	if doCheck {
-		if automountServiceAccountToken == "forbidden" {
-			if doesAutomountServiceAccountToken(&pod) {
-				//validationErrors = append(validationErrors, "automount of service account not allowed")
-				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
-			}
-		} else if automountServiceAccountToken == "non-default" {
-			if doesAutomountServiceAccountToken(&pod) && pod.Spec.ServiceAccountName == "default" {
-				//validationErrors = append(validationErrors, "automount of service account not allowed")
-				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
-			}
-		}
+		patches = secureAutomountServiceAccountToken(pod, automountServiceAccountToken, patches)
 	}
 
 	seccompProfile, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
@@ -162,8 +152,27 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	return response
 }
 
+func secureAutomountServiceAccountToken(pod corev1.Pod, annotation string, patches []string) []string {
+	if annotation == "forbidden" {
+		if automountServiceAccountTokenUndefined(&pod) {
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes"}`))
+		}
+	} else if annotation == "non-default" {
+		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes"}`))
+		}
+	}
+	return patches
+}
+
 func doesAutomountServiceAccountToken(pod *corev1.Pod) bool {
 	return pod.Spec.AutomountServiceAccountToken == nil || *pod.Spec.AutomountServiceAccountToken
+}
+
+func automountServiceAccountTokenUndefined(pod *corev1.Pod) bool {
+	return pod.Spec.AutomountServiceAccountToken == nil
 }
 
 func shouldIgnore(ar v1beta1.AdmissionReview) (bool, error) {

@@ -22,7 +22,7 @@ import (
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 )
 
-func TestMutatePod(t *testing.T) {
+func TestMutatePodServiceToken(t *testing.T) {
 	pod := &corev1.Pod{}
 
 	patches, validationErrors := validatePod(&v1alpha1.KarydiaSecurityPolicy{}, pod)
