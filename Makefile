@@ -36,7 +36,7 @@ container:
 
 .PHONY: container-dev
 container-dev:
-	docker build -f Dockerfile.dev --target dev-image -t $(IMAGE_REPO)/$(IMAGE_NAME)$(DEV_POSTFIX) .
+	docker build --target dev-image -t $(IMAGE_REPO)/$(IMAGE_NAME)$(DEV_POSTFIX) .
 
 .PHONY: deploy-dev
 deploy-dev:
