@@ -18,6 +18,7 @@ RUN mkdir -p /go/src/github.com/karydia/karydia/
 WORKDIR /go/src/github.com/karydia/karydia/
 COPY ./ ./
 RUN make
+RUN make test
 
 # dev-image (only for development)
 FROM k8s.gcr.io/alpine-with-bash:1.0 as dev-image
