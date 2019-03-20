@@ -20,12 +20,51 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func TestMutatePodWithAnnotation(t *testing.T) {
+func TestValidatePodWithForbiddentAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
 	var patches []string
+	var validationErrors []string
 
-	patches = secureAutomountServiceAccountToken(pod, "forbidden", patches)
-	if len(patches) != 2 {
-		t.Errorf("expected 2 patches but got: %+v", patches)
+	pod.Spec.ServiceAccountName = "default"
+
+	patches, validationErrors = secureAutomountServiceAccountToken(pod, "forbidden", patches, validationErrors)
+	if len(patches) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches)
+	}
+	if len(validationErrors) != 1 {
+		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
+	}
+}
+func TestMutatePodWithRemoveDefaultAnnotation(t *testing.T) {
+	pod := corev1.Pod{}
+	var patches []string
+	var validationErrors []string
+
+	pod.Spec.ServiceAccountName = "default"
+	pod.Spec.Volumes = append([]corev1.Volume{}, corev1.Volume{Name: "default-token-abcd", VolumeSource: corev1.VolumeSource{}})
+	mounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{Name: "default-token-1234"})
+	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
+
+	patches, validationErrors = secureAutomountServiceAccountToken(pod, "remove-default", patches, validationErrors)
+	if len(patches) != 5 {
+		t.Errorf("expected 5 patches but got: %+v", patches)
+	}
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+}
+
+func TestValidatePodWithNonDefaultAnnotation(t *testing.T) {
+	pod := corev1.Pod{}
+	var patches []string
+	var validationErrors []string
+
+	pod.Spec.ServiceAccountName = "default"
+	patches, validationErrors = secureAutomountServiceAccountToken(pod, "non-default", patches, validationErrors)
+	if len(patches) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches)
+	}
+	if len(validationErrors) != 1 {
+		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
 	}
 }
