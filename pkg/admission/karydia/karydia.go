@@ -106,7 +106,7 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 
 	automountServiceAccountToken, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	if doCheck {
-		patches = secureAutomountServiceAccountToken(pod, automountServiceAccountToken, patches)
+		patches, validationErrors = secureAutomountServiceAccountToken(pod, automountServiceAccountToken, patches, validationErrors)
 	}
 
 	seccompProfile, doCheck := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
@@ -152,19 +152,36 @@ func (k *KarydiaAdmission) AdmitPod(ar v1beta1.AdmissionReview, mutationAllowed 
 	return response
 }
 
-func secureAutomountServiceAccountToken(pod corev1.Pod, annotation string, patches []string) []string {
+func secureAutomountServiceAccountToken(pod corev1.Pod, annotation string, patches []string, errors []string) ([]string, []string) {
 	if annotation == "forbidden" {
 		if automountServiceAccountTokenUndefined(&pod) {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
-			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes"}`))
+			errors = append(errors, "automount of service account not allowed")
 		}
 	} else if annotation == "non-default" {
 		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
+			errors = append(errors, "automount of service account 'default' not allowed")
+		}
+	} else if annotation == "remove-default" {
+		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
 			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
-			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes"}`))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/ServiceAccount"}`))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/ServiceAccountName"}`))
+			for i, v := range pod.Spec.Volumes {
+				if strings.HasPrefix(v.Name, "default-token-") {
+					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
+				}
+			}
+			for i, c := range pod.Spec.Containers {
+				for j, v := range c.VolumeMounts {
+					if strings.HasPrefix(v.Name, "default-token-") {
+						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/VolumeMounts/%d"}`, i, j))
+					}
+				}
+			}
 		}
 	}
-	return patches
+	fmt.Printf("Got %d patches", len(patches))
+	return patches, errors
 }
 
 func doesAutomountServiceAccountToken(pod *corev1.Pod) bool {
