@@ -3,6 +3,7 @@ karydia-pipeline:
         build-image-job:
             traits:
                 version: ~
+                pull_request: ~
                 publish:
                     dockerimages:
                         karydia:
