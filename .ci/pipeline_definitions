@@ -1,4 +1,4 @@
-karydia-pipeline:
+karydia:
     base_definition:
         traits:
             version: ~
@@ -8,7 +8,7 @@ karydia-pipeline:
                         dockerfile: 'Dockerfile'
                         tag_as_latest: True
     jobs:
-        build-image-job: ~
-        pull-request-job:
+        build-image: ~
+        pull-request:
             traits:
                 pull-request: ~
