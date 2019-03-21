@@ -1,14 +1,1 @@
-karydia:
-    base_definition:
-        traits:
-            version: ~
-            publish:
-                dockerimages:
-                    karydia:
-                        dockerfile: 'Dockerfile'
-                        tag_as_latest: True
-    jobs:
-        build-image: ~
-        pull-request:
-            traits:
-                pull-request: ~
+karydia: ~
