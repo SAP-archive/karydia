@@ -163,9 +163,8 @@ func secureAutomountServiceAccountToken(pod corev1.Pod, annotation string, patch
 		}
 	} else if annotation == "remove-default" {
 		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": "%s"}`, "false"))
-			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/ServiceAccount"}`))
-			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/ServiceAccountName"}`))
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/serviceAccountName"}`))
 			for i, v := range pod.Spec.Volumes {
 				if strings.HasPrefix(v.Name, "default-token-") {
 					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
@@ -174,7 +173,7 @@ func secureAutomountServiceAccountToken(pod corev1.Pod, annotation string, patch
 			for i, c := range pod.Spec.Containers {
 				for j, v := range c.VolumeMounts {
 					if strings.HasPrefix(v.Name, "default-token-") {
-						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/VolumeMounts/%d"}`, i, j))
+						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
 					}
 				}
 			}

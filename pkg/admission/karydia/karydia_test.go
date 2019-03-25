@@ -46,8 +46,8 @@ func TestMutatePodWithRemoveDefaultAnnotation(t *testing.T) {
 	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
 
 	patches, validationErrors = secureAutomountServiceAccountToken(pod, "remove-default", patches, validationErrors)
-	if len(patches) != 5 {
-		t.Errorf("expected 5 patches but got: %+v", patches)
+	if len(patches) != 4 {
+		t.Errorf("expected 4 patches but got: %+v", patches)
 	}
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
