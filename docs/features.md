@@ -36,13 +36,16 @@ Karydia Admission (`--enable-karydia-admission`) offers features with the goal
 of hardening a cluster setup.
 
 The features currently supported are:
-- prevent service account token automounts
-- enforcing a seccomp policy
+1. Prevent service account token automounts
+    - `forbidden` prevents pods with any service account token to be deployed
+    - `non-default` prevents pods with the default service account token to be deployed
+    - `remove-default` deploys pods, but removes default service account token when `automountServiceAccountToken` is not explicitly set to `true`.
+2. Enforcing a seccomp policy
 
 It is configured with the following namespace annotations:
 
 | Name | Type | Possible values |
 |---|---|---|
-|karydia.gardener.cloud/automountServiceAccountToken|string|"forbidden" or "non-default"|
-|karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. "runtime/default" or "localhost/my-profile"|
+|karydia.gardener.cloud/automountServiceAccountToken|string|`forbidden` \| `non-default` \| `remove-default`|
+|karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
