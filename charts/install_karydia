@@ -19,8 +19,8 @@ kubectl create configmap -n kube-system karydia-default-network-policy --from-li
 helm install ./ --name karydia
 echo "Deployed Karydia"
 
-sleep 10
+#sleep 10
 
-echo "Establish Webhook..."
-/bin/bash ../scripts/configure-karydia-webhook
-echo "Established Webhook"
+#echo "Establish Webhook..."
+#/bin/bash ../scripts/configure-karydia-webhook
+#echo "Established Webhook"
