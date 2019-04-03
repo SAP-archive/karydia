@@ -1,0 +1,26 @@
+#!/bin/bash
+# Creates needed certificate and tls secrets
+/bin/bash ../scripts/create-karydia-certificate
+/bin/bash ../scripts/create-karydia-tls-secret
+echo "Created certificate and TLS secrets."
+
+sleep 1
+
+# Create configmap for the default network policy
+kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<../manifests/example-default-network-policy.yml)"
+echo "Created configmap for default network polcy"
+
+sleep 1
+
+# Write CA bundle into values.yml so it can be later used by the webhook
+ca_bundle="$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\r\n')"
+if [[ -z "${ca_bundle}" ]]; then
+  echo "ERROR: extension-apiserver-authentication config map with CA bundle not found - aborting" >&2
+  exit 1
+fi
+
+echo "${ca_bundle}"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+printf "%s\n" "caBundle: |" "  ${ca_bundle}" >${DIR}/values.yaml
+echo "Wrote CA bundle into values.yml"
