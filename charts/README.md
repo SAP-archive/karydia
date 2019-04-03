@@ -20,7 +20,7 @@ In the next step, you have to create the needed certificate and configure some o
 ```
 This creates a certificate signing request, sends it to the apiserver and lets the apiserver sign the cert. To make the certificate available to karydia, a secret is created.
 
-It will also create a configmap for the default network policy and writes the CA bundle for the later established webhook into teh values.yml.
+It will also create a configmap for the default network policy and writes the CA bundle for the later established webhook into the values.yml.
 
 ## Deploy karydia
 To deploy karydia simply run:
