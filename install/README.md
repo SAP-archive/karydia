@@ -16,7 +16,7 @@ helm init --service-account tiller
 ## Certificates and Secrets
 In the next step, you have to create the needed certificate and configure some options by running:
 ```
-./charts/prepare-karydia-install
+./install/prepare-karydia-install
 ```
 This creates a certificate signing request, sends it to the apiserver and lets the apiserver sign the cert. To make the certificate available to karydia, a secret is created.
 
@@ -25,7 +25,7 @@ It will also create a configmap for the default network policy and writes the CA
 ## Deploy karydia
 To deploy karydia simply run:
 ```
-helm install ./charts --name karydia
+helm install ./install/charts --name karydia
 ```
 
 # Make sure that karydia is runnning
