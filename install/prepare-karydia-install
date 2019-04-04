@@ -38,5 +38,5 @@ fi
 
 echo "${ca_bundle}"
 
-printf "%s\n" "caBundle: |" "  ${ca_bundle}" >${DIR}/values.yaml
+printf "%s\n" "caBundle: |" "  ${ca_bundle}" >${DIR}/charts/values.yaml
 echo "Wrote CA bundle into values.yml"
