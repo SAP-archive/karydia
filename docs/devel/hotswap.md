@@ -23,7 +23,7 @@ next step.
 ## [OPTIONAL] Re-Generate the `manifests-dev/deployment-dev.yml`
 
 You can use `scripts/generate-deployment-dev` to automatically re-generate the
-`manifests-dev/deployment-dev.yml` from `manifests/deployment.yml`.
+`manifests-dev/deployment-dev.yml` from `install/charts/templates/deployment.yml`.
 
 Two parameters are expected:
 - PROD_DOCKER_IMAGE which is the mentioned image under the karydia container spec at
@@ -36,11 +36,11 @@ scripts/generate-deployment-dev karydia/karydia karydia/karydia-dev
 
 ## Getting started
 
-Follow the steps of [installing karydia](../install.md)
+Follow the steps of [installing karydia](../install/README.md)
 
 Switch from karydia prod to dev Kubernetes deployment:
 ```
-kubectl delete -f manifests/deployment.yml
+kubectl delete -f install/charts/templates/deployment.yml
 kubectl apply -f manifests-dev/deployment-dev.yml
 ```
 

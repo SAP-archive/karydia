@@ -1,64 +1,4 @@
-# Installing karydia
-
-karydia can be installed as a validating and mutating admission webhook
-into any Kubernetes cluster.
-
-## Installation
-
-### Create a TLS certificate
-
-You can use `scripts/create-karydia-certificate` to create a certificate
-signing request (openssl is used under the hood), send it to the
-apiserver and let the apiserver sign the cert.
-
-This assumes that your Kubernetes user is authorized to approve certificates.
-
-### Create a secret with TLS certificate and key
-
-To make the certificate available to karydia, we need to create a secret.
-`./scripts/create-karydia-tls-secret` can be used for that.
-
-### Deploy karydia
-
-First, create a configmap that holds the default network policy that
-karydia should use. Note that this is only necessary if karydia is
-deployed with `--enable-default-network-policy`.
-
-```
-kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<manifests/example-default-network-policy.yml)"
-```
-
-Create the `KarydiaSecurityPolicy` CRD (not actually used currently but
-expected by the controller):
-
-```
-kubectl apply -f manifests/crd-karydia-security-policy.yml
-```
-
-Create a service account with cluster-admin permissions and deploy karydia:
-
-```
-kubectl apply -f manifests/namespace.yml
-kubectl apply -f manifests/rbac.yml
-kubectl apply -f manifests/deployment.yml
-kubectl apply -f manifests/service.yml
-```
-
-Finally, configure karydia as both a validating and mutating admission
-controller with the apiserver:
-
-```
-./scripts/configure-karydia-webhook
-```
-
-Take a quick look at the logs to see if karydia started:
-
-```
-kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
-
-time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
-[...]
-```
+# Development and Gardener
 
 ## Development and test environment
 
@@ -79,7 +19,7 @@ After that, you can repeat the following commands to rebuild and test changes:
 kubectl delete -n kube-system deployment karydia || true
 eval $(minikube docker-env)
 make container
-cat manifests/deployment.yml | sed -e 's|image: karydia/karydia.*|image: karydia/karydia|' | kubectl apply -f -
+cat install/charts/templates/deployment.yml | sed -e 's|image: karydia/karydia.*|image: karydia/karydia|' | kubectl apply -f -
 ```
 
 These steps allow you to test new code without having to push the container
@@ -146,7 +86,7 @@ SUBJECT_NAME=kubemgmt NAMESPACE=$SHOOT_NS CA=ca.pem ./contrib/gardener/scripts/c
 Install resources on the shoot:
 ```
 export KUBECONFIG=$KUBECONFIG_SHOOT
-kubectl apply -f manifests/namespace.yml
+kubectl apply -f install/charts/templates/namespace.yml
 kubectl apply -f contrib/gardener/manifests/rbac-cp.yml
 ```
 
