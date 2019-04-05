@@ -27,6 +27,7 @@ To deploy karydia simply run:
 ```
 helm install ./install/charts --name karydia
 ```
+In this process, ``KarydiaSecurityPolicy`` CRD is and a service account with cluster-admin permissions are created. After the actual deployement, karydia is configured as both a validating and mutating admission controller with the apiserver.
 
 # Make sure that karydia is runnning
 Afterwards, you can check if karydia is running by taking a look at the logs:
