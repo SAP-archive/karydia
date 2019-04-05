@@ -31,7 +31,7 @@ func TestMutatePodWithRemoveDefaultAnnotation(t *testing.T) {
 	mounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{Name: "default-token-abcd"})
 	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
 
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "remove-default", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "remove-default", patches, validationErrors)
 	if len(patches) != 4 {
 		t.Errorf("expected 4 patches but got: %+v", patches)
 	}
@@ -50,7 +50,7 @@ func TestMutatePodWithRemoveDefaultAnnotationNonDefaultServiceAccount(t *testing
 	mounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{Name: "test-token-abcd"})
 	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
 
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "remove-default", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "remove-default", patches, validationErrors)
 	if len(patches) != 0 {
 		t.Errorf("expected 0 patches but got: %+v", patches)
 	}
@@ -71,7 +71,7 @@ func TestMutatePodWithRemoveDefaultAnnotationMultipleVolumes(t *testing.T) {
 	mounts = append(mounts, corev1.VolumeMount{Name: "test-token-abcd"})
 	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
 
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "remove-default", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "remove-default", patches, validationErrors)
 	if len(patches) != 4 {
 		t.Errorf("expected 4 patches but got: %+v", patches)
 	}
@@ -88,7 +88,7 @@ func TestValidatePodWithForbiddentAnnotation(t *testing.T) {
 
 	pod.Spec.ServiceAccountName = "default"
 
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "forbidden", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "forbidden", patches, validationErrors)
 	if len(patches) != 0 {
 		t.Errorf("expected 0 patches but got: %+v", patches)
 	}
@@ -104,7 +104,7 @@ func TestValidatePodWithNonDefaultAnnotation(t *testing.T) {
 	var validationErrors []string
 
 	pod.Spec.ServiceAccountName = "default"
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "non-default", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "non-default", patches, validationErrors)
 	if len(patches) != 0 {
 		t.Errorf("expected 0 patches but got: %+v", patches)
 	}
@@ -119,7 +119,7 @@ func TestValidatePodWithNonDefaultAnnotationNonDefaultServiceAccount(t *testing.
 	var validationErrors []string
 
 	pod.Spec.ServiceAccountName = "test"
-	patches, validationErrors = secureAutomountServiceAccountToken(pod, "non-default", patches, validationErrors)
+	patches, validationErrors = admitServiceAccountToken(pod, "non-default", patches, validationErrors)
 	if len(patches) != 0 {
 		t.Errorf("expected 0 patches but got: %+v", patches)
 	}
