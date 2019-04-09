@@ -47,7 +47,6 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			Namespace: ns,
 		},
 		Spec: corev1.PodSpec{
-			AutomountServiceAccountToken: &automountServiceAccountToken,
 			Containers: []corev1.Container{
 				{
 					Name:  "nginx",

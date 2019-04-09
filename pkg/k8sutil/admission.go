@@ -15,6 +15,9 @@
 package k8sutil
 
 import (
+	"fmt"
+	"strings"
+
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -25,5 +28,36 @@ func ErrToAdmissionResponse(err error) *v1beta1.AdmissionResponse {
 		Result: &metav1.Status{
 			Message: err.Error(),
 		},
+	}
+}
+
+func ValidationErrorAdmissionResponse(validationErrors []string) *v1beta1.AdmissionResponse {
+	return &v1beta1.AdmissionResponse{
+		Allowed: false,
+		Result: &metav1.Status{
+			Message: fmt.Sprintf("%+v", validationErrors),
+		},
+	}
+}
+
+func MutatingAdmissionResponse(patches []string) *v1beta1.AdmissionResponse {
+	response := &v1beta1.AdmissionResponse{
+		Allowed: true,
+	}
+
+	if len(patches) > 0 {
+		patchesStr := strings.Join(patches, ",")
+		patchType := v1beta1.PatchTypeJSONPatch
+
+		response.Patch = []byte(fmt.Sprintf("[%s]", patchesStr))
+		response.PatchType = &patchType
+	}
+
+	return response
+}
+
+func AllowAdmissionResponse() *v1beta1.AdmissionResponse {
+	return &v1beta1.AdmissionResponse{
+		Allowed: true,
 	}
 }
