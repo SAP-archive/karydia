@@ -42,10 +42,10 @@ func TestMutatePodServiceToken(t *testing.T) {
 	}
 
 	patches, validationErrors = validatePod(policy, pod)
-	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validation errors but got: %+v", validationErrors)
+	if len(validationErrors) != 1 {
+		t.Errorf("expected 1 validation errors but got: %+v", validationErrors)
 	}
-	if len(patches) != 1 {
-		t.Errorf("expected 1 patch but got: %+v", patches)
+	if len(patches) != 0 {
+		t.Errorf("expected 0 patch but got: %+v", patches)
 	}
 }
