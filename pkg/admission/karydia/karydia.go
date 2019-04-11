@@ -82,7 +82,7 @@ func (k *KarydiaAdmission) AdmitPod(admissionRequest v1beta1.AdmissionRequest, m
 
 	automountServiceAccountToken, annotated := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	if annotated {
-		patches, validationErrors = admitServiceAccountToken(*pod, automountServiceAccountToken, patches, validationErrors)
+		patches, validationErrors = admitServiceAccountToken(*pod, automountServiceAccountToken, mutationAllowed, patches, validationErrors)
 	}
 
 	seccompProfile, annotated := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
@@ -93,7 +93,7 @@ func (k *KarydiaAdmission) AdmitPod(admissionRequest v1beta1.AdmissionRequest, m
 	return admitResponse(patches, validationErrors)
 }
 
-func admitServiceAccountToken(pod corev1.Pod, annotation string, patches []string, validationErrors []string) ([]string, []string) {
+func admitServiceAccountToken(pod corev1.Pod, annotation string, mutationAllowed bool, patches []string, validationErrors []string) ([]string, []string) {
 	if annotation == "forbidden" {
 		// Validating webhook
 		if automountServiceAccountTokenUndefined(&pod) {
@@ -106,21 +106,26 @@ func admitServiceAccountToken(pod corev1.Pod, annotation string, patches []strin
 		}
 	} else if annotation == "remove-default" {
 		// Mutating webhook
-		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
-			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/serviceAccountName"}`))
-			for i, v := range pod.Spec.Volumes {
-				if strings.HasPrefix(v.Name, "default-token-") {
-					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
-				}
-			}
-			for i, c := range pod.Spec.Containers {
-				for j, v := range c.VolumeMounts {
+		if mutationAllowed {
+
+			if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
+				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
+				patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/serviceAccountName"}`))
+				for i, v := range pod.Spec.Volumes {
 					if strings.HasPrefix(v.Name, "default-token-") {
-						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
+						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
+					}
+				}
+				for i, c := range pod.Spec.Containers {
+					for j, v := range c.VolumeMounts {
+						if strings.HasPrefix(v.Name, "default-token-") {
+							patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
+						}
 					}
 				}
 			}
+		} else {
+			validationErrors = append(validationErrors, "option 'remove-default' for  karydia.gardener.cloud/automountServiceAccountToken is only available for mutating webhooks")
 		}
 	}
 	return patches, validationErrors
