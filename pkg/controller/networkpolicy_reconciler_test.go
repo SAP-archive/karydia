@@ -23,12 +23,11 @@ import (
 
 	networkingv1 "k8s.io/api/networking/v1"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/diff"
 	kubeinformers "k8s.io/client-go/informers"
-	networkpolicyInformer "k8s.io/client-go/informers/networking/v1"
 	k8sfake "k8s.io/client-go/kubernetes/fake"
-	kubelistersNetworkingv1 "k8s.io/client-go/listers/networking/v1"
 	core "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
@@ -44,7 +43,7 @@ type fixture struct {
 
 	kubeclient *k8sfake.Clientset
 	// Objects to put in the store.
-	networkPolicyLister []*kubelistersNetworkingv1.NetworkPolicyLister
+	networkPolicy []*networkingv1.NetworkPolicy
 	// Actions expected to happen on the client.
 	kubeactions []core.Action
 	actions     []core.Action
@@ -73,15 +72,13 @@ func (f *fixture) newController() (*NetworkpolicyReconciler, kubeinformers.Share
 
 	k8sI := kubeinformers.NewSharedInformerFactory(f.kubeclient, noResyncPeriodFunc())
 
-	c := NewNetworkpolicyReconciler(f.kubeclient, networkpolicyInformer.NetworkPolicyInformer, f.defaultNetworkPolicy)
+	c := NewNetworkpolicyReconciler(f.kubeclient, k8sI.Networking().V1().NetworkPolicies(), &f.defaultNetworkPolicy)
 
 	c.networkPoliciesSynced = alwaysReady
 	c.recorder = &record.FakeRecorder{}
 
-	for _, d := range f.networkPolicyLister {
-
+	for _, d := range f.networkPolicy {
 		k8sI.Networking().V1().NetworkPolicies().Informer().GetIndexer().Add(d)
-
 	}
 
 	return c, k8sI
@@ -110,7 +107,7 @@ func (f *fixture) runController(fooName string, startInformers bool, expectError
 		f.t.Error("expected error syncing foo, got nil")
 	}
 
-	actions := filterInformerActions(f.client.Actions())
+	actions := filterInformerActions(f.kubeclient.Actions())
 	for i, action := range actions {
 		if len(f.actions) < i+1 {
 			f.t.Errorf("%d unexpected actions: %+v", len(actions)-len(f.actions), actions[i:])
@@ -213,11 +210,21 @@ func getKey(networkpolicy *networkingv1.NetworkPolicy, t *testing.T) string {
 
 func TestCreateNetworkPolicy(t *testing.T) {
 	f := newFixture(t)
-	newNetworkPolicy := networkingv1.NetworkPolicy{}
+	newNetworkPolicy := &networkingv1.NetworkPolicy{}
 	newNetworkPolicy.Name = "karydia-default-network-policy"
+	newNetworkPolicy.Namespace = "default"
+	newNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress}}
 
-	f.networkPolicyLister = append(f.networkPolicyLister, newNetworkPolicy)
-	f.objects = append(f.objects, newNetworkPolicy)
+	f.networkPolicy = append(f.networkPolicy, newNetworkPolicy)
+	f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
 
 	f.run(getKey(newNetworkPolicy, t))
+
+	actualPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Errorf("No error expected")
+	} else if len(actualPolicy.Spec.PolicyTypes) != 0 {
+		t.Errorf("No reconcile")
+	}
 }
