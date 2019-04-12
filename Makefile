@@ -30,6 +30,13 @@ build:
 		-ldflags "-s -X github.com/karydia/karydia.Version=$(VERSION)" \
 		cli/main.go
 
+.PHONY: build-debug
+build-debug:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/karydia \
+		-gcflags="all=-N -l" \
+		-ldflags "-X github.com/karydia/karydia.Version=$(VERSION)" \
+		cli/main.go
+
 .PHONY: container
 container:
 	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME) .
@@ -40,7 +47,11 @@ container-dev:
 
 .PHONY: deploy-dev
 deploy-dev:
-	kubectl cp bin/karydia kube-system/$(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
+	kubectl cp bin/karydia -n kube-system $(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
+
+.PHONY: debug-dev
+debug-dev:
+	kubectl port-forward -n kube-system pod/$(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}') 2345
 
 .PHONY: codegen
 codegen:

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ARG golangImageTag=1.12.3
+
 # build
-FROM golang:1.12.0 as build-stage
+FROM golang:${golangImageTag} as build-stage
 RUN mkdir -p /go/src/github.com/karydia/karydia/
 WORKDIR /go/src/github.com/karydia/karydia/
 COPY ./ ./
@@ -21,13 +23,14 @@ RUN make
 RUN make test
 
 # dev-image (only for development)
-FROM k8s.gcr.io/alpine-with-bash:1.0 as dev-image
-RUN apk update && apk add inotify-tools
+FROM build-stage as dev-image
+RUN apt-get -qq update && apt-get -qq install inotify-tools lsof
+RUN go get -u github.com/go-delve/delve/cmd/dlv
 COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 COPY ./scripts/hotswap-dev /usr/local/bin/hotswap-dev
 
 # prod-image (production usage)
-FROM k8s.gcr.io/debian-base-amd64:0.4.0 as prod-image
+FROM k8s.gcr.io/debian-base-amd64:1.0.0 as prod-image
 COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 USER 65534:65534
 
