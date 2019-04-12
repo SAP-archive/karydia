@@ -29,7 +29,7 @@ spec:
       serviceAccount: karydia
       containers:
       - name: karydia
-        image: karydia/karydia-dev
+        image: eu.gcr.io/gardener-project/karydia/karydia-dev
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: karydia-tls
