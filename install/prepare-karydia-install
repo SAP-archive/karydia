@@ -17,7 +17,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # Creates needed certificate and tls secrets
-/bin/bash ${DIR}/../scripts/create-karydia-certificatei
+/bin/bash ${DIR}/../scripts/create-karydia-certificate
 /bin/bash ${DIR}/../scripts/create-karydia-tls-secret
 echo "Created certificate and TLS secrets."
 
@@ -25,7 +25,7 @@ sleep 1
 
 # Create configmap for the default network policy
 kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<${DIR}/../manifests/example-default-network-policy.yml)"
-echo "Created configmap for default network polcy"
+echo "Created configmap for default network policy"
 
 sleep 1
 
@@ -36,23 +36,19 @@ if [[ -z "${ca_bundle}" ]]; then
   exit 1
 fi
 
-echo "${ca_bundle}"
+# Create values.yaml from its template and include CA bundle
 
 templateFile="${DIR}/charts/values-template.yaml"
 valuesFile="${DIR}/charts/values.yaml"
 
-echo "$templateFile"
-
 rm $valuesFile
 while IFS= read -r line
 do
-  echo $line >> $valuesFile
+  echo "$line" >> $valuesFile
   if [[ $line = "caBundle: |" ]]
   then
-    echo $ca_bundle >> $valuesFile
+    echo "  $ca_bundle" >> $valuesFile
   fi
-done <"$templateFile"
+done <$templateFile
 
-# printf "%s\n" "caBundle: |" "  ${ca_bundle}" >${DIR}/charts/values.yaml
-
-echo "Wrote CA bundle into values.yml"
+echo "Created values.yml"
