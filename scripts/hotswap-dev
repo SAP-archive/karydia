@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,29 +17,70 @@
 # This script is only for development. It (hot)swaps the main binary within a running dev container for a new binary.
 # This new binary could be built locally and just copied to the dev container (e.g. with 'kubectl cp'). Afterwards this script kill(s) the running
 # main binary process(es), replaces the main binary with the new one and starts it again.
+# author: Jonas Zengerle
 
 set -e
+
+# Options
+## provide the following parameters for customizing
+##   -r <command>	: use this command to run main binary instead of starting it directly
+while getopts ":r:" opt
+do
+  case $opt in
+    r)
+      RUN_CMD="$OPTARG"			# e.g. 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec {{binPath}} --'
+    ;;
+  esac
+done
+shift $((OPTIND-1))
 
 # Setup
 MAIN_BIN_PATH="$1"			# e.g. '/usr/local/bin/karydia'
 WATCH_BIN_PATH="$1-dev"			# e.g. '/usr/local/bin/karydia-dev'
 MAIN_BIN=$(basename "$MAIN_BIN_PATH")	# e.g. 'karydia'
 WATCH_BIN=$(basename "$WATCH_BIN_PATH")	# e.g. 'karydia-dev'
+MAIN_BIN_RUN_CMD="$MAIN_BIN_PATH"	# e.g. '/usr/local/bin/karydia'
 LOG_MAIN="$MAIN_BIN.log"		# e.g. 'karydia.log'
 LOG_SELF=$(basename "$0")'.log'		# e.g. 'hotswap-dev.log'
 LOG_FORMAT='%-23s\t%-4s\t%-6s\t%-11s\t%-18s\t%-8s\n'
 MAX_CYCLES=10
 
+# Templating
+## provide the following placeholder(s) for usage in run command (specified via parameter '-r')
+##   {{binPath}}	gets replaced with	path to main binary ($MAIN_BIN_PATH)
+if ! [ -z "$RUN_CMD" ]
+then
+  MAIN_BIN_RUN_CMD=$(printf '%s' "$RUN_CMD" | sed \
+    -e "s|{{binPath}}|$MAIN_BIN_PATH|g"	# replace '{{binPath}}' with path to main binary ($MAIN_BIN_PATH)
+  )
+fi
+
+# Functions
+## get IDs of processes which are using specified file passed via parameter (e.g. $1:'/usr/local/bin/karydia')
+function getPids() {
+  lsof | grep $1 |
+    while read -r name pid data
+    do
+      printf '%s\n' "$pid"
+    done
+}
+
 
 # Start
 
-## run main binary in separate process with passed parameters (e.g. $2:'runserver', $3:'--tls-cert', ...) if main binary exists otherwise exit
-[ -e "$MAIN_BIN_PATH" ] && (nohup "$MAIN_BIN_PATH" "${@:2}" > "$LOG_MAIN" &) || exit 1
+## prepare parameters for 'nohup' command
+NOHUP_UTILITY=$(echo "$MAIN_BIN_RUN_CMD" | cut -d' ' -f1)									# e.g. '/usr/local/bin/karydia'
+NOHUP_ARGUMENTS=''														# add content only if existent
+[ $(echo "$MAIN_BIN_RUN_CMD" | wc -w) -gt 1 ] && NOHUP_ARGUMENTS+=$(echo "$MAIN_BIN_RUN_CMD"' ' | cut -d' ' -f2-) || true	# e.g. '--listen=:40000 --headless=true ...'
+[ $(echo "${@:2}" | wc -w) -ge 1 ] && NOHUP_ARGUMENTS+=$(echo "${@:2}") || true							# e.g. 'runserver --tls-cert ...'
+
+## run main binary in separate process with passed parameters if main binary exists otherwise exit
+[ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || exit 1
 
 ## log activity to STDOUT and file
 touch "$LOG_SELF"
-echo "$MAIN_BIN_PATH ${@:2}" | tee "$LOG_SELF"
-printf "\n$LOG_FORMAT" 'DATE' 'TYPE' 'USER' 'FILE' 'MESSAGE' 'EVENTS' | tee -a "$LOG_SELF"
+printf '%s %s\n\n' "$NOHUP_UTILITY" "$NOHUP_ARGUMENTS" | tee "$LOG_SELF"
+printf "$LOG_FORMAT" 'DATE' 'TYPE' 'USER' 'FILE' 'MESSAGE' 'EVENTS' | tee -a "$LOG_SELF"
 
 
 # Watch
@@ -53,11 +95,15 @@ do
   then
     msg=''; cnt=1
 
+    ## if main binary file is moved connected processes are automatically adjusted to moved file (by OS), thus, the following step is needed to free file
+    ## kill / send 'SIGTERM' to these processes
+    [ "$event" == 'MOVED_TO' ] && [ ! -e "$MAIN_BIN_PATH" ] && sleep $(($MAX_CYCLES/2)) && kill $(getPids $WATCH_BIN_PATH) &> /dev/null || true
+
     ## wait till all processes (e.g. 'kubectl cp') freed watched file otherwise exit after some time
     while [[ "$(lsof | grep $WATCH_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && exit 1; done
 
-    ## kill / send 'SIGTERM' to processes who are using main binary
-    kill "$(pgrep $MAIN_BIN_PATH)" &> /dev/null || true
+    ## kill / send 'SIGTERM' to processes using main binary
+    kill $(getPids $MAIN_BIN_PATH) &> /dev/null || true
 
     msg+='killed'; cnt=1
 
@@ -67,8 +113,8 @@ do
     ## set watched file as new main binary
     mv -f "$WATCH_BIN_PATH" "$MAIN_BIN_PATH"
 
-    ## run main binary in separate process with passed parameters (e.g. $2:'runserver', $3:'--tls-cert', ...) if main binary exists otherwise exit
-    [ -e "$MAIN_BIN_PATH" ] && (nohup "$MAIN_BIN_PATH" "${@:2}" > "$LOG_MAIN" &) || exit 1
+    ## run main binary in separate process with passed parameters if main binary exists otherwise exit
+    [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || exit 1
 
     msg+=' & restarted'; cnt=1
 

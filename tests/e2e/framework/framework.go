@@ -57,6 +57,21 @@ func Setup(server, kubeconfig, namespace string) (*Framework, error) {
 	}, nil
 }
 
+func (f *Framework) CreateServiceAccount(serviceAccountName string, namespace string) (*corev1.ServiceAccount, error) {
+	serviceAccount := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      serviceAccountName,
+			Namespace: namespace,
+		},
+	}
+
+	serviceAccount, err := f.KubeClientset.CoreV1().ServiceAccounts(namespace).Create(serviceAccount)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service account: %v", err)
+	}
+	return serviceAccount, nil
+}
+
 func (f *Framework) CreateNamespace() error {
 	var objectMeta metav1.ObjectMeta
 	objectMeta.Labels = map[string]string{

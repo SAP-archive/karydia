@@ -53,7 +53,6 @@ func init() {
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
 	runserverCmd.Flags().Bool("enable-opa-admission", false, "Enable the OPA admission plugin")
-	runserverCmd.Flags().Bool("enable-ksp-admission", false, "Enable the KarydiaSecurityPolicy admission plugin")
 	runserverCmd.Flags().Bool("enable-karydia-admission", false, "Enable the Karydia admission plugin")
 
 	// TODO(schu): the '/v1' currently is required since the OPA package
@@ -78,7 +77,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	var (
 		enableController           bool
 		enableDefaultNetworkPolicy = viper.GetBool("enable-default-network-policy")
-		enableKSPAdmission         = viper.GetBool("enable-ksp-admission")
+		enableKSPAdmission         = false
 		enableOPAAdmission         = viper.GetBool("enable-opa-admission")
 		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
 	)

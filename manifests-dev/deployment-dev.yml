@@ -29,7 +29,7 @@ spec:
       serviceAccount: karydia
       containers:
       - name: karydia
-        image: karydia/karydia-dev
+        image: eu.gcr.io/gardener-project/karydia/karydia-dev
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: karydia-tls
@@ -38,6 +38,10 @@ spec:
         - containerPort: 33333
         command:
         - hotswap-dev
+        - -r
+        - 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient
+          exec {{binPath}} --'
+        - --
         - /usr/local/bin/karydia
         - runserver
         - --tls-cert
