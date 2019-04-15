@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +16,7 @@
 
 # This script is only for development. It generates the dev deployment yaml with a dev container from the prod deployment yaml.
 # This dev deployment yaml replaces the default deployment yaml and thus should ease and speed up (local) development.
+# author: Jonas Zengerle
 
 set -e
 
@@ -23,7 +25,12 @@ PROD_IMAGE="$1"	# e.g. 'karydia/karydia'
 DEV_IMAGE="$2"	# e.g. 'karydia/karydia-dev'
 PROD_YAML='manifests/deployment.yml'
 DEV_YAML='manifests-dev/deployment-dev.yml'
-DEV_CMD_FIRST='hotswap-dev'
+DEV_CMD_FIRST=(
+  'hotswap-dev'
+  '-r'
+  "'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec {{binPath}} --'"
+  '--'
+)
 DEV_CMD_BIN_LOCATION='/usr/local/bin/'
 CMD_MAIN_BIN='karydia'
 ERR_MSG_PREFIX='ERROR'
@@ -65,19 +72,32 @@ $cmd
 EOF
 )"												# get size of prod command list
     yq d -i "$DEV_YAML" "spec.template.spec.containers.$i.command"				# delete prod command list
-    yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.0" -- "$DEV_CMD_FIRST"	# set first command of dev command list
-    for ((j=0;j<$size;j++))
+    cnt=1											# count written elements of additional dev command list
+    for ((j=0;j<${#DEV_CMD_FIRST[*]};j++))							# loop through additional dev command elements
+    do
+      yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.$((cnt-1))" -- \
+        "${DEV_CMD_FIRST[$j]}"									# add command to dev command list
+      ((cnt++))											# increase written elements counter
+    done
+    for ((j=0;j<$size;j++))									# loop through prod command list
     do
       c="$(cat <<EOF | yq r - $j
 $cmd
 EOF
-)"												# get each command of prod command list
-      [ "$c" == "$CMD_MAIN_BIN" ] && c="$DEV_CMD_BIN_LOCATION$c"				# if command equals main binary add location
-      yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.$((j+1))" -- "$c"		# add command to dev command list
+)"												# get element of prod command list
+      [ "$c" == "$CMD_MAIN_BIN" ] && c="$DEV_CMD_BIN_LOCATION$c"				# if element equals main binary add location
+      yq w -i "$DEV_YAML" "spec.template.spec.containers.$i.command.$((j+cnt-1))" -- "$c"	# add command to dev command list
     done
     yq d -i "$DEV_YAML" "spec.template.spec.containers.$i.livenessProbe"			# delete liveness probe for dev
   fi
 done
+
+## yq uses yaml parser which strips single and double quotes (and comments), thus, the following step is needed to keep single quotes
+## see https://github.com/mikefarah/yq/issues/19
+## replace resulting tripple single quotes (''') with just one single quote (')
+cat <<EOF > "$DEV_YAML" |
+$(cat "$DEV_YAML" | sed -e "s|'''|'|g")
+EOF
 
 ## success message
 echo "Successfully generated '$DEV_YAML'"
