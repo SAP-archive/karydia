@@ -14,5 +14,8 @@
 
 metadata:
   name: karydia
+  namespace: kube-system
   labelApp: karydia
+namespace:
+  name: opa
 caBundle: |

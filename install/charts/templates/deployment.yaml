@@ -15,10 +15,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: karydia
+  name: {{ .Values.metadata.name }}
   labels:
     app: {{ .Values.metadata.labelApp }}
-  namespace: kube-system
+  namespace: {{ .Values.metadata.namespace }}
 spec:
   replicas: 1
   template:
