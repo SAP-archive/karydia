@@ -24,4 +24,4 @@ spec:
   - port: 443
     targetPort: 33333
   selector:
-    app: karydia
+    app: {{ .Values.metadata.labelApp }}

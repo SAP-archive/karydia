@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: {{ .Values.webhook.apiVersion }}
 kind: MutatingWebhookConfiguration
 metadata:
-  name: karydia-webhook
+  name: {{ .Values.metadata.name }}-webhook
   labels:
     app: {{ .Values.metadata.labelApp }}
 webhooks:
-  - name: karydia.gardener.cloud
+  - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
     clientConfig:
       service:
-        name: karydia
-        namespace: kube-system
+        name: {{ .Values.metadata.name }}
+        namespace: {{ .Values.metadata.namespace }}
         path: "/webhook/mutating"
       caBundle: {{ .Values.caBundle }}
     rules:

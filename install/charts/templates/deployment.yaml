@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: extensions/v1beta1
+apiVersion: {{ .Values.deployment.apiVersion }}
 kind: Deployment
 metadata:
   name: {{ .Values.metadata.name }}
@@ -24,12 +24,12 @@ spec:
   template:
     metadata:
       labels:
-        app: karydia
+        app: {{ .Values.metadata.labelApp }}
     spec:
-      serviceAccount: karydia
+      serviceAccount: {{ .Values.metadata.name }}
       containers:
-      - name: karydia
-        image: karydia/karydia:0.1.0
+      - name: {{ .Values.metadata.name }}
+        image: {{ .Values.metadata.name }}/{{ .Values.metadata.name }}:{{ .Values.version }}
         imagePullPolicy: IfNotPresent
         command:
           - karydia
@@ -42,8 +42,8 @@ spec:
           - --enable-karydia-admission
           - --enable-opa-admission
         volumeMounts:
-          - name: karydia-tls
-            mountPath: /etc/karydia/tls
+          - name: {{ .Values.deployment.volume.name }}
+            mountPath: {{ .Values.deployment.volume.path }}
         livenessProbe:
           httpGet:
             path: /healthz
@@ -56,7 +56,7 @@ spec:
           failureThreshold: 2
         ports:
         - containerPort: 33333
-      - name: opa
+      - name: {{ .Values.namespace.name }}
         image: openpolicyagent/opa:0.10.2
         imagePullPolicy: IfNotPresent
         args:
@@ -69,6 +69,6 @@ spec:
         args:
           - "--replicate-cluster=v1/pods"
       volumes:
-        - name: karydia-tls
+        - name: {{ .Values.deployment.volume.name }}
           secret:
-            secretName: karydia-tls
+            secretName: {{ .Values.deployment.volume.name }}
