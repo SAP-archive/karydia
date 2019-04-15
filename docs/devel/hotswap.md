@@ -17,8 +17,7 @@ Build the dev karydia container:
 make container-dev
 ```
 and push it to your docker registry.
-Adjust `manifests-dev/deployment-dev.yml` to your docker registry image manually or just use the
-next step.
+Adjust `manifests-dev/deployment-dev.yml` to your docker registry image manually or just use the next step.
 
 ## [OPTIONAL] Re-Generate the `manifests-dev/deployment-dev.yml`
 
@@ -28,8 +27,7 @@ You can use `scripts/generate-deployment-dev` to automatically re-generate the
 Two parameters are expected:
 - PROD_DOCKER_IMAGE which is the mentioned image under the karydia container spec at
 `manifests/deployment.yml` (e.g. `karydia/karydia`)
-- DEV_DOCKER_IMAGE which is the dev container image (e.g. `karydia/karydia-dev` OR your docker
-registry image from the previous step)
+- DEV_DOCKER_IMAGE which is the dev container image (e.g. `karydia/karydia-dev` OR your docker registry image from the previous step)
 ```
 scripts/generate-deployment-dev karydia/karydia karydia/karydia-dev
 ```
@@ -46,8 +44,24 @@ kubectl apply -f manifests-dev/deployment-dev.yml
 
 Develop a new feature
 
+### Live testing
+
 Build karydia and copy this new karydia go binary directly into the running cloud dev container:
 ```
 make build deploy-dev
 ```
+
+### Live debugging
+
+Build karydia with debug symbols and copy this new karydia go binary directly into the running cloud dev container:
+```
+make build-debug deploy-dev
+```
+
+Forward debug port to `localhost` via:
+```
+make debug-dev
+```
+
+Connect code debugger, e.g. from IDE, to (remote) debug port (default: `localhost:2345`)
 
