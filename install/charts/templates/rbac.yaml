@@ -90,7 +90,7 @@ roleRef:
 kind: ClusterRole
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: { .Values.metadata.name }}-view-roles
+  name: {{ .Values.metadata.name }}-view-roles
 rules:
 - apiGroups: ["rbac.authorization.k8s.io"]
   resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
@@ -101,14 +101,14 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: { .Values.metadata.name }}-view-roles
+  name: {{ .Values.metadata.name }}-view-roles
 subjects:
 - kind: ServiceAccount
-  namespace: { .Values.metadata.namespace }}
-  name: { .Values.metadata.name }}
+  namespace: {{ .Values.metadata.namespace }}
+  name: {{ .Values.metadata.name }}
 roleRef:
   kind: ClusterRole
-  name: { .Values.metadata.name }}-view-roles
+  name: {{ .Values.metadata.name }}-view-roles
   apiGroup: {{ .Values.rbac.apiGroup }}
 
 ---
