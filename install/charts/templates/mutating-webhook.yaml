@@ -17,7 +17,7 @@ kind: MutatingWebhookConfiguration
 metadata:
   name: karydia-webhook
   labels:
-    app: {{ .Values.metadata.label-app }}
+    app: {{ .Values.metadata.labelApp }}
 webhooks:
   - name: karydia.gardener.cloud
     failurePolicy: Ignore

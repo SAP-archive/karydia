@@ -17,7 +17,7 @@ kind: Deployment
 metadata:
   name: karydia
   labels:
-    app: karydia
+    app: {{ .Values.metadata.labelApp }}
   namespace: kube-system
 spec:
   replicas: 1
