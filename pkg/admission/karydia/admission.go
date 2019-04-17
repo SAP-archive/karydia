@@ -19,6 +19,7 @@ package karydia
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
@@ -35,10 +36,12 @@ var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind:
 type KarydiaAdmission struct {
 	logger        *logrus.Logger
 	kubeClientset *kubernetes.Clientset
+	karydiaConfig *v1alpha1.KarydiaConfig
 }
 
 type Config struct {
 	KubeClientset *kubernetes.Clientset
+	KarydiaConfig *v1alpha1.KarydiaConfig
 }
 
 type patchOperation struct {
@@ -56,6 +59,7 @@ func New(config *Config) (*KarydiaAdmission, error) {
 	return &KarydiaAdmission{
 		logger:        logger,
 		kubeClientset: config.KubeClientset,
+		karydiaConfig: config.KarydiaConfig,
 	}, nil
 }
 

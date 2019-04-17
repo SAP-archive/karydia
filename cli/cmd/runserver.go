@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +19,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,6 +39,7 @@ import (
 
 	karydiaadmission "github.com/karydia/karydia/pkg/admission/karydia"
 	opaadmission "github.com/karydia/karydia/pkg/admission/opa"
+	clientset "github.com/karydia/karydia/pkg/client/clientset/versioned"
 	"github.com/karydia/karydia/pkg/controller"
 	"github.com/karydia/karydia/pkg/k8sutil"
 	"github.com/karydia/karydia/pkg/server"
@@ -53,6 +57,8 @@ var runserverCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runserverCmd)
+
+	runserverCmd.Flags().String("config-custom-resource", "karydia-config", "Custom Resource where to load the configuration from, in the format <name>")
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
@@ -75,6 +81,25 @@ func init() {
 	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
 	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
 	runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
+}
+
+func getKarydiaConfig(kubeServer string, kubeConfig string, configCustomResource string) *v1alpha1.KarydiaConfig {
+	cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+	karydiaClientset, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build karydia clientset: %v\n", err)
+		os.Exit(1)
+	}
+	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(configCustomResource, metav1.GetOptions{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to load karydia config: %v\n", err)
+		os.Exit(1)
+	}
+	return karydiaConfig
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
@@ -113,9 +138,15 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	karydiaConfig := getKarydiaConfig(kubeServer, kubeConfig, viper.GetString("config-custom-resource"))
+	fmt.Fprintf(os.Stderr, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	fmt.Fprintf(os.Stderr, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	fmt.Fprintf(os.Stderr, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+
 	if enableKarydiaAdmission {
 		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
 			KubeClientset: kubeClientset,
+			KarydiaConfig: karydiaConfig,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)

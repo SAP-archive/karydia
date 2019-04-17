@@ -27,7 +27,7 @@ import (
 func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var patches patchOperations
 
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	automountServiceAccountToken, annotated := k.getAutomountServiceAccountTokenAnnotation(ns)
 	if annotated {
 		patches = mutateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, patches)
 	}
@@ -38,12 +38,23 @@ func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns 
 func (k *KarydiaAdmission) validateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
 
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	automountServiceAccountToken, annotated := k.getAutomountServiceAccountTokenAnnotation(ns)
 	if annotated {
 		validationErrors = validateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, validationErrors)
 	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
+}
+
+func (k *KarydiaAdmission) getAutomountServiceAccountTokenAnnotation(ns *corev1.Namespace) (automountServiceAccountToken string, annotated bool) {
+	automountServiceAccountToken, annotated = ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	if !annotated {
+		automountServiceAccountToken = k.karydiaConfig.Spec.AutomountServiceAccountToken
+	}
+	if automountServiceAccountToken != "" {
+		annotated = true
+	}
+	return automountServiceAccountToken, annotated
 }
 
 func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, validationErrors []string) []string {

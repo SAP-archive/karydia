@@ -15,3 +15,41 @@
 // limitations under the License.
 
 package v1alpha1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type KarydiaConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   KarydiaConfigSpec   `json:"spec"`
+	Status KarydiaConfigStatus `json:"status"`
+}
+
+type KarydiaConfigSpec struct {
+	// AutomountServiceAccountToken can be used to restrict auto-mounting
+	// of service account tokens by default
+	AutomountServiceAccountToken string `json:"automountServiceAccountToken"`
+
+	// SeccompProfile can be used to set a default seccomp profile
+	SeccompProfile string `json:"seccompProfile"`
+}
+
+type KarydiaConfigStatus struct {
+	ServiceToken string `json:"serviceToken"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type KarydiaConfigList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []KarydiaConfig `json:"items"`
+}
