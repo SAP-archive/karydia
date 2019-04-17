@@ -106,27 +106,24 @@ func admitServiceAccountToken(pod corev1.Pod, annotation string, mutationAllowed
 		}
 	} else if annotation == "remove-default" {
 		// Mutating webhook
-		if mutationAllowed {
 
-			if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
-				patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/serviceAccountName"}`))
-				for i, v := range pod.Spec.Volumes {
-					if strings.HasPrefix(v.Name, "default-token-") {
-						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
-					}
+		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
+			patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/serviceAccountName"}`))
+			for i, v := range pod.Spec.Volumes {
+				if strings.HasPrefix(v.Name, "default-token-") {
+					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
 				}
-				for i, c := range pod.Spec.Containers {
-					for j, v := range c.VolumeMounts {
-						if strings.HasPrefix(v.Name, "default-token-") {
-							patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
-						}
+			}
+			for i, c := range pod.Spec.Containers {
+				for j, v := range c.VolumeMounts {
+					if strings.HasPrefix(v.Name, "default-token-") {
+						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
 					}
 				}
 			}
-		} else {
-			validationErrors = append(validationErrors, "option 'remove-default' for  karydia.gardener.cloud/automountServiceAccountToken is only available for mutating webhooks")
 		}
+
 	}
 	return patches, validationErrors
 }
