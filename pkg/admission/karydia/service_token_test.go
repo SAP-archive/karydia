@@ -41,27 +41,6 @@ func TestMutatePodWithRemoveDefaultAnnotation(t *testing.T) {
 	}
 }
 
-func TestValidatePodWithRemoveDefaultAnnotation(t *testing.T) {
-	pod := corev1.Pod{}
-	var patches []string
-	var validationErrors []string
-
-	mutationAllowed := false
-
-	pod.Spec.ServiceAccountName = "default"
-	pod.Spec.Volumes = append([]corev1.Volume{}, corev1.Volume{Name: "default-token-abcd", VolumeSource: corev1.VolumeSource{}})
-	mounts := append([]corev1.VolumeMount{}, corev1.VolumeMount{Name: "default-token-abcd"})
-	pod.Spec.Containers = append([]corev1.Container{}, corev1.Container{Name: "first-container", VolumeMounts: mounts})
-
-	patches, validationErrors = admitServiceAccountToken(pod, "remove-default", mutationAllowed, patches, validationErrors)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
-	}
-	if len(validationErrors) != 1 {
-		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
-	}
-}
-
 func TestMutatePodWithRemoveDefaultAnnotationNonDefaultServiceAccount(t *testing.T) {
 	pod := corev1.Pod{}
 	var patches []string
