@@ -124,7 +124,7 @@ func admitServiceAccountToken(pod corev1.Pod, annotation string, mutationAllowed
 					}
 				}
 			}
-		} else {
+		} else if automountServiceAccountTokenUndefined(&pod) {
 			validationErrors = append(validationErrors, "option 'remove-default' for  karydia.gardener.cloud/automountServiceAccountToken is only available for mutating webhooks")
 		}
 	}
