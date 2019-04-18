@@ -125,7 +125,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		webHook.RegisterAdmissionPlugin(karydiaAdmission)
 	}
 
-	var defaultNetworkPolicy *networkingv1.NetworkPolicy
+	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
 		defaultNetworkPolicyIdentifier := viper.GetString("default-network-policy-configmap")
 		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
@@ -145,7 +145,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
 			os.Exit(1)
 		}
-		defaultNetworkPolicy = &policy
+		defaultNetworkPolicies["karydia-default-network-policy"] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
@@ -165,7 +165,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
-		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, "karydia-default-network-policy", viper.GetStringSlice("default-network-policy-excludes"))
 
 	}
 

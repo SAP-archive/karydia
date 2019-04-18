@@ -21,9 +21,11 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	namespaceInformer "k8s.io/client-go/informers/core/v1"
@@ -39,7 +41,8 @@ import (
 const controllerAgentName = "networkpolicy_reconciler"
 
 type NetworkpolicyReconciler struct {
-	defaultNetworkPolicy         *networkingv1.NetworkPolicy
+	defaultNetworkPolicyName     string
+	defaultNetworkPolicies       map[string]*networkingv1.NetworkPolicy
 	defaultNetworkPolicyExcludes []string
 
 	kubeclientset          kubernetes.Interface
@@ -54,10 +57,10 @@ type NetworkpolicyReconciler struct {
 func NewNetworkpolicyReconciler(
 	kubeclientset kubernetes.Interface,
 	networkpolicyInformer networkpolicyInformer.NetworkPolicyInformer, namespaceInformer namespaceInformer.NamespaceInformer,
-	defaultNetworkPolicy *networkingv1.NetworkPolicy, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
+	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
 
 	reconciler := &NetworkpolicyReconciler{
-
+		defaultNetworkPolicyName:     defaultNetworkPolicyName,
 		kubeclientset:                kubeclientset,
 		networkPolicyLister:          networkpolicyInformer.Lister(),
 		networkPoliciesSynced:        networkpolicyInformer.Informer().HasSynced,
@@ -65,7 +68,7 @@ func NewNetworkpolicyReconciler(
 		namespacesSynced:             namespaceInformer.Informer().HasSynced,
 		namespaceWorkqueue:           workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Namespaces"),
 		networkPolicyworkqueue:       workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Networkpolicies"),
-		defaultNetworkPolicy:         defaultNetworkPolicy,
+		defaultNetworkPolicies:       defaultNetworkPolicies,
 		defaultNetworkPolicyExcludes: defaultNetworkPolicyExcludes,
 	}
 
@@ -198,35 +201,47 @@ func (reconciler *NetworkpolicyReconciler) processNextNamespaceWorkItem() bool {
 }
 
 func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) error {
-	namespace, name, err := cache.SplitMetaNamespaceKey(key)
+	namespaceName, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return nil
 	}
-	if reconciler.defaultNetworkPolicy == nil {
+	namespace, err := reconciler.kubeclientset.CoreV1().Namespaces().Get(namespaceName, meta_v1.GetOptions{})
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("namespace '%s'does not exist", namespaceName))
+		return nil
+	}
+
+	npName, err := reconciler.getDefaultNetworkpolicyName(namespace)
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("error getting default network policy: %s", err))
+		return nil
+	}
+
+	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
 		klog.Warning("No default network policy set")
 		reconciler.namespaceWorkqueue.Forget(key)
 		return nil
 	}
 
-	if name == reconciler.defaultNetworkPolicy.GetName() {
+	if name == reconciler.defaultNetworkPolicies[npName].GetName() {
 
-		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespace).Get(name)
+		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(name)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				utilruntime.HandleError(fmt.Errorf("networkpolicy '%s' in work queue no longer exists", key))
-				if err := reconciler.createDefaultNetworkPolicy(namespace); err != nil {
+				if err := reconciler.createDefaultNetworkPolicy(namespaceName, npName); err != nil {
 					klog.Errorf("failed to recreate default network policy: %v", err)
-					return fmt.Errorf("error syncing %q: %v", namespace, err)
+					return fmt.Errorf("error syncing %q: %v", namespaceName, err)
 				}
 				return nil
 			}
 		} else {
-			klog.Infof("Found networkpolicy %s/%s", namespace, networkPolicy.Name)
-			if reconciler.reconcileIsNeeded(networkPolicy) {
-				if err := reconciler.updateDefaultNetworkPolicy(namespace); err != nil {
+			klog.Infof("Found networkpolicy %s/%s", namespaceName, networkPolicy.Name)
+			if reconciler.reconcileIsNeeded(networkPolicy, npName) {
+				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, npName); err != nil {
 					klog.Errorf("failed to update default network policy: %v", err)
-					return fmt.Errorf("error syncing %q: %v", namespace, err)
+					return fmt.Errorf("error syncing %q: %v", namespaceName, err)
 				}
 			}
 		}
@@ -234,9 +249,7 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	return nil
 }
 func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) error {
-
-	_, err := reconciler.namespacesLister.Get(key)
-
+	namespace, err := reconciler.namespacesLister.Get(key)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			utilruntime.HandleError(fmt.Errorf("namespace '%s' in work queue no longer exists", key))
@@ -252,13 +265,19 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 		}
 	}
 
-	if reconciler.defaultNetworkPolicy == nil {
+	npName, err := reconciler.getDefaultNetworkpolicyName(namespace)
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf("error getting default network policy: %s", err))
+		return nil
+	}
+
+	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
 		klog.Warning("No default network policy set")
 		reconciler.namespaceWorkqueue.Forget(key)
 		return nil
 	}
 
-	if err := reconciler.createDefaultNetworkPolicy(key); err != nil {
+	if err := reconciler.createDefaultNetworkPolicy(key, npName); err != nil {
 		klog.Errorf("failed to create default network policy: %v", err)
 		return fmt.Errorf("error syncing %q: %v", key, err)
 	}
@@ -266,6 +285,17 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 	reconciler.namespaceWorkqueue.Forget(key)
 	klog.Infof("Successfully synced %q", key)
 	return nil
+}
+
+func (reconciler *NetworkpolicyReconciler) getDefaultNetworkpolicyName(namespace *corev1.Namespace) (name string, err error) {
+
+	npName := reconciler.defaultNetworkPolicyName
+
+	if defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/defaultNetworkPolicy"]; ok {
+		npName = defaultNetworkPolicyAnnotation
+	}
+
+	return npName, err
 }
 
 func (reconciler *NetworkpolicyReconciler) enqueueNetworkPolicy(obj interface{}) {
@@ -287,8 +317,8 @@ func (reconciler *NetworkpolicyReconciler) enqueueNamespace(obj interface{}) {
 	reconciler.namespaceWorkqueue.AddRateLimited(key)
 }
 
-func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy) bool {
-	desiredPolicy := reconciler.defaultNetworkPolicy.DeepCopy()
+func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy, networkpolicyName string) bool {
+	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	actualSpec, _ := actualPolicy.Spec.Marshal()
 	desiredSpec, _ := desiredPolicy.Spec.Marshal()
 	if bytes.Equal(actualSpec, desiredSpec) {
@@ -298,8 +328,8 @@ func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.Ne
 
 }
 
-func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace string) error {
-	desiredPolicy := reconciler.defaultNetworkPolicy.DeepCopy()
+func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace string, networkpolicyName string) error {
+	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	desiredPolicy.Namespace = namespace
 	if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Update(desiredPolicy); err != nil {
 		return err
@@ -307,8 +337,8 @@ func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace 
 	return nil
 }
 
-func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace string) error {
-	desiredPolicy := reconciler.defaultNetworkPolicy.DeepCopy()
+func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace string, networkpolicyName string) error {
+	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	desiredPolicy.ObjectMeta.Namespace = namespace
 
 	if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
