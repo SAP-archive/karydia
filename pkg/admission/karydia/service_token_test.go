@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +17,12 @@
 package karydia
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 
+	jsonpatch "github.com/evanphx/json-patch"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -38,6 +44,16 @@ func TestPodRemoveDefaultAnnotationDefaultServiceAccount(t *testing.T) {
 	if len(patches) != 3 {
 		t.Errorf("expected 3 patches but got: %+v", patches)
 	}
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+	// Zero validation errors expected for mutated pod
+	validationErrors = validatePodServiceAccountToken(mutatedPod, "remove-default", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+	// One validation error expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
@@ -58,6 +74,16 @@ func TestPodRemoveDefaultAnnotationSpecificServiceAccount(t *testing.T) {
 	if len(patches) != 0 {
 		t.Errorf("expected 0 patches but got: %+v", patches)
 	}
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+	// Zero validation errors expected for mutated pod
+	validationErrors = validatePodServiceAccountToken(mutatedPod, "remove-default", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+	// Zero validation errors expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
@@ -80,6 +106,16 @@ func TestPodRemoveDefaultAnnotationDefaultSerivceAccountMultipleVolumes(t *testi
 	if len(patches) != 3 {
 		t.Errorf("expected 3 patches but got: %+v", patches)
 	}
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+	// Zero validation errors expected for mutated pod
+	validationErrors = validatePodServiceAccountToken(mutatedPod, "remove-default", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+	// One validation error expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
@@ -146,4 +182,30 @@ func TestPodNonDefaultAnnotationSpecificServiceAccount(t *testing.T) {
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
+}
+
+/* Helper functions */
+func patchPod(pod corev1.Pod, patches []string) (corev1.Pod, error) {
+	var podJSON []byte
+	podJSON, err := json.Marshal(&pod)
+	if err != nil {
+		return pod, err
+	}
+
+	patchesStr := strings.Join(patches, ",")
+	patchesByteStr := []byte(fmt.Sprintf("[%s]", patchesStr))
+
+	patchObj, err := jsonpatch.DecodePatch(patchesByteStr)
+	if err != nil {
+		return pod, err
+	}
+	podPatchedJSON, err := patchObj.Apply(podJSON)
+	if err != nil {
+		return pod, err
+	}
+
+	var podPatched corev1.Pod
+	json.Unmarshal(podPatchedJSON, &podPatched)
+
+	return podPatched, nil
 }
