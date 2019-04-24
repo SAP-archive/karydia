@@ -90,7 +90,8 @@ func (k *KarydiaAdmission) AdmitPod(admissionRequest v1beta1.AdmissionRequest, m
 
 	seccompProfile, annotated := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if annotated {
-		patches, validationErrors = admitSeccompProfile(*pod, seccompProfile, mutationAllowed, patches, validationErrors)
+		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
+		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
 	}
 
 	return admitResponse(patches, validationErrors)
@@ -130,23 +131,29 @@ func mutatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, patches [
 	return patches
 }
 
-func admitSeccompProfile(pod corev1.Pod, seccompProfile string, mutationAllowed bool, patches []string, validationErrors []string) ([]string, []string) {
+func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
 	seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-	if !ok && mutationAllowed {
+	if !ok || seccompPod != nsAnnotation {
+		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", nsAnnotation)
+		validationErrors = append(validationErrors, validationErrorMsg)
+	}
+	return validationErrors
+}
+
+func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches []string) []string {
+	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
+	if !ok {
 		if len(pod.ObjectMeta.Annotations) == 0 {
 			// If no annotation object exists yet, we have
 			// to create it. Otherwise we will encounter
 			// the following error:
 			// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", seccompProfile))
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", nsAnnotation))
 		} else {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", seccompProfile))
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", nsAnnotation))
 		}
-	} else if seccompPod != seccompProfile {
-		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", seccompProfile)
-		validationErrors = append(validationErrors, validationErrorMsg)
 	}
-	return patches, validationErrors
+	return patches
 }
 
 func automountServiceAccountTokenUndefined(pod *corev1.Pod) bool {
