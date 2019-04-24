@@ -53,6 +53,7 @@ func TestPodRemoveDefaultAnnotationDefaultServiceAccount(t *testing.T) {
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
+	validationErrors = []string{}
 	// One validation error expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 1 {
@@ -83,6 +84,7 @@ func TestPodRemoveDefaultAnnotationSpecificServiceAccount(t *testing.T) {
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
+	validationErrors = []string{}
 	// Zero validation errors expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 0 {
@@ -115,6 +117,7 @@ func TestPodRemoveDefaultAnnotationDefaultSerivceAccountMultipleVolumes(t *testi
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
+	validationErrors = []string{}
 	// One validation error expected for initial pod
 	validationErrors = validatePodServiceAccountToken(pod, "remove-default", validationErrors)
 	if len(validationErrors) != 1 {
