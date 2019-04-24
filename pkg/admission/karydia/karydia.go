@@ -59,42 +59,59 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 	}
 
 	if ar.Request.Kind == kindPod && ar.Request.Resource == resourcePod {
-		return k.AdmitPod(*ar.Request, mutationAllowed)
+		raw := ar.Request.Object.Raw
+
+		pod, err := decodePod(raw)
+		if err != nil {
+			k.logger.Errorf("failed to decode object: %v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		namespace, err := k.getNamespaceFromAdmissionRequest(*ar.Request)
+		if err != nil {
+			k.logger.Errorf("%v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		if mutationAllowed {
+			return k.mutatePod(pod, namespace)
+		}
+		return k.validatePod(pod, namespace)
 	}
 
 	return k8sutil.AllowAdmissionResponse()
 }
 
-func (k *KarydiaAdmission) AdmitPod(admissionRequest v1beta1.AdmissionRequest, mutationAllowed bool) *v1beta1.AdmissionResponse {
-	var patches, validationErrors []string
+func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
+	var patches []string
 
-	raw := admissionRequest.Object.Raw
-
-	pod, err := decodePod(raw)
-	if err != nil {
-		k.logger.Errorf("failed to decode object: %v", err)
-		return k8sutil.ErrToAdmissionResponse(err)
-	}
-
-	namespace, err := k.getNamespaceFromAdmissionRequest(admissionRequest)
-	if err != nil {
-		k.logger.Errorf("%v", err)
-		return k8sutil.ErrToAdmissionResponse(err)
-	}
-
-	automountServiceAccountToken, annotated := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	if annotated {
 		patches = mutatePodServiceAccountToken(*pod, automountServiceAccountToken, patches)
+	}
+
+	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
+	if annotated {
+		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
+	}
+
+	return admitResponse(patches, nil)
+}
+
+func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
+	var validationErrors []string
+
+	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	if annotated {
 		validationErrors = validatePodServiceAccountToken(*pod, automountServiceAccountToken, validationErrors)
 	}
 
-	seccompProfile, annotated := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
+	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if annotated {
-		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
 		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
 	}
 
-	return admitResponse(patches, validationErrors)
+	return admitResponse(nil, validationErrors)
 }
 
 func validatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
