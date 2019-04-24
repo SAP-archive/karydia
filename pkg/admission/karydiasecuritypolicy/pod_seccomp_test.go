@@ -33,6 +33,7 @@ func TestValidatePodSeccomp(t *testing.T) {
 		t.Errorf("expected no patches but got: %+v", patches)
 	}
 
+	// Pod with policy, but without annotation => should create annotation object
 	policy := &v1alpha1.KarydiaSecurityPolicy{
 		Spec: v1alpha1.KarydiaSecurityPolicySpec{
 			Pod: v1alpha1.Pod{
@@ -49,6 +50,20 @@ func TestValidatePodSeccomp(t *testing.T) {
 		t.Errorf("expected 1 patch but got: %+v", patches)
 	}
 
+	// Pod with policy and annotation => should add seccomp annotation
+        pod.ObjectMeta.Annotations = map[string]string{
+                "test": "value",
+        }
+
+        patches, validationErrors = validatePod(policy, pod)
+        if len(validationErrors) != 0 {
+                t.Errorf("expected 0 validation errors but got: %+v", validationErrors)
+        }
+        if len(patches) != 1 {
+                t.Errorf("expected 1 patch but got: %+v", patches)
+        }
+
+	// Pod with policy and seccomp annotation
 	pod.ObjectMeta.Annotations = map[string]string{
 		"seccomp.security.alpha.kubernetes.io/pod": "my-seccomp-profile",
 	}

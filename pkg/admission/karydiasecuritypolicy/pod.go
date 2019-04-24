@@ -115,7 +115,15 @@ func validatePod(policy *v1alpha1.KarydiaSecurityPolicy, pod *corev1.Pod) ([]str
 	if seccompProfile != "" {
 		seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 		if !ok {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", seccompProfile))
+			if len(pod.ObjectMeta.Annotations) == 0 {
+				// If no annotation object exists yet, we have
+				// to create it. Otherwise we will encounter
+				// the following error:
+				// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
+				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", seccompProfile))
+			} else {
+				patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", seccompProfile))
+			}
 		} else if seccompPod != seccompProfile {
 			validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", seccompProfile)
 			validationErrors = append(validationErrors, validationErrorMsg)
