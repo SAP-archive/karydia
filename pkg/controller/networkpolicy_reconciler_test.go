@@ -225,7 +225,7 @@ func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
 	newNamespace.Name = "unittest"
 
 	annotations := make(map[string]string)
-	annotations["karydia.gardener.cloud/defaultNetworkPolicy"] = "karydia-default-network-policy-l2"
+	annotations["karydia.gardener.cloud/networkPolicy"] = "karydia-default-network-policy-l2"
 	newNamespace.ObjectMeta.SetAnnotations(annotations)
 
 	f.namespace = append(f.namespace, newNamespace)
