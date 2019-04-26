@@ -291,7 +291,7 @@ func (reconciler *NetworkpolicyReconciler) getDefaultNetworkpolicyName(namespace
 
 	npName := reconciler.defaultNetworkPolicyName
 
-	if defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/defaultNetworkPolicy"]; ok {
+	if defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy"]; ok {
 		npName = defaultNetworkPolicyAnnotation
 	}
 
