@@ -95,7 +95,7 @@ func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1b
 		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
 	}
 
-	return admitResponse(patches, nil)
+	return k8sutil.MutatingAdmissionResponse(patches)
 }
 
 func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
@@ -111,7 +111,7 @@ func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v
 		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
 	}
 
-	return admitResponse(nil, validationErrors)
+	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
 func validatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
@@ -189,13 +189,6 @@ func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.Admission
 		return nil, e
 	}
 	return namespace, nil
-}
-
-func admitResponse(patches []string, validationErrors []string) *v1beta1.AdmissionResponse {
-	if len(validationErrors) > 0 {
-		return k8sutil.ValidationErrorAdmissionResponse(validationErrors)
-	}
-	return k8sutil.MutatingAdmissionResponse(patches)
 }
 
 func decodePod(raw []byte) (*corev1.Pod, error) {
