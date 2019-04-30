@@ -19,17 +19,12 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/karydia/karydia/pkg/client/clientset/versioned/typed/karydia/v1alpha1"
-	rest "k8s.io/client-go/rest"
-	testing "k8s.io/client-go/testing"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/testing"
 )
 
 type FakeKarydiaV1alpha1 struct {
 	*testing.Fake
-}
-
-func (c *FakeKarydiaV1alpha1) KarydiaSecurityPolicies() v1alpha1.KarydiaSecurityPolicyInterface {
-	return &FakeKarydiaSecurityPolicies{c}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
