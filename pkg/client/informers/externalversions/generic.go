@@ -21,9 +21,8 @@ package externalversions
 import (
 	"fmt"
 
-	v1alpha1 "github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
-	schema "k8s.io/apimachinery/pkg/runtime/schema"
-	cache "k8s.io/client-go/tools/cache"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/cache"
 )
 
 // GenericInformer is type of SharedIndexInformer which will locate and delegate to other
@@ -53,8 +52,6 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=karydia.gardener.cloud, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithResource("karydiasecuritypolicies"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Karydia().V1alpha1().KarydiaSecurityPolicies().Informer()}, nil
 
 	}
 

@@ -28,13 +28,6 @@ deployed with `--enable-default-network-policy`.
 kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<manifests/example-default-network-policy.yml)"
 ```
 
-Create the `KarydiaSecurityPolicy` CRD (not actually used currently but
-expected by the controller):
-
-```
-kubectl apply -f manifests/crd-karydia-security-policy.yml
-```
-
 Create a service account with cluster-admin permissions and deploy karydia:
 
 ```
