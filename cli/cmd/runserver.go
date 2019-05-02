@@ -80,7 +80,8 @@ func init() {
 
 	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
 	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
-	runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
+	// replaced by KarydiaConfig - it's now possible to change this value via 'manifests/config.yml'
+	//runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
 }
 
 func getKarydiaConfig(kubeServer string, kubeConfig string, configCustomResource string) *v1alpha1.KarydiaConfig {
@@ -142,6 +143,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	fmt.Fprintf(os.Stderr, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
 	fmt.Fprintf(os.Stderr, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
 	fmt.Fprintf(os.Stderr, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	fmt.Fprintf(os.Stderr, "KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
 
 	if enableKarydiaAdmission {
 		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
@@ -158,10 +160,10 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
-		defaultNetworkPolicyIdentifier := viper.GetString("default-network-policy-configmap")
+		defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
 		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
 		if len(group) < 2 {
-			fmt.Fprintf(os.Stderr, "default-network-policy-configmap must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+			fmt.Fprintf(os.Stderr, "NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
 			os.Exit(1)
 		}
 		namespace := group[0]
@@ -176,7 +178,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
 			os.Exit(1)
 		}
-		defaultNetworkPolicies["karydia-default-network-policy"] = &policy
+		defaultNetworkPolicies[karydiaConfig.Spec.NetworkPolicy] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
