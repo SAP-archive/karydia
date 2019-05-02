@@ -18,7 +18,6 @@ package karydia
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
@@ -33,6 +32,9 @@ import (
 
 var resourcePod = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 var kindPod = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
+
+var resourceServiceAccount = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "serviceaccounts"}
+var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}
 
 type KarydiaAdmission struct {
 	logger        *logrus.Logger
@@ -77,6 +79,25 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 			return k.mutatePod(pod, namespace)
 		}
 		return k.validatePod(pod, namespace)
+	} else if ar.Request.Kind == kindServiceAccount && ar.Request.Resource == resourceServiceAccount {
+		raw := ar.Request.Object.Raw
+
+		sAcc, err := decodeServiceAccount(raw)
+		if err != nil {
+			k.logger.Errorf("failed to decode object: %v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		namespace, err := k.getNamespaceFromAdmissionRequest(*ar.Request)
+		if err != nil {
+			k.logger.Errorf("%v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		if mutationAllowed {
+			return k.mutateServiceAccount(sAcc, namespace)
+		}
+		return k.validateServiceAccount(sAcc, namespace)
 	}
 
 	return k8sutil.AllowAdmissionResponse()
@@ -85,26 +106,15 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var patches []string
 
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if annotated {
-		patches = mutatePodServiceAccountToken(*pod, automountServiceAccountToken, patches)
-	}
-
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if annotated {
 		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
 	}
-
 	return k8sutil.MutatingAdmissionResponse(patches)
 }
 
 func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
-
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if annotated {
-		validationErrors = validatePodServiceAccountToken(*pod, automountServiceAccountToken, validationErrors)
-	}
 
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if annotated {
@@ -114,35 +124,49 @@ func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
-func validatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
-	if nsAnnotation == "forbidden" {
-		if automountServiceAccountTokenUndefined(&pod) {
-			validationErrors = append(validationErrors, "automount of service account not allowed")
+func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
+	var patches []string
+
+	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	if annotated {
+		patches = mutateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, patches)
+	}
+
+	return k8sutil.MutatingAdmissionResponse(patches)
+}
+
+func (k *KarydiaAdmission) validateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
+	var validationErrors []string
+
+	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	if annotated {
+		validationErrors = validateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, validationErrors)
+	}
+
+	return k8sutil.ValidatingAdmissionResponse(validationErrors)
+}
+
+func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, validationErrors []string) []string {
+	if nsAnnotation == "change-default" {
+		if automountServiceAccountTokenUndefined(&sAcc) && sAcc.Name == "default" {
+			validationErrors = append(validationErrors, "implicit automount of default service account token not allowed")
 		}
-	} else if nsAnnotation == "non-default" || nsAnnotation == "remove-default" {
-		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
+	} else if nsAnnotation == "change-all" {
+		if automountServiceAccountTokenUndefined(&sAcc) {
+			validationErrors = append(validationErrors, "implicit automount of service account token not allowed")
 		}
 	}
 	return validationErrors
 }
 
-func mutatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, patches []string) []string {
-	if nsAnnotation == "remove-default" {
-		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
-			for i, v := range pod.Spec.Volumes {
-				if strings.HasPrefix(v.Name, "default-token-") {
-					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
-				}
-			}
-			for i, c := range pod.Spec.Containers {
-				for j, v := range c.VolumeMounts {
-					if strings.HasPrefix(v.Name, "default-token-") {
-						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
-					}
-				}
-			}
+func mutateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, patches []string) []string {
+	if nsAnnotation == "change-default" {
+		if automountServiceAccountTokenUndefined(&sAcc) && sAcc.Name == "default" {
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/automountServiceAccountToken", "value": %s}`, "false"))
+		}
+	} else if nsAnnotation == "change-all" {
+		if automountServiceAccountTokenUndefined(&sAcc) {
+			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/automountServiceAccountToken", "value": %s}`, "false"))
 		}
 	}
 	return patches
@@ -173,8 +197,8 @@ func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches []stri
 	return patches
 }
 
-func automountServiceAccountTokenUndefined(pod *corev1.Pod) bool {
-	return pod.Spec.AutomountServiceAccountToken == nil
+func automountServiceAccountTokenUndefined(sAcc *corev1.ServiceAccount) bool {
+	return sAcc.AutomountServiceAccountToken == nil
 }
 
 func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.AdmissionRequest) (*v1.Namespace, error) {
@@ -198,6 +222,15 @@ func decodePod(raw []byte) (*corev1.Pod, error) {
 		return nil, err
 	}
 	return pod, nil
+}
+
+func decodeServiceAccount(raw []byte) (*corev1.ServiceAccount, error) {
+	sAcc := &corev1.ServiceAccount{}
+	deserializer := scheme.Codecs.UniversalDeserializer()
+	if _, _, err := deserializer.Decode(raw, nil, sAcc); err != nil {
+		return nil, err
+	}
+	return sAcc, nil
 }
 
 func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
