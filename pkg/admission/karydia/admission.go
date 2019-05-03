@@ -21,13 +21,12 @@ import (
 	"fmt"
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 
+	"github.com/karydia/karydia/pkg/k8sutil"
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-
-	"github.com/karydia/karydia/pkg/k8sutil"
 )
 
 var kindPod = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
@@ -37,6 +36,10 @@ type KarydiaAdmission struct {
 	logger        *logrus.Logger
 	kubeClientset *kubernetes.Clientset
 	karydiaConfig *v1alpha1.KarydiaConfig
+}
+func (k *KarydiaAdmission) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
+	k.karydiaConfig = karydiaConfig.DeepCopy()
+	return nil
 }
 
 type Config struct {
