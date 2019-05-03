@@ -514,3 +514,13 @@ func (f *Framework) WaitPodRunning(namespace, name string, timeout time.Duration
 		return true, nil
 	})
 }
+
+func (f *Framework) WaitDefaultServiceAccountCreated(ns string, timeout time.Duration) error {
+	return wait.Poll(100*time.Millisecond, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get pods: %v", err)
+		}
+		return true, nil
+	})
+}
