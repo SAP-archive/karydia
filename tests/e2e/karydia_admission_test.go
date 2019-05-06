@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -134,21 +136,18 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 					}
 				}
 			} else {
-				timeout := 500 * time.Millisecond
+				timeout := 3000 * time.Millisecond
 				if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
-					t.Fatalf("default service account not created")
+					t.Fatalf("default service account not created: %v", err)
 				}
 			}
 
-			if tc.automountTokenServiceAccount != nil {
-				sAcc, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get(tc.serviceAccount, metav1.GetOptions{})
+			/* Try twice due to infrequent lock of service account resource after creation */
+			err = updateServiceAccount(tc, ns)
+			if err != nil {
+				err = updateServiceAccount(tc, ns)
 				if err != nil {
-					t.Fatalf("failed to retrieve service account: %v", err)
-				}
-				sAcc.AutomountServiceAccountToken = tc.automountTokenServiceAccount
-				sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
-				if err != nil {
-					t.Fatalf("failed to update service account: %v", err)
+					t.Fatalf("could not update service account: %v", err)
 				}
 			}
 
@@ -182,7 +181,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			}
 
 			if (len(createdPod.Spec.Volumes) == 1) != tc.mounted {
-				t.Fatalf("expected is mounted to be %v but is %v", tc.mounted, len(createdPod.Spec.Volumes) == 1)
+				t.Fatalf("expected is mounted to be %v but is %v with %v", tc.mounted, len(createdPod.Spec.Volumes) == 1, createdPod.Spec.Volumes)
 			}
 
 			timeout := 2 * time.Minute
@@ -191,6 +190,21 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+func updateServiceAccount(tc AutomountTokenTestCase, ns string) error {
+	if tc.automountTokenServiceAccount != nil {
+		sAcc, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get(tc.serviceAccount, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to retrieve service account: %v", err)
+		}
+		sAcc.AutomountServiceAccountToken = tc.automountTokenServiceAccount
+		sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
+		if err != nil {
+			return fmt.Errorf("failed to update service account: %v", err)
+		}
+	}
+	return nil
 }
 
 func stringifyTestCase(tc AutomountTokenTestCase) string {
