@@ -493,6 +493,11 @@ func (f *Framework) DeleteAll() error {
 			return fmt.Errorf("failed to delete namespace %q: %v", name, err)
 		}
 	}
+	/* Delete single pod in default namespace */
+	err = f.KubeClientset.CoreV1().Pods("default").Delete("karydia-e2e-test-pod", &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete pod in default namespace")
+	}
 	return nil
 }
 

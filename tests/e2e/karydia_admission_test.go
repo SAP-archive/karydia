@@ -198,6 +198,43 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 	}
 }
 
+func TestAutomountServiceAccountTokenInDefaultNamespace(t *testing.T) {
+	var ns = "default"
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: ns,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("failed to create pod: %v", err)
+	}
+
+	if createdPod.Spec.AutomountServiceAccountToken != nil {
+		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+	}
+
+	if !(len(createdPod.Spec.Volumes) == 0) {
+		/* Change to t.Fatalf when karydia setup is finished */
+		t.Logf("expected is mounted to be false but is true")
+	}
+
+	timeout := 2 * time.Minute
+	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
+		t.Fatalf("pod never reached state running")
+	}
+}
+
 func updateServiceAccount(tc AutomountTokenTestCase, ns string) error {
 	if tc.automountTokenServiceAccount != nil {
 		sAcc, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get(tc.serviceAccount, metav1.GetOptions{})
