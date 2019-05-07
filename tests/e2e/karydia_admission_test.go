@@ -104,18 +104,24 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(stringifyTestCase(tc), func(t *testing.T) {
-			namespace, err := f.CreateTestNamespace()
-			if err != nil {
-				t.Fatalf("failed to create test namespace: %v", err)
-			}
-			if tc.nsAnnotation != nil {
-				namespace.ObjectMeta.Annotations = map[string]string{
+
+			var namespace *corev1.Namespace
+			var err error
+
+			if tc.nsAnnotation == nil {
+				namespace, err = f.CreateTestNamespace()
+				if err != nil {
+					t.Fatalf("failed to create test namespace: %v", err)
+				}
+			} else {
+				/* Directly annotate namespace to prevent race-conditions with the
+				   automatically created default service account */
+				annotation := map[string]string{
 					"karydia.gardener.cloud/automountServiceAccountToken": *tc.nsAnnotation,
 				}
-
-				namespace, err = f.KubeClientset.CoreV1().Namespaces().Update(namespace)
+				namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 				if err != nil {
-					t.Fatalf("failed to annotate test namespace: %v", err)
+					t.Fatalf("failed to create test namespace: %v", err)
 				}
 			}
 

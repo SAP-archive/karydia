@@ -107,6 +107,22 @@ func (f *Framework) CreateTestNamespace() (*corev1.Namespace, error) {
 	return ns, nil
 }
 
+func (f *Framework) CreateTestNamespaceWithAnnotation(annotations map[string]string) (*corev1.Namespace, error) {
+	ns, err := f.KubeClientset.CoreV1().Namespaces().Create(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "karydia-e2e-test-",
+			Labels: map[string]string{
+				"app": "karydia-e2e-test",
+			},
+			Annotations: annotations,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+	}
+	return ns, nil
+}
+
 func (f *Framework) SetupKarydia() error {
 	// Create service account
 	sa := &corev1.ServiceAccount{
