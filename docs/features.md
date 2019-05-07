@@ -33,19 +33,18 @@ additional code in Golang.
 ## Karydia admission
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal
-of hardening a cluster setup.
+of a secure-by-default cluster setup.
 
 The features currently supported are:
-1. Prevent service account token automounts
-    - `forbidden` prevents pods with any service account token to be deployed
-    - `non-default` prevents pods with the default service account token to be deployed
-    - `remove-default` deploys pods, but removes default service account token when `automountServiceAccountToken` is not explicitly set to `true`.
+1. Secure-by-default mouting of service account tokens
+    - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
+    - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
 2. Enforcing a seccomp policy
 
 It is configured with the following namespace annotations:
 
 | Name | Type | Possible values |
 |---|---|---|
-|karydia.gardener.cloud/automountServiceAccountToken|string|`forbidden` \| `non-default` \| `remove-default`|
+|karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all` 
 |karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
