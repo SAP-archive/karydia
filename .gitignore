@@ -4,5 +4,3 @@
 bin/
 
 karydia*.pem
-
-install/charts/values.yaml
