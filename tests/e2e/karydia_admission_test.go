@@ -75,7 +75,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 		{"dedicated", nil, nil, &vTrue, true},
 		{"dedicated", nil, nil, &vFalse, false},
 		{"dedicated", nil, &vTrue, nil, true},
-		{"dedicated", nil, &vTrue, &vTrue, true}, //
+		{"dedicated", nil, &vTrue, &vTrue, true},
 		{"dedicated", nil, &vTrue, &vFalse, false},
 		{"dedicated", nil, &vFalse, nil, false},
 		{"dedicated", nil, &vFalse, &vTrue, true},
@@ -198,6 +198,13 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 	}
 }
 
+/*
+Single test case for default ServiceAccount in the default Namespace
+
+This represents a special case, since the this service account
+is already present when karydia is installed configuration via
+web-hook won't work.
+*/
 func TestAutomountServiceAccountTokenInDefaultNamespace(t *testing.T) {
 	var ns = "default"
 	pod := &corev1.Pod{
@@ -232,6 +239,44 @@ func TestAutomountServiceAccountTokenInDefaultNamespace(t *testing.T) {
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
 		t.Fatalf("pod never reached state running")
+	}
+}
+
+func TestAutomountServiceAccountTokenEditServiceAccount(t *testing.T) {
+	var namespace *corev1.Namespace
+	var err error
+
+	annotation := map[string]string{
+		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
+	}
+	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
+	if err != nil {
+		t.Fatalf("failed to create test namespace: %v", err)
+	}
+
+	ns := namespace.ObjectMeta.Name
+
+	sAcc, err := f.CreateServiceAccount("dedicated", ns)
+	if err != nil {
+		t.Fatalf("failed to create service account: %v", err)
+	}
+
+	automount := true
+	sAcc.AutomountServiceAccountToken = &automount
+	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
+	if err != nil {
+		t.Fatalf("failed to update service account: %v", err)
+	}
+
+	/* Test update resource ServiceAccount */
+	sAcc.AutomountServiceAccountToken = nil
+	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
+	if err != nil {
+		t.Fatalf("failed to update service account: %v", err)
+	}
+
+	if sAcc.AutomountServiceAccountToken == nil {
+		t.Fatalf("expected updated service account to have automoutnServiceAccountToken set to false but is nil")
 	}
 }
 

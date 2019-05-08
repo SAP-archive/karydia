@@ -215,6 +215,7 @@ func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.Admission
 	return namespace, nil
 }
 
+/* Utility functions to decode raw resources into objects */
 func decodePod(raw []byte) (*corev1.Pod, error) {
 	pod := &corev1.Pod{}
 	deserializer := scheme.Codecs.UniversalDeserializer()
@@ -234,11 +235,14 @@ func decodeServiceAccount(raw []byte) (*corev1.ServiceAccount, error) {
 }
 
 func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
-	// Right now we only care about 'CREATE' events. Needs to be
-	// updated depending on the kind of admission requests that
-	// `KarydiaAdmission` should handle in this package.
-	// https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127
-	if ar.Request.Operation != v1beta1.Create {
+	/* Right now we only care about 'CREATE' and 'UPDATE' events.
+	   Needs to be updated depending on the kind of admission requests that
+	   `KarydiaAdmission` should handle in this package.
+	   https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
+	const Create v1beta1.Operation = "CREATE"
+	const Update v1beta1.Operation = "UPDATE"
+	operation := ar.Request.Operation
+	if operation != Create && operation != Update {
 		return true
 	}
 	return false
