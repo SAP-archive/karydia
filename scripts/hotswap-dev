@@ -82,11 +82,22 @@ fi
 # Functions
 ## get IDs of processes which are using specified file passed via parameter (e.g. $1:'/usr/local/bin/karydia')
 function getPids() {
-  lsof | grep $1 |
-    while read -r name pid data
-    do
-      printf '%s\n' "$pid"
-    done
+  while read -r name pid data
+  do
+    printf '%s\n' "$pid"
+  done < <(lsof | grep $1)
+}
+## wait for specified file passed via parameter (e.g. $1:'/usr/local/bin/karydia') to get freed by processes or till timeout intervenes
+function waitTillFreed() {
+  i=1
+  while [[ "$(lsof | grep $1)" != '' ]]
+  do
+    sleep 1
+    ((i>=$MAX_CYCLES)) && break
+    ((i++))
+  done
+  # return 1 if timeout intervened or 0 if file is freed
+  ((i>=$MAX_CYCLES)) && echo 1 || echo 0
 }
 
 
@@ -111,33 +122,33 @@ printf "$LOG_FORMAT" 'DATE' 'TYPE' 'USER' 'FILE' 'MESSAGE' 'EVENTS' | tee -a "$L
 # Watch
 
 ## listen on events in directory of watched file (e.g. '/usr/local/bin/')
-inotifywait -q -m -e create,moved_to $(dirname "$WATCH_BIN_PATH") |
 while read -r dir event file
 do
 
   ## check if triggered event belongs to specific watched file
   if [ "$file" == "$WATCH_BIN" ]
   then
-    msg=''; cnt=1; touch "$LOG_SELF"
+    touch "$LOG_SELF"
+    msg=''
 
     ## if main binary file is moved connected processes are automatically adjusted to moved file (by OS), thus, the following step is needed to free file
     ## kill / send 'SIGTERM' to these processes
     [ "$event" == 'MOVED_TO' ] && [ ! -e "$MAIN_BIN_PATH" ] && sleep $(($MAX_CYCLES/4)) && kill $(getPids $WATCH_BIN_PATH) &> /dev/null || true
 
     ## wait till all processes (e.g. 'kubectl cp') freed watched file otherwise continue with next after some time
-    while [[ "$(lsof | grep $WATCH_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && \
-      printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" "never freed file" "$event" | tee -a "$LOG_SELF" && \
-      continue; done
+    [ "$(waitTillFreed $WATCH_BIN_PATH)" -eq 1 ] && \
+      { printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" 'never freed file' "$event" | tee -a "$LOG_SELF" || true; } && \
+      continue
 
     ## kill / send 'SIGTERM' to processes using main binary
     kill $(getPids $MAIN_BIN_PATH) &> /dev/null || true
 
-    msg+='killed'; cnt=1
+    msg+='killed'
 
     ## wait till all processes ended who used main binary otherwise continue with next after some time
-    while [[ "$(lsof | grep $MAIN_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && \
-      printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" "procs never ended" "$event" | tee -a "$LOG_SELF" && \
-      continue; done
+    [ "$(waitTillFreed $MAIN_BIN_PATH)" -eq 1 ] && \
+      { printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" 'procs never ended' "$event" | tee -a "$LOG_SELF" || true; } && \
+      continue
 
     ## set watched file as new main binary
     mv -f "$WATCH_BIN_PATH" "$MAIN_BIN_PATH"
@@ -146,11 +157,11 @@ do
     [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || \
       { printf "$ERROR_LOG_FORMAT" 'binary not found' "Is '$MAIN_BIN_PATH' an absolute path to an existing binary?" >&2 && exit 1; }
 
-    msg+=' & restarted'; cnt=1
+    msg+=' & restarted'
 
     ## log activity to STDOUT and file
     printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'INFO' "$(whoami)" "$file" "$msg" "$event" | tee -a "$LOG_SELF"
 
   fi
-done
+done < <(inotifywait -q -m -e create,moved_to $(dirname "$WATCH_BIN_PATH"))
 
