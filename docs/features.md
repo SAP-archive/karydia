@@ -48,3 +48,18 @@ It is configured with the following namespace annotations:
 |karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all` 
 |karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
+### karydia.gardener.cloud/automountServiceAccountToken
+
+The feature defaults a service accounts `automountServiceAccountToken` to false in cases 5, 6 and 7. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
+
+| # | service account | pod | k8s behavior | karydia behavior |
+|---|-----------------|-----|--------------|-----------------|
+|1| true | true | true | true |
+|2| false | true | true | true |
+|3| true | false | false | false |
+|4| false | false | false | false |
+|5| **not defined** | not defined | true | **false** |
+|6| **not defined** | true | true | true |
+|7| **not defined** | false | false | false |
+|8| true | not defined | true | true |
+|9| false | not defined | false | false |
