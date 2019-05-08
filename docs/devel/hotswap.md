@@ -29,7 +29,7 @@ Two parameters are expected:
 `manifests/deployment.yml` (e.g. `karydia/karydia`)
 - DEV_DOCKER_IMAGE which is the dev container image (e.g. `karydia/karydia-dev` OR your docker registry image from the previous step)
 ```
-scripts/generate-deployment-dev karydia/karydia karydia/karydia-dev
+scripts/generate-deployment-dev karydia/karydia eu.gcr.io/gardener-project/karydia/karydia-dev
 ```
 
 ## <a name="getting-started"></a> Getting started
@@ -91,12 +91,12 @@ Issue & solution: __waiting timeout issue occured - try to increase timeouts man
 
 1. add script parameter `-t` with a desired increase value, e.g. `5`, at `manifests-dev/deployment-dev.yml`
 ```
-...
+[...]
         command:
         - hotswap-dev
 +       - -t5
         - -r
-...
+[...]
 ```
 2. deploy changes and try `make deploy-dev` again
 ```
@@ -122,5 +122,5 @@ hotswap-dev.log | /go/src/github.com/karydia/karydia | hotswap logs like the one
 karydia.log     | /go/src/github.com/karydia/karydia | some additional logs from karydia
 hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
 karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
-karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - the creation of this file triggers the hotswap routine
+karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
 
