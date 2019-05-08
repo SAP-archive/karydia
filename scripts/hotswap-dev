@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+# Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+# This file is licensed under the Apache Software License, v. 2 except as
+# noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,17 +24,39 @@
 set -e
 
 # Options
-## provide the following parameters for customizing
+## provide the following parameter(s) for customizing
+##   -t <integer>	: use this integer to increase waiting timeout for freed watched file
 ##   -r <command>	: use this command to run main binary instead of starting it directly
-while getopts ":r:" opt
+ERROR_LOG_FORMAT='ERROR %s: %s\n'
+ADD_CYCLES=0
+while getopts ":t:r:" opt
 do
   case $opt in
+    t)
+      if [[ "$OPTARG" =~ ^[1-9][0-9]?$ ]]
+      then
+        ADD_CYCLES="$OPTARG"		# e.g. '5'
+      else
+        printf "$ERROR_LOG_FORMAT" 'Usage' "$0 -t {1-99} BINARY_PATH [BINARY_ARGUMENTS]" >&2 && exit 1
+      fi
+    ;;
     r)
-      RUN_CMD="$OPTARG"			# e.g. 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec {{binPath}} --'
+      if ! [ -z "$OPTARG" ]
+      then
+        RUN_CMD="$OPTARG"		# e.g. 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec {{binPath}} --'
+      else
+        printf "$ERROR_LOG_FORMAT" 'Usage' "$0 -r 'BINARY_RUN_COMMAND' BINARY_PATH [BINARY_ARGUMENTS]" >&2 && exit 1
+      fi
     ;;
   esac
 done
 shift $((OPTIND-1))
+
+# Check mandatory parameter(s)
+if [ -z "$1" ]
+then
+  printf "$ERROR_LOG_FORMAT" 'Usage' "$0 BINARY_PATH [BINARY_ARGUMENTS]" >&2 && exit 1
+fi
 
 # Setup
 MAIN_BIN_PATH="$1"			# e.g. '/usr/local/bin/karydia'
@@ -43,7 +67,7 @@ MAIN_BIN_RUN_CMD="$MAIN_BIN_PATH"	# e.g. '/usr/local/bin/karydia'
 LOG_MAIN="$MAIN_BIN.log"		# e.g. 'karydia.log'
 LOG_SELF=$(basename "$0")'.log'		# e.g. 'hotswap-dev.log'
 LOG_FORMAT='%-23s\t%-4s\t%-6s\t%-11s\t%-18s\t%-8s\n'
-MAX_CYCLES=10
+MAX_CYCLES=$((20+$ADD_CYCLES))
 
 # Templating
 ## provide the following placeholder(s) for usage in run command (specified via parameter '-r')
@@ -75,7 +99,8 @@ NOHUP_ARGUMENTS=''														# add content only if existent
 [ $(echo "${@:2}" | wc -w) -ge 1 ] && NOHUP_ARGUMENTS+=$(echo "${@:2}") || true							# e.g. 'runserver --tls-cert ...'
 
 ## run main binary in separate process with passed parameters if main binary exists otherwise exit
-[ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || exit 1
+[ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || \
+  { printf "$ERROR_LOG_FORMAT" 'binary not found' "Is '$MAIN_BIN_PATH' an absolute path to an existing binary?" >&2 && exit 1; }
 
 ## log activity to STDOUT and file
 touch "$LOG_SELF"
@@ -93,33 +118,37 @@ do
   ## check if triggered event belongs to specific watched file
   if [ "$file" == "$WATCH_BIN" ]
   then
-    msg=''; cnt=1
+    msg=''; cnt=1; touch "$LOG_SELF"
 
     ## if main binary file is moved connected processes are automatically adjusted to moved file (by OS), thus, the following step is needed to free file
     ## kill / send 'SIGTERM' to these processes
-    [ "$event" == 'MOVED_TO' ] && [ ! -e "$MAIN_BIN_PATH" ] && sleep $(($MAX_CYCLES/2)) && kill $(getPids $WATCH_BIN_PATH) &> /dev/null || true
+    [ "$event" == 'MOVED_TO' ] && [ ! -e "$MAIN_BIN_PATH" ] && sleep $(($MAX_CYCLES/4)) && kill $(getPids $WATCH_BIN_PATH) &> /dev/null || true
 
-    ## wait till all processes (e.g. 'kubectl cp') freed watched file otherwise exit after some time
-    while [[ "$(lsof | grep $WATCH_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && exit 1; done
+    ## wait till all processes (e.g. 'kubectl cp') freed watched file otherwise continue with next after some time
+    while [[ "$(lsof | grep $WATCH_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && \
+      printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" "never freed file" "$event" | tee -a "$LOG_SELF" && \
+      continue; done
 
     ## kill / send 'SIGTERM' to processes using main binary
     kill $(getPids $MAIN_BIN_PATH) &> /dev/null || true
 
     msg+='killed'; cnt=1
 
-    ## wait till all processes ended who used main binary otherwise exit after some time
-    while [[ "$(lsof | grep $MAIN_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && exit 1; done
+    ## wait till all processes ended who used main binary otherwise continue with next after some time
+    while [[ "$(lsof | grep $MAIN_BIN_PATH)" != '' ]]; do sleep 1 && ((cnt++)) && ((cnt>$MAX_CYCLES+1)) && \
+      printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'ERR' "$(whoami)" "$file" "procs never ended" "$event" | tee -a "$LOG_SELF" && \
+      continue; done
 
     ## set watched file as new main binary
     mv -f "$WATCH_BIN_PATH" "$MAIN_BIN_PATH"
 
     ## run main binary in separate process with passed parameters if main binary exists otherwise exit
-    [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || exit 1
+    [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || \
+      { printf "$ERROR_LOG_FORMAT" 'binary not found' "Is '$MAIN_BIN_PATH' an absolute path to an existing binary?" >&2 && exit 1; }
 
     msg+=' & restarted'; cnt=1
 
     ## log activity to STDOUT and file
-    touch "$LOG_SELF"
     printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'INFO' "$(whoami)" "$file" "$msg" "$event" | tee -a "$LOG_SELF"
 
   fi
