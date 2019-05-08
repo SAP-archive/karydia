@@ -1,0 +1,16 @@
+apiVersion: v1 # cannot set this by values.yaml (Error: validation failed: unable to recognize "": no matches for kind "ConfigMap" in version "extensions/v1beta1")
+kind: ConfigMap
+metadata:
+  name: karydia-tmp
+  labels:
+    app: {{ .Values.metadata.labelApp }}
+  namespace: {{ .Values.metadata.namespace }}
+data:
+  configure-karydia-webhook.sh: |-
+    {{- include "configure-karydia-webhook.sh.tpl" . | indent 4}}
+  create-karydia-certificate.sh: |-
+    {{- include "create-karydia-certificate.sh.tpl" . | indent 4}}
+  create-karydia-tls-secret.sh: |-
+    {{- include "create-karydia-tls-secret.sh.tpl" . | indent 4}}
+  example-default-network-policy.sh: |-
+    {{- include "example-default-network-policy.sh.tpl" . | indent 4}}

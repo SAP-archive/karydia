@@ -122,7 +122,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["configmaps"]
-  verbs: ["update", "patch"]
+  verbs: ["update", "patch", "get"]
 
 ---
 
@@ -139,4 +139,56 @@ subjects:
 roleRef:
   kind: Role
   name: configmap-modifier
+  apiGroup: {{ .Values.rbac.apiGroup }}
+
+---
+
+apiVersion: {{ .Values.apiVersion }}
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.metadata.name }}-install
+  namespace: {{ .Values.metadata.namespace }}
+
+---
+
+kind: ClusterRole
+apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
+metadata:
+  name: {{ .Values.metadata.name }}-installer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests"]
+  verbs: ["create", "delete", "get"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests/approval"]
+  verbs: ["update"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create", "patch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "create", "delete"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations"]
+  verbs: ["get", "create", "patch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["mutatingwebhookconfigurations"]
+  verbs: ["get", "create", "patch"]
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
+metadata:
+  name: install-{{ .Values.metadata.name }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.metadata.name }}
+  namespace: {{ .Values.metadata.namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.metadata.name }}-installer
   apiGroup: {{ .Values.rbac.apiGroup }}

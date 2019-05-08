@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.metadata.name }}-post
+  labels:
+    app: {{ .Values.metadata.labelApp }}
+  namespace: {{ .Values.metadata.namespace }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    metadata:
+      name: {{ .Values.metadata.name }}-post-install
+    spec:
+      serviceAccountName: karydia
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ .Values.metadata.name }}-post-install-container
+          image: "lachlanevenson/k8s-kubectl"
+          command: ['sh', '-c', 'sh /tmp/configure-karydia-webhook.sh']
+          volumeMounts:
+            - mountPath: "/tmp"
+              name: workdir
+      volumes:
+        - name: workdir
+          configMap:
+            name: karydia-tmp

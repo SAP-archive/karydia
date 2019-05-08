@@ -1,5 +1,7 @@
+{{ define "example-default-network-policy.sh.tpl" }}
+#!/bin/bash
 # Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,26 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: v1
-version: 0.1.0
+kubectl delete configmap -n kube-system karydia-default-network-policy 2> /dev/null
+
+networkPolicy=$(cat <<EOF
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
 metadata:
-  name: karydia
-  apiGroup: karydia.gardener.cloud
-  namespace: kube-system
-  labelApp: karydia
-namespace:
-  name: opa
-webhook:
-  apiVersion: admissionregistration.k8s.io/v1beta1
-securityPolicy:
-  apiVersion: apiextensions.k8s.io/v1beta1
-  version: v1alpha1
-rbac:
-  apiGroup: rbac.authorization.k8s.io
-  apiVersion: /v1
-deployment:
-  apiVersion: extensions/v1beta1
-  volume:
-    name: karydia-tls
-    path: /etc/karydia/tls
-caBundle: |
+  labels:
+    app: karydia
+  name: karydia-default-network-policy
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+EOF
+)
+
+kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="${networkPolicy}"
+
+{{ end }}
