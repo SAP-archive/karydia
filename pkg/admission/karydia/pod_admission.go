@@ -27,13 +27,13 @@ import (
 )
 
 func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
-	var patches []string
+	var patches patchOperations
 
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
 	if annotated {
 		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
 	}
-	return k8sutil.MutatingAdmissionResponse(patches)
+	return k8sutil.MutatingAdmissionResponse(patches.toBytes())
 }
 
 func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
@@ -56,7 +56,7 @@ func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationEr
 	return validationErrors
 }
 
-func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches []string) []string {
+func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches patchOperations) patchOperations {
 	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 	if !ok {
 		if len(pod.ObjectMeta.Annotations) == 0 {
@@ -64,9 +64,19 @@ func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches []stri
 			// to create it. Otherwise we will encounter
 			// the following error:
 			// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", nsAnnotation))
+			patches = append(patches, patchOperation{
+				Op:   "add",
+				Path: "/metadata/annotations",
+				Value: map[string]string{
+					"seccomp.security.alpha.kubernetes.io/pod": nsAnnotation,
+				},
+			})
 		} else {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", nsAnnotation))
+			patches = append(patches, patchOperation{
+				Op:    "add",
+				Path:  "/metadata/annotations/seccomp.security.alpha.kubernetes.io~1pod",
+				Value: nsAnnotation,
+			})
 		}
 	}
 	return patches

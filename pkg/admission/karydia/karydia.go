@@ -17,6 +17,7 @@
 package karydia
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -28,10 +29,7 @@ import (
 	"github.com/karydia/karydia/pkg/k8sutil"
 )
 
-var resourcePod = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 var kindPod = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
-
-var resourceServiceAccount = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "serviceaccounts"}
 var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}
 
 type KarydiaAdmission struct {
@@ -42,6 +40,14 @@ type KarydiaAdmission struct {
 type Config struct {
 	KubeClientset *kubernetes.Clientset
 }
+
+type patchOperation struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+type patchOperations []patchOperation
 
 func New(config *Config) (*KarydiaAdmission, error) {
 	logger := logrus.New()
@@ -54,20 +60,20 @@ func New(config *Config) (*KarydiaAdmission, error) {
 }
 
 func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
-	if shouldIgnoreEvent(ar) {
+	req := ar.Request
+	/*if shouldIgnoreEvent(ar) {
 		return k8sutil.AllowAdmissionResponse()
-	}
+	}*/
 
-	if ar.Request.Kind == kindPod && ar.Request.Resource == resourcePod {
-		raw := ar.Request.Object.Raw
-
-		pod, err := decodePod(raw)
+	switch req.Kind {
+	case kindPod:
+		pod, err := decodePod(req.Object.Raw)
 		if err != nil {
 			k.logger.Errorf("failed to decode object: %v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
-		namespace, err := k.getNamespaceFromAdmissionRequest(*ar.Request)
+		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
 			k.logger.Errorf("%v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
@@ -77,16 +83,14 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 			return k.mutatePod(pod, namespace)
 		}
 		return k.validatePod(pod, namespace)
-	} else if ar.Request.Kind == kindServiceAccount && ar.Request.Resource == resourceServiceAccount {
-		raw := ar.Request.Object.Raw
-
-		sAcc, err := decodeServiceAccount(raw)
+	case kindServiceAccount:
+		sAcc, err := decodeServiceAccount(req.Object.Raw)
 		if err != nil {
 			k.logger.Errorf("failed to decode object: %v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
-		namespace, err := k.getNamespaceFromAdmissionRequest(*ar.Request)
+		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
 			k.logger.Errorf("%v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
@@ -115,16 +119,24 @@ func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.Admission
 	return namespace, nil
 }
 
-func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
-	/* Right now we only care about 'CREATE' and 'UPDATE' events.
-	   Needs to be updated depending on the kind of admission requests that
-	   `KarydiaAdmission` should handle in this package.
-	   https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
-	const Create v1beta1.Operation = "CREATE"
+func (patches *patchOperations) toBytes() []byte {
+	patchBytes, err := json.Marshal(patches)
+	if err != nil {
+		return nil
+	}
+	return patchBytes
+}
+
+//func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
+/* Right now we only care about 'CREATE' and 'UPDATE' events.
+   Needs to be updated depending on the kind of admission requests that
+   `KarydiaAdmission` should handle in this package.
+   https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
+/*	const Create v1beta1.Operation = "CREATE"
 	const Update v1beta1.Operation = "UPDATE"
 	operation := ar.Request.Operation
 	if operation != Create && operation != Update {
 		return true
 	}
 	return false
-}
+}*/
