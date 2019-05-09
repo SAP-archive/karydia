@@ -66,8 +66,8 @@ WATCH_BIN=$(basename "$WATCH_BIN_PATH")	# e.g. 'karydia-dev'
 MAIN_BIN_RUN_CMD="$MAIN_BIN_PATH"	# e.g. '/usr/local/bin/karydia'
 LOG_MAIN="$MAIN_BIN.log"		# e.g. 'karydia.log'
 LOG_SELF=$(basename "$0")'.log'		# e.g. 'hotswap-dev.log'
-LOG_FORMAT='%-23s\t%-4s\t%-6s\t%-11s\t%-18s\t%-8s\n'
-MAX_CYCLES=$((20+$ADD_CYCLES))
+LOG_FORMAT='%-23s\t%-4s\t%-6s\t%-11s\t%-18s\t%-17s\n'
+MAX_CYCLES=$((10+$ADD_CYCLES))
 
 # Templating
 ## provide the following placeholder(s) for usage in run command (specified via parameter '-r')
@@ -163,5 +163,5 @@ do
     printf "$LOG_FORMAT" "$(date +'%F %T %Z')" 'INFO' "$(whoami)" "$file" "$msg" "$event" | tee -a "$LOG_SELF"
 
   fi
-done < <(inotifywait -q -m -e create,moved_to $(dirname "$WATCH_BIN_PATH"))
+done < <(inotifywait -q -m -e close_write,moved_to $(dirname "$WATCH_BIN_PATH"))
 
