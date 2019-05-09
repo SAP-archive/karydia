@@ -77,17 +77,17 @@ kubectl logs -f -n kube-system $(kubectl get pods -n kube-system -l app=karydia 
 #### If there are outputs like the following:
 ```
 DATE                   	TYPE	USER  	FILE       	MESSAGE           	EVENTS
-YYYY-MM-DD HH:MM:SS UTC	INFO	root  	karydia-dev	killed & restarted	CREATE
+YYYY-MM-DD HH:MM:SS UTC	INFO	root  	karydia-dev	killed & restarted	CLOSE_WRITE,CLOSE
 ```
 Issue & solution: __everything seems to work as expected - nothing else to do__
 
 #### If there are outputs like the following:
 ```
-DATE                   	TYPE    USER  	FILE       	MESSAGE           	EVENTS
-YYYY-MM-DD HH:MM:SS UTC	ERR     root  	karydia-dev	never freed file	CREATE
-YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	procs never ended	CREATE
+DATE                   	TYPE	USER  	FILE       	MESSAGE           	EVENTS
+YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	never freed file  	CLOSE_WRITE,CLOSE
+YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	procs never ended 	CLOSE_WRITE,CLOSE
 ```
-Issue & solution: __waiting timeout issue occured - try to increase timeouts manually__
+Issue & solution: __waiting timeout issue occured - try again or try to increase timeouts manually__
 
 1. add script parameter `-t` with a desired increase value, e.g. `5`, at `manifests-dev/deployment-dev.yml`
 ```
@@ -103,7 +103,7 @@ Issue & solution: __waiting timeout issue occured - try to increase timeouts man
 kubectl apply -f manifests-dev/deployment-dev.yml
 ```
 
-Possible reason: longer copy / upload execution times with `kubectl cp` through slow network connections
+Possible reason: failing / incomplete `kubectl cp` or `karydia` shutdown takes too long
 
 #### If there are no outputs
 
@@ -119,8 +119,8 @@ kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l app=karydia
 File            | Location                           | Description
 --------------- | ---------------------------------- | ---------------------------------
 hotswap-dev.log | /go/src/github.com/karydia/karydia | hotswap logs like the ones mentioned above, e.g. infos about restarts and / or errors
-karydia.log     | /go/src/github.com/karydia/karydia | some additional logs from karydia
+karydia.log     | /go/src/github.com/karydia/karydia | potentially some additional logs from specified run command
 hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
 karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
-karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
+karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
 
