@@ -33,19 +33,33 @@ additional code in Golang.
 ## Karydia admission
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal
-of hardening a cluster setup.
+of a secure-by-default cluster setup.
 
 The features currently supported are:
-1. Prevent service account token automounts
-    - `forbidden` prevents pods with any service account token to be deployed
-    - `non-default` prevents pods with the default service account token to be deployed
-    - `remove-default` deploys pods, but removes default service account token when `automountServiceAccountToken` is not explicitly set to `true`.
+1. Secure-by-default mounting of service account tokens
+    - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
+    - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
 2. Enforcing a seccomp policy
 
 It is configured with the following namespace annotations:
 
 | Name | Type | Possible values |
 |---|---|---|
-|karydia.gardener.cloud/automountServiceAccountToken|string|`forbidden` \| `non-default` \| `remove-default`|
+|karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all` 
 |karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
+### karydia.gardener.cloud/automountServiceAccountToken
+
+The feature defaults a service account's `automountServiceAccountToken` to false in cases 5, 6 and 7 of the following table. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
+
+| # | service account | pod | k8s behavior | karydia behavior |
+|---|-----------------|-----|--------------|-----------------|
+|1| true | true | true | true |
+|2| false | true | true | true |
+|3| true | false | false | false |
+|4| false | false | false | false |
+|5| **not defined** | not defined | true | **false** |
+|6| **not defined** | true | true | true |
+|7| **not defined** | false | false | false |
+|8| true | not defined | true | true |
+|9| false | not defined | false | false |
