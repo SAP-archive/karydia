@@ -201,7 +201,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 /*
 Single test case for default ServiceAccount in the default Namespace
 
-This represents a special case, since the this service account
+This represents a special case, since this service account
 is already present when karydia is installed configuration via
 web-hook won't work.
 */

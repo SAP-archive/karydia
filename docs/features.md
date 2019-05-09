@@ -36,7 +36,7 @@ Karydia Admission (`--enable-karydia-admission`) offers features with the goal
 of a secure-by-default cluster setup.
 
 The features currently supported are:
-1. Secure-by-default mouting of service account tokens
+1. Secure-by-default mounting of service account tokens
     - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
     - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
 2. Enforcing a seccomp policy
@@ -50,7 +50,7 @@ It is configured with the following namespace annotations:
 
 ### karydia.gardener.cloud/automountServiceAccountToken
 
-The feature defaults a service accounts `automountServiceAccountToken` to false in cases 5, 6 and 7. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
+The feature defaults a service account's `automountServiceAccountToken` to false in cases 5, 6 and 7 of the following table. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
 
 | # | service account | pod | k8s behavior | karydia behavior |
 |---|-----------------|-----|--------------|-----------------|
