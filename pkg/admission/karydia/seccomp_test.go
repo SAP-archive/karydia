@@ -28,7 +28,7 @@ import (
  */
 func TestPodSeccompDefaultProfileWithAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	pod.Annotations = make(map[string]string)
@@ -57,7 +57,7 @@ func TestPodSeccompDefaultProfileWithAnnotation(t *testing.T) {
 
 func TestPodSeccompDefaultProfileNoAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	patches = mutatePodSeccompProfile(pod, "runtime/default", patches)
@@ -83,7 +83,7 @@ func TestPodSeccompDefaultProfileNoAnnotation(t *testing.T) {
 
 func TestPodSeccompDefaultProfileOtherAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	pod.Annotations = make(map[string]string)

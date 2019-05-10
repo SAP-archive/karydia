@@ -18,8 +18,6 @@ package karydia
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
 	"testing"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -32,7 +30,7 @@ import (
  * kubectl annotate ns default karydia.gardener.cloud/automountServiceAccountToken=change-default
  */
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -60,7 +58,7 @@ func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountUndefine
 }
 
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountFalse(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 	var automount = false
 
@@ -90,7 +88,7 @@ func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountFalse(t 
 }
 
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountTrue(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 	var automount = true
 
@@ -120,7 +118,7 @@ func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountTrue(t *
 }
 
 func TestServiceAccountChangeDefaultAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -147,7 +145,7 @@ func TestServiceAccountChangeDefaultAnnotationSpecificServiceAccountMountUndefin
 	}
 }
 func TestServiceAccountRandomAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -180,7 +178,7 @@ func TestServiceAccountRandomAnnotationDefaultServiceAccountMountUndefined(t *te
  * kubectl annotate ns default karydia.gardener.cloud/automountServiceAccountToken=change-all
  */
 func TestServiceAccountChangeAllAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -208,7 +206,7 @@ func TestServiceAccountChangeAllAnnotationDefaultServiceAccountMountUndefined(t 
 }
 
 func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -236,7 +234,7 @@ func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountUndefined(t
 }
 
 func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountFalse(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 	var automount = false
 
@@ -266,7 +264,7 @@ func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountFalse(t *te
 }
 
 func TestServiceAccountChangeAllAnnotationspecificServiceAccountMountTrue(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 	var automount = true
 
@@ -296,7 +294,7 @@ func TestServiceAccountChangeAllAnnotationspecificServiceAccountMountTrue(t *tes
 }
 
 func TestServiceAccountRandomAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches []string
+	var patches patchOperations
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
@@ -324,17 +322,14 @@ func TestServiceAccountRandomAnnotationSpecificServiceAccountMountUndefined(t *t
 }
 
 /* Helper functions */
-func patchPod(pod corev1.Pod, patches []string) (corev1.Pod, error) {
+func patchPod(pod corev1.Pod, patches patchOperations) (corev1.Pod, error) {
 	var podJSON []byte
 	podJSON, err := json.Marshal(&pod)
 	if err != nil {
 		return pod, err
 	}
 
-	patchesStr := strings.Join(patches, ",")
-	patchesByteStr := []byte(fmt.Sprintf("[%s]", patchesStr))
-
-	patchObj, err := jsonpatch.DecodePatch(patchesByteStr)
+	patchObj, err := jsonpatch.DecodePatch(patches.toBytes())
 	if err != nil {
 		return pod, err
 	}
@@ -349,17 +344,14 @@ func patchPod(pod corev1.Pod, patches []string) (corev1.Pod, error) {
 	return podPatched, nil
 }
 
-func patchServiceAccount(sAcc corev1.ServiceAccount, patches []string) (corev1.ServiceAccount, error) {
+func patchServiceAccount(sAcc corev1.ServiceAccount, patches patchOperations) (corev1.ServiceAccount, error) {
 	var podJSON []byte
 	podJSON, err := json.Marshal(&sAcc)
 	if err != nil {
 		return sAcc, err
 	}
 
-	patchesStr := strings.Join(patches, ",")
-	patchesByteStr := []byte(fmt.Sprintf("[%s]", patchesStr))
-
-	patchObj, err := jsonpatch.DecodePatch(patchesByteStr)
+	patchObj, err := jsonpatch.DecodePatch(patches.toBytes())
 	if err != nil {
 		return sAcc, err
 	}
