@@ -20,16 +20,16 @@ cat <<EOF | sed -e "s|§CA_BUNDLE§|${ca_bundle}|g" | kubectl apply -f -
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
-  name: karydia-webhook
+  name: {{ .Values.metadata.name }}-webhook
   labels:
-    app: karydia
+    app: {{ .Values.metadata.labelApp }}
 webhooks:
-  - name: karydia.gardener.cloud
+  - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
     clientConfig:
       service:
-        name: karydia
-        namespace: kube-system
+        name: {{ .Values.metadata.name }}
+        namespace: {{ .Values.metadata.namespace }}
         path: "/webhook/validating"
       caBundle: §CA_BUNDLE§
     rules:
@@ -54,16 +54,16 @@ cat <<EOF | sed -e "s|§CA_BUNDLE§|${ca_bundle}|g" | kubectl apply -f -
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: karydia-webhook
+  name: {{ .Values.metadata.name }}-webhook
   labels:
-    app: karydia
+    app: {{ .Values.metadata.labelApp }}
 webhooks:
-  - name: karydia.gardener.cloud
+  - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
     clientConfig:
       service:
-        name: karydia
-        namespace: kube-system
+        name: {{ .Values.metadata.name }}
+        namespace: {{ .Values.metadata.namespace }}
         path: "/webhook/mutating"
       caBundle: §CA_BUNDLE§
     rules:

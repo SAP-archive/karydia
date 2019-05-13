@@ -20,7 +20,7 @@ spec:
     metadata:
       name: {{ .Values.metadata.name }}-post-install
     spec:
-      serviceAccountName: karydia
+      serviceAccountName: {{ .Values.rbac.serviceAccount }}
       restartPolicy: OnFailure
       containers:
         - name: {{ .Values.metadata.name }}-post-install-container
@@ -32,4 +32,4 @@ spec:
       volumes:
         - name: workdir
           configMap:
-            name: karydia-tmp
+            name: {{ .Values.metadata.name }}-tmp

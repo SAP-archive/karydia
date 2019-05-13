@@ -9,3 +9,11 @@ apiVersion: v1
 name: karydia
 version: 0.1.0
 description: A Helm chart for karydia
+keywords:
+  - karydia
+  - kubernetes
+  - security
+sources:
+  - https://github.com/karydia/karydia
+engine: gotpl
+icon: https://raw.githubusercontent.com/karydia/karydia/simple-install-option/logo/Karydia%400.5x.png

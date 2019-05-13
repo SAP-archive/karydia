@@ -68,7 +68,6 @@ spec:
         volumeMounts:
         - name: workdir
           mountPath: "/tmp"
-
       volumes:
         - name: {{ .Values.deployment.volume.name }}
           secret:
@@ -76,4 +75,4 @@ spec:
             optional: true
         - name: workdir
           configMap:
-            name: karydia-tmp
+            name: {{ .Values.metadata.name }}-tmp

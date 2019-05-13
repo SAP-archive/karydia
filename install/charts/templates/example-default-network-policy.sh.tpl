@@ -8,15 +8,15 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 
-kubectl delete configmap -n kube-system karydia-default-network-policy 2> /dev/null
+kubectl delete configmap -n {{ .Values.metadata.namespace }} {{ .Values.metadata.name }}-default-network-policy 2> /dev/null
 
 networkPolicy=$(cat <<EOF
 apiVersion: extensions/v1beta1
 kind: NetworkPolicy
 metadata:
   labels:
-    app: karydia
-  name: karydia-default-network-policy
+    app: {{ .Values.metadata.labelApp }}
+  name: {{ .Values.metadata.name }}-default-network-policy
   namespace: default
 spec:
   podSelector: {}
@@ -25,6 +25,6 @@ spec:
 EOF
 )
 
-kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="${networkPolicy}"
+kubectl create configmap -n {{ .Values.metadata.namespace }} {{ .Values.metadata.name }}-default-network-policy --from-literal policy="${networkPolicy}"
 
 {{ end }}
