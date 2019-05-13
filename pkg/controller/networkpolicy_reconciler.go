@@ -17,7 +17,6 @@ package controller
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -357,14 +356,15 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 
 		var policy networkingv1.NetworkPolicy
 		if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, networkpolicyName, err)
+			klog.Errorf("Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, networkpolicyName, err)
 		}
 		reconciler.defaultNetworkPolicies[networkpolicyName] = &policy
 		klog.Infof("Network policy %s loaded into buffer. New Buffer length: %v", policy.GetName(), len(reconciler.defaultNetworkPolicies))
 	}
 
 	if _, ok := reconciler.defaultNetworkPolicies[networkpolicyName]; !ok {
-		klog.Errorf("Network not found in buffer after load %s", networkpolicyName)
+		err := fmt.Errorf("Network not found in buffer after load %s", networkpolicyName)
+		return err
 	} else {
 		desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 		desiredPolicy.ObjectMeta.Namespace = namespace
