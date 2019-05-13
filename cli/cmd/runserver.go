@@ -30,9 +30,11 @@ import (
 	"github.com/spf13/viper"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	kubeinformers "k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	karydiaadmission "github.com/karydia/karydia/pkg/admission/karydia"
-	kspadmission "github.com/karydia/karydia/pkg/admission/karydiasecuritypolicy"
 	opaadmission "github.com/karydia/karydia/pkg/admission/opa"
 	"github.com/karydia/karydia/pkg/controller"
 	"github.com/karydia/karydia/pkg/k8sutil"
@@ -40,6 +42,8 @@ import (
 	"github.com/karydia/karydia/pkg/util/tls"
 	"github.com/karydia/karydia/pkg/webhook"
 )
+
+const resyncInterval = 30 * time.Second
 
 var runserverCmd = &cobra.Command{
 	Use:   "runserver",
@@ -77,11 +81,11 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	var (
 		enableController           bool
 		enableDefaultNetworkPolicy = viper.GetBool("enable-default-network-policy")
-		enableKSPAdmission         = false
 		enableOPAAdmission         = viper.GetBool("enable-opa-admission")
 		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
+		kubeInformerFactory        kubeinformers.SharedInformerFactory
 	)
-	if enableDefaultNetworkPolicy || enableKSPAdmission {
+	if enableDefaultNetworkPolicy {
 		enableController = true
 	}
 
@@ -121,7 +125,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		webHook.RegisterAdmissionPlugin(karydiaAdmission)
 	}
 
-	var defaultNetworkPolicy *networkingv1.NetworkPolicy
+	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
 		defaultNetworkPolicyIdentifier := viper.GetString("default-network-policy-configmap")
 		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
@@ -141,41 +145,28 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
 			os.Exit(1)
 		}
-		defaultNetworkPolicy = &policy
+		defaultNetworkPolicies["karydia-default-network-policy"] = &policy
 	}
 
-	var ctrler *controller.Controller
+	var reconciler *controller.NetworkpolicyReconciler
+
 	if enableController {
-		ctrler, err = controller.New(ctx, &controller.Config{
-			DefaultNetworkPolicy:         defaultNetworkPolicy,
-			DefaultNetworkPolicyExcludes: viper.GetStringSlice("default-network-policy-excludes"),
-
-			Kubeconfig: kubeConfig,
-			MasterURL:  kubeServer,
-		})
+		cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load controller: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	if enableKSPAdmission {
-		kspAdmission, err := kspadmission.New()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load karydia security policy admission: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error building kubeconfig: %v", err)
 			os.Exit(1)
 		}
 
-		rbacAuthorizer, err := k8sutil.NewRBACAuthorizer(ctrler.KubeInformerFactory())
+		kubeClientset, err := kubernetes.NewForConfig(cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load rbac authorizer: %v\n", err)
+			fmt.Fprintf(os.Stderr, "error building kubernetes clientset: %v", err)
 			os.Exit(1)
 		}
+		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
+		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
+		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, "karydia-default-network-policy", viper.GetStringSlice("default-network-policy-excludes"))
 
-		kspAdmission.SetAuthorizer(rbacAuthorizer)
-		kspAdmission.SetExternalInformerFactory(ctrler.KarydiaInformerFactory())
-
-		webHook.RegisterAdmissionPlugin(kspAdmission)
 	}
 
 	if enableOPAAdmission {
@@ -229,8 +220,8 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-
-			if err := ctrler.Run(2); err != nil {
+			kubeInformerFactory.Start(ctx.Done())
+			if err := reconciler.Run(2, ctx.Done()); err != nil {
 				fmt.Fprintf(os.Stderr, "Error running controller: %v\n", err)
 			}
 		}()

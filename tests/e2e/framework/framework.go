@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -99,6 +101,22 @@ func (f *Framework) CreateTestNamespace() (*corev1.Namespace, error) {
 			Labels: map[string]string{
 				"app": "karydia-e2e-test",
 			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+	}
+	return ns, nil
+}
+
+func (f *Framework) CreateTestNamespaceWithAnnotation(annotations map[string]string) (*corev1.Namespace, error) {
+	ns, err := f.KubeClientset.CoreV1().Namespaces().Create(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "karydia-e2e-test-",
+			Labels: map[string]string{
+				"app": "karydia-e2e-test",
+			},
+			Annotations: annotations,
 		},
 	})
 	if err != nil {
@@ -380,9 +398,9 @@ func (f *Framework) ConfigureWebhook() error {
 
 	// Finally, configure karydia webhook
 
-	webhookName := "karydia.e2e.test"
+	webhookName := "karydiamutating.e2e.test"
 	webhookPath := "/webhook/mutating"
-	webhookConfig := &admissionv1beta1.MutatingWebhookConfiguration{
+	mutatingWebhookConfig := &admissionv1beta1.MutatingWebhookConfiguration{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: webhookName,
 		},
@@ -409,15 +427,53 @@ func (f *Framework) ConfigureWebhook() error {
 		},
 	}
 
-	if _, err := f.KubeClientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Create(webhookConfig); err != nil {
-		return fmt.Errorf("failed to register webhook: %v", err)
+	webhookName = "karydiavalidating.e2e.test"
+	valWebhookPath := "/webhook/validating"
+	validatingWebhookConfig := &admissionv1beta1.ValidatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: webhookName,
+		},
+		Webhooks: []admissionv1beta1.Webhook{
+			{
+				Name: webhookName,
+				Rules: []admissionv1beta1.RuleWithOperations{{
+					Operations: []admissionv1beta1.OperationType{admissionv1beta1.OperationAll},
+					Rule: admissionv1beta1.Rule{
+						APIGroups:   []string{"*"},
+						APIVersions: []string{"*"},
+						Resources:   []string{"*/*"},
+					},
+				}},
+				ClientConfig: admissionv1beta1.WebhookClientConfig{
+					Service: &admissionv1beta1.ServiceReference{
+						Namespace: f.Namespace,
+						Name:      "karydia",
+						Path:      &valWebhookPath,
+					},
+					CABundle: []byte(caCertPEM),
+				},
+			},
+		},
+	}
+
+	if _, err := f.KubeClientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Create(mutatingWebhookConfig); err != nil {
+		return fmt.Errorf("failed to register mutating webhook: %v", err)
+	}
+
+	if _, err := f.KubeClientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Create(validatingWebhookConfig); err != nil {
+		return fmt.Errorf("failed to register validating webhook: %v", err)
 	}
 
 	return nil
 }
 
 func (f *Framework) DeleteWebhook() error {
-	return f.KubeClientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Delete("karydia.e2e.test", &metav1.DeleteOptions{})
+	errMut := f.KubeClientset.AdmissionregistrationV1beta1().MutatingWebhookConfigurations().Delete("karydiamutating.e2e.test", &metav1.DeleteOptions{})
+	errVal := f.KubeClientset.AdmissionregistrationV1beta1().ValidatingWebhookConfigurations().Delete("karydiavalidating.e2e.test", &metav1.DeleteOptions{})
+	if errMut != nil || errVal != nil {
+		return fmt.Errorf("Deletion of webhooks failed: %d %d", errMut, errVal)
+	}
+	return nil
 }
 
 func (f *Framework) DeleteAll() error {
@@ -438,6 +494,11 @@ func (f *Framework) DeleteAll() error {
 		}); err != nil {
 			return fmt.Errorf("failed to delete namespace %q: %v", name, err)
 		}
+	}
+	/* Delete single pod in default namespace */
+	err = f.KubeClientset.CoreV1().Pods("default").Delete("karydia-e2e-test-pod", &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete pod in default namespace")
 	}
 	return nil
 }
@@ -471,6 +532,16 @@ func (f *Framework) WaitPodRunning(namespace, name string, timeout time.Duration
 			return false, fmt.Errorf("failed to get pods: %v", err)
 		}
 		if !podv1.IsPodReady(pod) {
+			return false, nil
+		}
+		return true, nil
+	})
+}
+
+func (f *Framework) WaitDefaultServiceAccountCreated(ns string, timeout time.Duration) error {
+	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
+		if err != nil {
 			return false, nil
 		}
 		return true, nil
