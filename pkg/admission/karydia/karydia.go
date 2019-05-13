@@ -17,22 +17,20 @@
 package karydia
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/karydia/karydia/pkg/k8sutil"
-	"github.com/karydia/karydia/pkg/k8sutil/scheme"
 )
 
-var resourcePod = metav1.GroupVersionResource{Group: "", Version: "v1", Resource: "pods"}
 var kindPod = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
+var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}
 
 type KarydiaAdmission struct {
 	logger        *logrus.Logger
@@ -42,6 +40,14 @@ type KarydiaAdmission struct {
 type Config struct {
 	KubeClientset *kubernetes.Clientset
 }
+
+type patchOperation struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+type patchOperations []patchOperation
 
 func New(config *Config) (*KarydiaAdmission, error) {
 	logger := logrus.New()
@@ -54,20 +60,20 @@ func New(config *Config) (*KarydiaAdmission, error) {
 }
 
 func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
-	if shouldIgnoreEvent(ar) {
+	req := ar.Request
+	/*if shouldIgnoreEvent(ar) {
 		return k8sutil.AllowAdmissionResponse()
-	}
+	}*/
 
-	if ar.Request.Kind == kindPod && ar.Request.Resource == resourcePod {
-		raw := ar.Request.Object.Raw
-
-		pod, err := decodePod(raw)
+	switch req.Kind {
+	case kindPod:
+		pod, err := decodePod(req.Object.Raw)
 		if err != nil {
 			k.logger.Errorf("failed to decode object: %v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
-		namespace, err := k.getNamespaceFromAdmissionRequest(*ar.Request)
+		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
 			k.logger.Errorf("%v", err)
 			return k8sutil.ErrToAdmissionResponse(err)
@@ -77,104 +83,26 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 			return k.mutatePod(pod, namespace)
 		}
 		return k.validatePod(pod, namespace)
+	case kindServiceAccount:
+		sAcc, err := decodeServiceAccount(req.Object.Raw)
+		if err != nil {
+			k.logger.Errorf("failed to decode object: %v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
+		if err != nil {
+			k.logger.Errorf("%v", err)
+			return k8sutil.ErrToAdmissionResponse(err)
+		}
+
+		if mutationAllowed {
+			return k.mutateServiceAccount(sAcc, namespace)
+		}
+		return k.validateServiceAccount(sAcc, namespace)
 	}
 
 	return k8sutil.AllowAdmissionResponse()
-}
-
-func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
-	var patches []string
-
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if annotated {
-		patches = mutatePodServiceAccountToken(*pod, automountServiceAccountToken, patches)
-	}
-
-	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if annotated {
-		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
-	}
-
-	return k8sutil.MutatingAdmissionResponse(patches)
-}
-
-func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
-	var validationErrors []string
-
-	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
-	if annotated {
-		validationErrors = validatePodServiceAccountToken(*pod, automountServiceAccountToken, validationErrors)
-	}
-
-	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if annotated {
-		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
-	}
-
-	return k8sutil.ValidatingAdmissionResponse(validationErrors)
-}
-
-func validatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
-	if nsAnnotation == "forbidden" {
-		if automountServiceAccountTokenUndefined(&pod) {
-			validationErrors = append(validationErrors, "automount of service account not allowed")
-		}
-	} else if nsAnnotation == "non-default" || nsAnnotation == "remove-default" {
-		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			validationErrors = append(validationErrors, "automount of service account 'default' not allowed")
-		}
-	}
-	return validationErrors
-}
-
-func mutatePodServiceAccountToken(pod corev1.Pod, nsAnnotation string, patches []string) []string {
-	if nsAnnotation == "remove-default" {
-		if automountServiceAccountTokenUndefined(&pod) && pod.Spec.ServiceAccountName == "default" {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/spec/automountServiceAccountToken", "value": %s}`, "false"))
-			for i, v := range pod.Spec.Volumes {
-				if strings.HasPrefix(v.Name, "default-token-") {
-					patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/volumes/%d"}`, i))
-				}
-			}
-			for i, c := range pod.Spec.Containers {
-				for j, v := range c.VolumeMounts {
-					if strings.HasPrefix(v.Name, "default-token-") {
-						patches = append(patches, fmt.Sprintf(`{"op": "remove", "path": "/spec/containers/%d/volumeMounts/%d"}`, i, j))
-					}
-				}
-			}
-		}
-	}
-	return patches
-}
-
-func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
-	seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-	if !ok || seccompPod != nsAnnotation {
-		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", nsAnnotation)
-		validationErrors = append(validationErrors, validationErrorMsg)
-	}
-	return validationErrors
-}
-
-func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches []string) []string {
-	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-	if !ok {
-		if len(pod.ObjectMeta.Annotations) == 0 {
-			// If no annotation object exists yet, we have
-			// to create it. Otherwise we will encounter
-			// the following error:
-			// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations", "value": {"%s": "%s"}}`, "seccomp.security.alpha.kubernetes.io/pod", nsAnnotation))
-		} else {
-			patches = append(patches, fmt.Sprintf(`{"op": "add", "path": "/metadata/annotations/%s", "value": "%s"}`, "seccomp.security.alpha.kubernetes.io~1pod", nsAnnotation))
-		}
-	}
-	return patches
-}
-
-func automountServiceAccountTokenUndefined(pod *corev1.Pod) bool {
-	return pod.Spec.AutomountServiceAccountToken == nil
 }
 
 func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.AdmissionRequest) (*v1.Namespace, error) {
@@ -191,22 +119,24 @@ func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.Admission
 	return namespace, nil
 }
 
-func decodePod(raw []byte) (*corev1.Pod, error) {
-	pod := &corev1.Pod{}
-	deserializer := scheme.Codecs.UniversalDeserializer()
-	if _, _, err := deserializer.Decode(raw, nil, pod); err != nil {
-		return nil, err
+func (patches *patchOperations) toBytes() []byte {
+	patchBytes, err := json.Marshal(patches)
+	if err != nil {
+		return nil
 	}
-	return pod, nil
+	return patchBytes
 }
 
-func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
-	// Right now we only care about 'CREATE' events. Needs to be
-	// updated depending on the kind of admission requests that
-	// `KarydiaAdmission` should handle in this package.
-	// https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127
-	if ar.Request.Operation != v1beta1.Create {
+//func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
+/* Right now we only care about 'CREATE' and 'UPDATE' events.
+   Needs to be updated depending on the kind of admission requests that
+   `KarydiaAdmission` should handle in this package.
+   https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
+/*	const Create v1beta1.Operation = "CREATE"
+	const Update v1beta1.Operation = "UPDATE"
+	operation := ar.Request.Operation
+	if operation != Create && operation != Update {
 		return true
 	}
 	return false
-}
+}*/

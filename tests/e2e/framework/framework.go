@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -99,6 +101,22 @@ func (f *Framework) CreateTestNamespace() (*corev1.Namespace, error) {
 			Labels: map[string]string{
 				"app": "karydia-e2e-test",
 			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+	}
+	return ns, nil
+}
+
+func (f *Framework) CreateTestNamespaceWithAnnotation(annotations map[string]string) (*corev1.Namespace, error) {
+	ns, err := f.KubeClientset.CoreV1().Namespaces().Create(&corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "karydia-e2e-test-",
+			Labels: map[string]string{
+				"app": "karydia-e2e-test",
+			},
+			Annotations: annotations,
 		},
 	})
 	if err != nil {
@@ -477,6 +495,11 @@ func (f *Framework) DeleteAll() error {
 			return fmt.Errorf("failed to delete namespace %q: %v", name, err)
 		}
 	}
+	/* Delete single pod in default namespace */
+	err = f.KubeClientset.CoreV1().Pods("default").Delete("karydia-e2e-test-pod", &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete pod in default namespace")
+	}
 	return nil
 }
 
@@ -509,6 +532,16 @@ func (f *Framework) WaitPodRunning(namespace, name string, timeout time.Duration
 			return false, fmt.Errorf("failed to get pods: %v", err)
 		}
 		if !podv1.IsPodReady(pod) {
+			return false, nil
+		}
+		return true, nil
+	})
+}
+
+func (f *Framework) WaitDefaultServiceAccountCreated(ns string, timeout time.Duration) error {
+	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
+		if err != nil {
 			return false, nil
 		}
 		return true, nil
