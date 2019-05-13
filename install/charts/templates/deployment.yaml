@@ -5,7 +5,7 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 
-apiVersion: {{ .Values.deployment.apiVersion }}
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: {{ .Values.metadata.name }}
@@ -19,7 +19,7 @@ spec:
       labels:
         app: {{ .Values.metadata.labelApp }}
     spec:
-      serviceAccount: {{ .Values.metadata.name }}
+      serviceAccount: {{ .Values.rbac.serviceAccount }}
       containers:
       - name: {{ .Values.metadata.name }}
         image: {{ .Values.metadata.name }}/{{ .Values.metadata.name }}:{{ .Values.version }}
@@ -35,8 +35,8 @@ spec:
           - --enable-karydia-admission
           - --enable-opa-admission
         volumeMounts:
-          - name: {{ .Values.deployment.volume.name }}
-            mountPath: {{ .Values.deployment.volume.path }}
+          - name: {{ .Values.metadata.name }}-tls
+            mountPath: "/etc/karydia/tls"
         livenessProbe:
           httpGet:
             path: /healthz
@@ -69,9 +69,9 @@ spec:
         - name: workdir
           mountPath: "/tmp"
       volumes:
-        - name: {{ .Values.deployment.volume.name }}
+        - name: {{ .Values.metadata.name }}-tls
           secret:
-            secretName: {{ .Values.deployment.volume.name }}
+            secretName: {{ .Values.metadata.name }}-tls
             optional: true
         - name: workdir
           configMap:

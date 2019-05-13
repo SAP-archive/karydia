@@ -5,10 +5,10 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 
-apiVersion: {{ .Values.apiVersion }}
+apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
   namespace: {{ .Values.metadata.namespace }}
 
 ---
@@ -42,7 +42,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
   name: view
@@ -57,7 +57,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
   name: {{ .Values.metadata.name }}-networkpolicies
@@ -72,7 +72,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
   name: {{ .Values.metadata.name }}-view-ksp
@@ -98,7 +98,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
   name: {{ .Values.metadata.name }}-view-roles
@@ -128,19 +128,11 @@ metadata:
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: Role
   name: configmap-modifier
   apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-apiVersion: {{ .Values.apiVersion }}
-kind: ServiceAccount
-metadata:
-  name: {{ .Values.metadata.name }}-install
-  namespace: {{ .Values.metadata.namespace }}
 
 ---
 
@@ -179,7 +171,7 @@ metadata:
   name: install-{{ .Values.metadata.name }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.rbac.serviceAccount }}
   namespace: {{ .Values.metadata.namespace }}
 roleRef:
   kind: ClusterRole

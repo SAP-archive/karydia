@@ -5,13 +5,13 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 
-apiVersion: {{ .Values.securityPolicy.apiVersion }}
+apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   name: karydiasecuritypolicies.{{ .Values.metadata.apiGroup }}
 spec:
   group: {{ .Values.metadata.apiGroup }}
-  version: {{ .Values.securityPolicy.version }}
+  version: v1alpha1
   scope: Cluster
   names:
     kind: KarydiaSecurityPolicy
