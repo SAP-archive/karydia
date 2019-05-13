@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/api/networking/v1"
@@ -143,13 +144,12 @@ func (reconciler *NetworkpolicyReconciler) processNextNetworkPolicyWorkItem() bo
 		}
 
 		if err := reconciler.syncNetworkPolicyHandler(key); err != nil {
-
 			reconciler.networkPolicyworkqueue.AddRateLimited(key)
 			return fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error())
 		}
 
 		reconciler.networkPolicyworkqueue.Forget(obj)
-		klog.Infof("Successfully synced '%s'", key)
+		klog.Infof("Successfully synced network policy '%s'", key)
 		return nil
 	}(obj)
 
@@ -186,7 +186,7 @@ func (reconciler *NetworkpolicyReconciler) processNextNamespaceWorkItem() bool {
 		}
 
 		reconciler.namespaceWorkqueue.Forget(obj)
-		klog.Infof("Successfully synced '%s'", key)
+		klog.Infof("Successfully synced workitem '%s'", key)
 		return nil
 	}(obj)
 
@@ -199,6 +199,7 @@ func (reconciler *NetworkpolicyReconciler) processNextNamespaceWorkItem() bool {
 }
 
 func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) error {
+	klog.Infof("Start network policy reconciler (syncNetworkPolicyHandler) for %s", key)
 	namespaceName, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
@@ -217,13 +218,12 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	}
 
 	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		klog.Warning("No default network policy set")
+		klog.Warningf("No default network policy set %s", key)
 		reconciler.namespaceWorkqueue.Forget(key)
 		return nil
 	}
 
 	if name == reconciler.defaultNetworkPolicies[npName].GetName() {
-
 		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(name)
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -246,7 +246,9 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	}
 	return nil
 }
+
 func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) error {
+	klog.Infof("Start network policy reconciler for namespace %s", key)
 	namespace, err := reconciler.namespacesLister.Get(key)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -254,7 +256,7 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 			return nil
 		}
 	}
-	klog.Infof("Found namespace %s", key)
+	klog.Infof("Found namespace %s in queue", key)
 	for _, ns := range reconciler.defaultNetworkPolicyExcludes {
 		if key == ns {
 			klog.Infof("Not creating default network policy in %q - namespace excluded", key)
@@ -269,19 +271,26 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 		return nil
 	}
 
-	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		klog.Warning("No default network policy set")
-		reconciler.namespaceWorkqueue.Forget(key)
-		return nil
+	networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(key).Get(npName)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			if err := reconciler.createDefaultNetworkPolicy(key, npName); err != nil {
+				klog.Errorf("failed to create default network policy: %v", err)
+				return fmt.Errorf("error syncing %q: %v", key, err)
+			}
+			reconciler.namespaceWorkqueue.Forget(key)
+			klog.Infof("Successfully synced namespace %q", key)
+			return nil
+		}
+	} else {
+		klog.Infof("Found networkpolicy %s/%s", key, npName)
+		if reconciler.reconcileIsNeeded(networkPolicy, npName) {
+			if err := reconciler.updateDefaultNetworkPolicy(key, npName); err != nil {
+				klog.Errorf("failed to update default network policy: %v", err)
+				return fmt.Errorf("error syncing %q: %v", key, err)
+			}
+		}
 	}
-
-	if err := reconciler.createDefaultNetworkPolicy(key, npName); err != nil {
-		klog.Errorf("failed to create default network policy: %v", err)
-		return fmt.Errorf("error syncing %q: %v", key, err)
-	}
-
-	reconciler.namespaceWorkqueue.Forget(key)
-	klog.Infof("Successfully synced %q", key)
 	return nil
 }
 
@@ -336,12 +345,34 @@ func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace 
 }
 
 func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace string, networkpolicyName string) error {
-	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
-	desiredPolicy.ObjectMeta.Namespace = namespace
+	if _, ok := reconciler.defaultNetworkPolicies[networkpolicyName]; !ok {
+		klog.Infof("Network policy not in buffer. Load %s", networkpolicyName)
 
-	if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
+		networkPolicyConfigmap, err := reconciler.kubeclientset.CoreV1().ConfigMaps("kube-system").Get(networkpolicyName, meta_v1.GetOptions{})
+		if err != nil {
+			klog.Errorf("Failed to get network policy %s", networkpolicyName)
+			return fmt.Errorf("Failed to get network policy %s", networkpolicyName)
+		}
+
+		var policy networkingv1.NetworkPolicy
+		if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
+			klog.Errorf("Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, networkpolicyName, err)
+		}
+		reconciler.defaultNetworkPolicies[networkpolicyName] = &policy
+		klog.Infof("Network policy %s loaded into buffer. New Buffer length: %v", policy.GetName(), len(reconciler.defaultNetworkPolicies))
+	}
+
+	if _, ok := reconciler.defaultNetworkPolicies[networkpolicyName]; !ok {
+		err := fmt.Errorf("Network not found in buffer after load %s", networkpolicyName)
 		return err
+	} else {
+		desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
+		desiredPolicy.ObjectMeta.Namespace = namespace
+		klog.Infof("Deep copy of network policy with name %s", desiredPolicy.GetName())
+		if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
+			klog.Errorf("Network policy creation failed. Name specified: %s Actual name %s", networkpolicyName, desiredPolicy.GetName())
+			return err
+		}
 	}
 	return nil
-
 }
