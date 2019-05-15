@@ -30,7 +30,7 @@ Agent](https://www.openpolicyagent.org/) endpoint specified by
 Complex policies can be loaded in OPA using the rego language without needing
 additional code in Golang.
 
-## Karydia admission
+## Karydia Admission
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal
 of a secure-by-default cluster setup.
@@ -39,7 +39,8 @@ The features currently supported are:
 1. Secure-by-default mounting of service account tokens
     - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
     - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
-2. Enforcing a seccomp policy
+2. Secure-by-default Seccomp profiles
+    - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
 
 It is configured with the following namespace annotations:
 
