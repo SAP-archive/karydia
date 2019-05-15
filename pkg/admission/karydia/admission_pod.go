@@ -48,8 +48,8 @@ func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v
 }
 
 func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
-	seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-	if !ok || seccompPod != nsAnnotation {
+	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
+	if !ok {
 		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", nsAnnotation)
 		validationErrors = append(validationErrors, validationErrorMsg)
 	}

@@ -97,15 +97,15 @@ func TestPodSeccompDefaultProfileOtherAnnotation(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
-	// One, validation error expected for mutated pod
+	// No validation error expected for mutated pod
 	validationErrors = validatePodSeccompProfile(mutatedPod, "runtime/default", validationErrors)
-	if len(validationErrors) != 1 {
-		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
-	// One validation error expected for initial pod
+	// No validation error expected for initial pod
 	validationErrors = validatePodSeccompProfile(pod, "runtime/default", validationErrors)
-	if len(validationErrors) != 1 {
-		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
