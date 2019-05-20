@@ -63,6 +63,11 @@ codegen:
 test:
 	go test $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
 
+.PHONY: test-coverage
+test-coverage:
+	go test -coverprofile=cov.out $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
+	go tool cover -html=cov.out
+
 .PHONY: e2e-test
 e2e-test:
 	go test -v ./tests/e2e/... --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)
