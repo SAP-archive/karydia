@@ -219,7 +219,6 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 
 	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
 		klog.Warningf("No default network policy set %s", key)
-		reconciler.namespaceWorkqueue.Forget(key)
 		return nil
 	}
 
@@ -234,6 +233,7 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 				}
 				return nil
 			}
+			return err
 		} else {
 			klog.Infof("Found networkpolicy %s/%s", namespaceName, networkPolicy.Name)
 			if reconciler.reconcileIsNeeded(networkPolicy, npName) {
@@ -260,7 +260,6 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 	for _, ns := range reconciler.defaultNetworkPolicyExcludes {
 		if key == ns {
 			klog.Infof("Not creating default network policy in %q - namespace excluded", key)
-			reconciler.namespaceWorkqueue.Forget(key)
 			return nil
 		}
 	}
@@ -278,10 +277,10 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 				klog.Errorf("failed to create default network policy: %v", err)
 				return fmt.Errorf("error syncing %q: %v", key, err)
 			}
-			reconciler.namespaceWorkqueue.Forget(key)
 			klog.Infof("Successfully synced namespace %q", key)
 			return nil
 		}
+		return err
 	} else {
 		klog.Infof("Found networkpolicy %s/%s", key, npName)
 		if reconciler.reconcileIsNeeded(networkPolicy, npName) {
@@ -312,7 +311,7 @@ func (reconciler *NetworkpolicyReconciler) enqueueNetworkPolicy(obj interface{})
 		utilruntime.HandleError(err)
 		return
 	}
-	reconciler.networkPolicyworkqueue.AddRateLimited(key)
+	reconciler.networkPolicyworkqueue.Add(key)
 }
 func (reconciler *NetworkpolicyReconciler) enqueueNamespace(obj interface{}) {
 	var key string
@@ -321,7 +320,7 @@ func (reconciler *NetworkpolicyReconciler) enqueueNamespace(obj interface{}) {
 		utilruntime.HandleError(err)
 		return
 	}
-	reconciler.namespaceWorkqueue.AddRateLimited(key)
+	reconciler.namespaceWorkqueue.Add(key)
 }
 
 func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy, networkpolicyName string) bool {
@@ -363,7 +362,7 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 	}
 
 	if _, ok := reconciler.defaultNetworkPolicies[networkpolicyName]; !ok {
-		err := fmt.Errorf("Network not found in buffer after load %s", networkpolicyName)
+		err := fmt.Errorf("Network policy not found in buffer after load %s", networkpolicyName)
 		return err
 	} else {
 		desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
