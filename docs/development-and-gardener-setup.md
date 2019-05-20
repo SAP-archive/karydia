@@ -1,9 +1,8 @@
 # Development and Gardener
-=======
 # Installing karydia
 
 ## Installation
-Installation instruction can be found [here](https://github.com/karydia/karydia/blob/master/install/README.md).
+Installation instruction can be found [here](/install/README.md).
 
 ## Development and test environment
 
@@ -16,7 +15,7 @@ eval $(minikube docker-env)
 make container
 ```
 
-Follow the [installation instructions](https://github.com/karydia/karydia/blob/master/install/README.md).
+Follow the [installation instructions](/install/README.md).
 
 After that, you can repeat the following commands to rebuild and test changes:
 
