@@ -31,10 +31,23 @@ spec:
       serviceAccount: {{ .Values.rbac.serviceAccount }}
       containers:
       - name: {{ .Values.metadata.name }}
-        image: {{ .Values.metadata.name }}/{{ .Values.metadata.name }}:{{ .Values.version }}
+        {{- if .Values.dev }}
+        image: eu.gcr.io/gardener-project/karydia/karydia-dev
+        {{- else }}
+        image: eu.gcr.io/gardener-project/karydia/karydia
+        {{- end }} 
         imagePullPolicy: IfNotPresent
         command:
+          {{- if .Values.dev }}
+          - hotswap-dev
+          - -r
+          - 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient
+            exec {{"{{"}}binPath{{"}}"}} --'
+          - --
+          - /usr/local/bin/karydia
+          {{- else }}
           - karydia
+          {{- end }}
           - runserver
           - --tls-cert
           - /etc/karydia/tls/cert.pem
