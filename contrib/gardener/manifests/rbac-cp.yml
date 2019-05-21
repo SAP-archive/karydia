@@ -17,6 +17,17 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
+  name: karydia-view-kc
+rules:
+- apiGroups: ["karydia.gardener.cloud"]
+  resources: ["karydiaconfigs"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
   name: karydia-networkpolicies
 rules:
 - apiGroups: ["networking.k8s.io"]
@@ -54,6 +65,21 @@ subjects:
 roleRef:
   kind: ClusterRole
   name: karydia-networkpolicies
+  apiGroup: rbac.authorization.k8s.io
+
+---
+
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: karydia-view-kc
+subjects:
+- kind: User
+  name: system:karydia
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: karydia-view-kc
   apiGroup: rbac.authorization.k8s.io
 
 ---
