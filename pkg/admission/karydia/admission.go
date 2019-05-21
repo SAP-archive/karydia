@@ -19,6 +19,7 @@ package karydia
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 
 	"github.com/karydia/karydia/pkg/k8sutil"
@@ -34,16 +35,17 @@ var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind:
 
 type KarydiaAdmission struct {
 	logger        *logrus.Logger
-	kubeClientset *kubernetes.Clientset
+	kubeClientset kubernetes.Interface
 	karydiaConfig *v1alpha1.KarydiaConfig
 }
+
 func (k *KarydiaAdmission) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	k.karydiaConfig = &karydiaConfig
 	return nil
 }
 
 type Config struct {
-	KubeClientset *kubernetes.Clientset
+	KubeClientset kubernetes.Interface
 	KarydiaConfig *v1alpha1.KarydiaConfig
 }
 
@@ -68,9 +70,9 @@ func New(config *Config) (*KarydiaAdmission, error) {
 
 func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *v1beta1.AdmissionResponse {
 	req := ar.Request
-	/*if shouldIgnoreEvent(ar) {
+	if shouldIgnoreEvent(ar) {
 		return k8sutil.AllowAdmissionResponse()
-	}*/
+	}
 
 	switch req.Kind {
 	case kindPod:
@@ -134,16 +136,16 @@ func (patches *patchOperations) toBytes() []byte {
 	return patchBytes
 }
 
-//func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
-/* Right now we only care about 'CREATE' and 'UPDATE' events.
-   Needs to be updated depending on the kind of admission requests that
-   `KarydiaAdmission` should handle in this package.
-   https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
-/*	const Create v1beta1.Operation = "CREATE"
+func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
+	/* Right now we only care about 'CREATE' and 'UPDATE' events.
+	Needs to be updated depending on the kind of admission requests that
+	`KarydiaAdmission` should handle in this package.
+	https://github.com/kubernetes/api/blob/kubernetes-1.12.2/admission/v1beta1/types.go#L118-L127 */
+	const Create v1beta1.Operation = "CREATE"
 	const Update v1beta1.Operation = "UPDATE"
 	operation := ar.Request.Operation
 	if operation != Create && operation != Update {
 		return true
 	}
 	return false
-}*/
+}
