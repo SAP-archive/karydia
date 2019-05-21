@@ -35,25 +35,25 @@ import (
 )
 
 type testSettings struct {
-	t						*testing.T
-	clientset				*fake.Clientset
-	configInformer			v1alpha12.KarydiaConfigInformer
-	configInterfaces		[]ConfigInterface
-	configWorker			v1alpha13.KarydiaConfigInterface
-	sharedInformerFactory	externalversions.SharedInformerFactory
-	waitTimeoutSeconds		time.Duration
+	t                     *testing.T
+	clientset             *fake.Clientset
+	configInformer        v1alpha12.KarydiaConfigInformer
+	controllers           []ControllerInterface
+	configWorker          v1alpha13.KarydiaConfigInterface
+	sharedInformerFactory externalversions.SharedInformerFactory
+	waitTimeoutSeconds    time.Duration
 }
-func newTestSettings(t *testing.T, kubeObjects []runtime.Object, configInterfaces []ConfigInterface) *testSettings {
+func newTestSettings(t *testing.T, kubeObjects []runtime.Object, karydiaControllers []ControllerInterface) *testSettings {
 	clientset := fake.NewSimpleClientset(kubeObjects...)
 	sharedInformerFactory := externalversions.NewSharedInformerFactory(clientset, noResyncPeriodFunc())
 	return &testSettings{
-		t:						t,
-		clientset:				clientset,
-		configInformer:			sharedInformerFactory.Karydia().V1alpha1().KarydiaConfigs(),
-		configInterfaces:		configInterfaces,
-		configWorker:			clientset.KarydiaV1alpha1().KarydiaConfigs(),
-		sharedInformerFactory:	sharedInformerFactory,
-		waitTimeoutSeconds:		10 * time.Second,
+		t:                     t,
+		clientset:             clientset,
+		configInformer:        sharedInformerFactory.Karydia().V1alpha1().KarydiaConfigs(),
+		controllers:           karydiaControllers,
+		configWorker:          clientset.KarydiaV1alpha1().KarydiaConfigs(),
+		sharedInformerFactory: sharedInformerFactory,
+		waitTimeoutSeconds:    10 * time.Second,
 	}
 }
 
@@ -84,16 +84,16 @@ func newTestConfig(t *testing.T, resourceVersion string, params testConfigParams
 	}
 }
 
-type testConfigInterface interface {
+type testControllerInterface interface {
 	UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error
 	isUpdated() bool
 }
-type testConfigInterfaceImpl struct {
+type testController struct {
 	name				string
 	updated				bool
 	updateError			error
 }
-func (c *testConfigInterfaceImpl) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
+func (c *testController) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	if c.updateError != nil {
 		c.updated = false
 		return c.updateError
@@ -101,7 +101,7 @@ func (c *testConfigInterfaceImpl) UpdateConfig(karydiaConfig v1alpha1.KarydiaCon
 	c.updated = true
 	return nil
 }
-func (c *testConfigInterfaceImpl) isUpdated() bool {
+func (c *testController) isUpdated() bool {
 	return c.updated
 }
 
@@ -113,12 +113,12 @@ func TestNewConfigReconciler(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{new(testConfigInterfaceImpl)})
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 
 	// create reconciler and check values
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 	assert.Equal(c.config, r.config)
-	assert.Equal(s.configInterfaces, r.configInterfaces)
+	assert.Equal(s.controllers, r.controllers)
 	assert.Equal(s.clientset, r.clientset)
 	assert.Equal(s.configInformer.Lister(), r.lister)
 
@@ -130,11 +130,11 @@ func TestNewConfigReconciler(t *testing.T) {
 	assert.Equal(c.config, r.config)
 
 	// change expected values to make sure no pointers are used for config interfaces
-	s.configInterfaces = append(s.configInterfaces, new(testConfigInterfaceImpl))
-	assert.NotEqual(s.configInterfaces, r.configInterfaces)
+	s.controllers = append(s.controllers, new(testController))
+	assert.NotEqual(s.controllers, r.controllers)
 	// undo change and check again
-	s.configInterfaces = s.configInterfaces[:1]
-	assert.Equal(s.configInterfaces, r.configInterfaces)
+	s.controllers = s.controllers[:1]
+	assert.Equal(s.controllers, r.controllers)
 }
 
 func TestConfigReconciler_syncConfigHandlerWithoutConfigElement(t *testing.T) {
@@ -145,8 +145,8 @@ func TestConfigReconciler_syncConfigHandlerWithoutConfigElement(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// valid resource key namespace/name
 	assert.NoError(r.syncConfigHandler("a/" + c.config.Name))
@@ -178,8 +178,8 @@ func TestConfigReconciler_enqueueConfig(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// empty workqueue
 	assert.Equal(0, r.workqueue.Len())
@@ -206,8 +206,8 @@ func TestConfigReconciler_reconcileIsNeeded(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// equal configs
 	assert.Equal(c.config, r.config)
@@ -222,7 +222,7 @@ func TestConfigReconciler_reconcileIsNeeded(t *testing.T) {
 	assert.True(r.reconcileIsNeeded(c.config))
 }
 
-func TestConfigReconciler_UpdateConfigWithoutConfigInterfaces(t *testing.T) {
+func TestConfigReconciler_UpdateConfigWithoutControllers(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
@@ -230,8 +230,8 @@ func TestConfigReconciler_UpdateConfigWithoutConfigInterfaces(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// equal configs
 	assert.Equal(c.config, r.config)
@@ -249,7 +249,7 @@ func TestConfigReconciler_UpdateConfigWithoutConfigInterfaces(t *testing.T) {
 	assert.Equal(c.config, r.config)
 }
 
-func TestConfigReconciler_UpdateConfigWithConfigInterface(t *testing.T) {
+func TestConfigReconciler_UpdateConfigWithController(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
@@ -257,42 +257,42 @@ func TestConfigReconciler_UpdateConfigWithConfigInterface(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{new(testConfigInterfaceImpl)})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
-	cI := s.configInterfaces[0].(*testConfigInterfaceImpl)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
+	controller := s.controllers[0].(*testController)
 
 	// equal configs
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 	// different configs
-	cI.updated = false
+	controller.updated = false
 	c.config.Name = "newName"
 	assert.NotEqual(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 	// different configs again but with already updated flag
 	c.config.Name = "newSpecialName"
 	assert.NotEqual(c.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 	// different configs with empty config
-	cI.updated = false
+	controller.updated = false
 	c.config = *new(v1alpha1.KarydiaConfig)
 	assert.NotEqual(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 }
 
-func TestConfigReconciler_UpdateConfigWithConfigInterfaces(t *testing.T) {
+func TestConfigReconciler_UpdateConfigWithControllers(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
@@ -300,53 +300,53 @@ func TestConfigReconciler_UpdateConfigWithConfigInterfaces(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	configInterface0 := testConfigInterfaceImpl{name: "testConfigInterface0"}
-	configInterface1 := testConfigInterfaceImpl{name: "testConfigInterface1"}
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{&configInterface0, &configInterface1})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	controller0 := testController{name: "testController0"}
+	controller1 := testController{name: "testController1"}
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{&controller0, &controller1})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// equal configs
 	assert.Equal(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.True(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.True(controller1.updated)
 	// different configs
-	configInterface0.updated = false
-	configInterface1.updated = false
+	controller0.updated = false
+	controller1.updated = false
 	c.config.Name = "newName"
 	assert.NotEqual(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.True(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.True(controller1.updated)
 	// different configs again but with already updated flag
 	c.config.Name = "newSpecialName"
 	assert.NotEqual(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.True(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.True(controller1.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.True(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.True(controller1.updated)
 	// different configs with empty config
-	configInterface0.updated = false
-	configInterface1.updated = false
+	controller0.updated = false
+	controller1.updated = false
 	c.config = *new(v1alpha1.KarydiaConfig)
 	assert.NotEqual(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
 	assert.NoError(r.UpdateConfig(c.config))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.True(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.True(controller1.updated)
 }
 
-func TestConfigReconciler_UpdateConfigWithConfigInterfacesAndError(t *testing.T) {
+func TestConfigReconciler_UpdateConfigWithControllersAndError(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
@@ -354,50 +354,50 @@ func TestConfigReconciler_UpdateConfigWithConfigInterfacesAndError(t *testing.T)
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	configInterface0 := testConfigInterfaceImpl{name: "testConfigInterface0"}
-	configInterface1 := testConfigInterfaceImpl{name: "testConfigInterface1", updateError: fmt.Errorf("test config update error")}
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{&configInterface0, &configInterface1})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	controller0 := testController{name: "testController0"}
+	controller1 := testController{name: "testController1", updateError: fmt.Errorf("test config update error")}
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{&controller0, &controller1})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// equal configs
 	assert.Equal(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
-	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(configInterface1.updateError))
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
+	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(controller1.updateError))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.False(controller1.updated)
 	// different configs
-	configInterface0.updated = false
-	configInterface1.updated = false
+	controller0.updated = false
+	controller1.updated = false
 	c.config.Name = "newName"
 	assert.NotEqual(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
-	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(configInterface1.updateError))
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
+	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(controller1.updateError))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.False(controller1.updated)
 	// different configs again but with already updated flag
 	c.config.Name = "newSpecialName"
 	assert.NotEqual(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.False(configInterface1.updated)
-	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(configInterface1.updateError))
+	assert.True(controller0.updated)
+	assert.False(controller1.updated)
+	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(controller1.updateError))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.False(controller1.updated)
 	// different configs with empty config
-	configInterface0.updated = false
-	configInterface1.updated = false
+	controller0.updated = false
+	controller1.updated = false
 	c.config = *new(v1alpha1.KarydiaConfig)
 	assert.NotEqual(c.config, r.config)
-	assert.False(configInterface0.updated)
-	assert.False(configInterface1.updated)
-	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(configInterface1.updateError))
+	assert.False(controller0.updated)
+	assert.False(controller1.updated)
+	assert.EqualError(r.UpdateConfig(c.config), fmt.Sprint(controller1.updateError))
 	assert.Equal(c.config, r.config)
-	assert.True(configInterface0.updated)
-	assert.False(configInterface1.updated)
+	assert.True(controller0.updated)
+	assert.False(controller1.updated)
 }
 
 func TestConfigReconciler_createConfig(t *testing.T) {
@@ -408,8 +408,8 @@ func TestConfigReconciler_createConfig(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
 
 	// no config deployed
 	_, err := s.configWorker.Get(c.config.Name, metav1.GetOptions{})
@@ -435,9 +435,9 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 		seccompProfile:					"newValue",
 		networkPolicy:					"testNetworkPolicy",
 	})
-	s := newTestSettings(t, []runtime.Object{}, []ConfigInterface{new(testConfigInterfaceImpl)})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
-	cI := s.configInterfaces[0].(*testConfigInterfaceImpl)
+	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
+	controller := s.controllers[0].(*testController)
 
 	// start channels
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -465,7 +465,7 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	assert.True(errors.IsNotFound(err))
 	// and without informing methods because operation failed
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// try to delete config
 	assert.True(errors.IsNotFound(s.configWorker.Delete(c.config.Name, &metav1.DeleteOptions{})))
@@ -475,7 +475,7 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	assert.True(errors.IsNotFound(err))
 	// and without informing methods because operation failed
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// create config
 	_, err = s.configWorker.Create(&newC.config)
@@ -495,7 +495,7 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	assert.Equal(&newC.config, e)
 	// but without informing methods because operation not watched
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// stop channels
 	cancelCtx()
@@ -519,9 +519,9 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 		seccompProfile:					"testSeccompProfile",
 		networkPolicy:					"differentValue",
 	})
-	s := newTestSettings(t, []runtime.Object{&c.config}, []ConfigInterface{new(testConfigInterfaceImpl)})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
-	cI := s.configInterfaces[0].(*testConfigInterfaceImpl)
+	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
+	controller := s.controllers[0].(*testController)
 
 	// start channels
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -555,7 +555,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	assert.Equal(&c.config, e)
 	// and without informing methods because operation failed and not watched
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// try to update config
 	_, err = s.configWorker.Update(&newC.config)
@@ -566,7 +566,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	assert.Equal(&newC.config, e)
 	// but without informing methods because resource versions are equal
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// try to update config again with different resource versions
 	_, err = s.configWorker.Update(&differentC.config)
@@ -577,11 +577,11 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	assert.Equal(&differentC.config, e)
 	// and informing methods
 	assert.Equal(differentC.config, r.config)
-	assert.True(cI.updated)
+	assert.True(controller.updated)
 
 	// try to update config again with different resource versions but equal configs
 	differentC.config.ResourceVersion = "3"
-	cI.updated = false
+	controller.updated = false
 	_, err = s.configWorker.Update(&differentC.config)
 	assert.NoError(err)
 	// with cache update
@@ -591,7 +591,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	// and informing methods
 	assert.NotEqual(differentC.config, r.config)
 	assert.Equal(differentC.config.Spec, r.config.Spec)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// try to delete config
 	differentC.config.ResourceVersion = "2"
@@ -601,7 +601,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	e, _ = s.configWorker.Get(c.config.Name, metav1.GetOptions{})
 	assert.Equal(&differentC.config, e)
 	assert.Equal(differentC.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 	// and re-synced cache
 	s.sharedInformerFactory.WaitForCacheSync(ctx.Done())
 	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
@@ -634,9 +634,9 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 		networkPolicy:					"differentNetworkPolicy",
 	})
 	differentC.config.Name = "differentName"
-	s := newTestSettings(t, []runtime.Object{&c.config}, []ConfigInterface{new(testConfigInterfaceImpl)})
-	r := NewConfigReconciler(c.config, s.configInterfaces, s.clientset, s.configInformer)
-	cI := s.configInterfaces[0].(*testConfigInterfaceImpl)
+	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
+	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
+	controller := s.controllers[0].(*testController)
 
 	// start channels
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -686,7 +686,7 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	assert.Equal(&c.config, e)
 	// and without informing methods because it is a different config and operation not watched
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// update config
 	differentC.config.ResourceVersion = "3"
@@ -704,7 +704,7 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	assert.Equal(&c.config, e)
 	// and without informing methods because it is a different config
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// delete config
 	assert.NoError(s.configWorker.Delete(differentC.config.Name, &metav1.DeleteOptions{}))
@@ -718,7 +718,7 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	assert.Equal(&c.config, e)
 	// and without informing methods because it is a different config
 	assert.Equal(c.config, r.config)
-	assert.False(cI.updated)
+	assert.False(controller.updated)
 
 	// stop channels
 	cancelCtx()

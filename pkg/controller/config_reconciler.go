@@ -35,35 +35,35 @@ import (
 
 // reconciler (controller) struct
 type ConfigReconciler struct {
-	config           v1alpha1.KarydiaConfig
-	configInterfaces []ConfigInterface
+	config		v1alpha1.KarydiaConfig
+	controllers	[]ControllerInterface
 
 	// clientset for own API group
-	clientset        versioned.Interface
-	lister           v1alpha13.KarydiaConfigLister
-	synced           cache.InformerSynced
+	clientset	versioned.Interface
+	lister		v1alpha13.KarydiaConfigLister
+	synced		cache.InformerSynced
 	// rate limited work queue
 	// This is used to queue work to be processed instead of performing it as
 	// soon as a change happens. This means we can ensure we only process a
 	// fixed amount of resources at a time, and makes it easy to ensure we are
 	// never processing the same item simultaneously in two different workers.
-	workqueue        workqueue.RateLimitingInterface
+	workqueue	workqueue.RateLimitingInterface
 }
 
 // reconciler (controller) setup
 func NewConfigReconciler (
-	karydiaConfig               v1alpha1.KarydiaConfig,
-	karydiaConfigInterfaces     []ConfigInterface,
-	karydiaClientset            versioned.Interface,
-	karydiaConfigInformer       v1alpha12.KarydiaConfigInformer,
+	karydiaConfig			v1alpha1.KarydiaConfig,
+	karydiaControllers		[]ControllerInterface,
+	karydiaClientset		versioned.Interface,
+	karydiaConfigInformer	v1alpha12.KarydiaConfigInformer,
 	) *ConfigReconciler {
 	reconciler := &ConfigReconciler{
-		config:           karydiaConfig,
-		configInterfaces: karydiaConfigInterfaces,
-		clientset:        karydiaClientset,
-		lister:           karydiaConfigInformer.Lister(),
-		synced:           karydiaConfigInformer.Informer().HasSynced,
-		workqueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Config"),
+		config:      karydiaConfig,
+		controllers: karydiaControllers,
+		clientset:   karydiaClientset,
+		lister:      karydiaConfigInformer.Lister(),
+		synced:      karydiaConfigInformer.Informer().HasSynced,
+		workqueue:   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Config"),
 	}
 
 	klog.Info("Setting up event handler")
@@ -249,8 +249,8 @@ func (reconciler *ConfigReconciler) reconcileIsNeeded(desiredConfig v1alpha1.Kar
 // update actual config
 func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	reconciler.config = karydiaConfig
-	for _, configInterface := range reconciler.configInterfaces {
-		if err := configInterface.UpdateConfig(karydiaConfig); err != nil {
+	for _, controller := range reconciler.controllers {
+		if err := controller.UpdateConfig(karydiaConfig); err != nil {
 			utilruntime.HandleError(err)
 			return err
 		}

@@ -27,8 +27,8 @@ import (
 func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var patches patchOperations
 
-	automountServiceAccountToken, annotated := k.getAutomountServiceAccountTokenAnnotation(ns)
-	if annotated {
+	automountServiceAccountToken := k.getAutomountServiceAccountTokenSetting(ns)
+	if automountServiceAccountToken != "" {
 		patches = mutateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, patches)
 	}
 
@@ -38,23 +38,20 @@ func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns 
 func (k *KarydiaAdmission) validateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
 
-	automountServiceAccountToken, annotated := k.getAutomountServiceAccountTokenAnnotation(ns)
-	if annotated {
+	automountServiceAccountToken := k.getAutomountServiceAccountTokenSetting(ns)
+	if automountServiceAccountToken != "" {
 		validationErrors = validateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, validationErrors)
 	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
-func (k *KarydiaAdmission) getAutomountServiceAccountTokenAnnotation(ns *corev1.Namespace) (automountServiceAccountToken string, annotated bool) {
-	automountServiceAccountToken, annotated = ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+func (k *KarydiaAdmission) getAutomountServiceAccountTokenSetting(ns *corev1.Namespace) string {
+	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	if !annotated {
 		automountServiceAccountToken = k.karydiaConfig.Spec.AutomountServiceAccountToken
 	}
-	if automountServiceAccountToken != "" {
-		annotated = true
-	}
-	return automountServiceAccountToken, annotated
+	return automountServiceAccountToken
 }
 
 func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, validationErrors []string) []string {

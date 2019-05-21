@@ -18,6 +18,6 @@ package controller
 
 import "github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 
-type ConfigInterface interface {
+type ControllerInterface interface {
 	UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error
 }

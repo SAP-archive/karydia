@@ -58,7 +58,7 @@ var runserverCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runserverCmd)
 
-	runserverCmd.Flags().String("config-custom-resource", "karydia-config", "Custom Resource where to load the configuration from, in the format <name>")
+	runserverCmd.Flags().String("config", "karydia-config", "Custom Resource where to load the configuration from, in the format <name>")
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
@@ -80,8 +80,6 @@ func init() {
 
 	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
 	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
-	// replaced by KarydiaConfig - it's now possible to change this value via 'manifests/config.yml'
-	//runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
@@ -92,7 +90,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
 		kubeInformerFactory        kubeinformers.SharedInformerFactory
 		karydiaInformerFactory     karydiainformers.SharedInformerFactory
-		karydiaConfigInterfaces    = []controller.ConfigInterface{}
+		karydiaControllers         = []controller.ControllerInterface{}
 	)
 	if enableDefaultNetworkPolicy {
 		enableController = true
@@ -133,15 +131,15 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config-custom-resource"), metav1.GetOptions{})
+	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config"), metav1.GetOptions{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr,"Failed to load karydia config: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Fprintf(os.Stderr, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
-	fmt.Fprintf(os.Stderr, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
-	fmt.Fprintf(os.Stderr, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
-	fmt.Fprintf(os.Stderr, "KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
 
 	if enableKarydiaAdmission {
 		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
@@ -154,7 +152,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		}
 
 		webHook.RegisterAdmissionPlugin(karydiaAdmission)
-		karydiaConfigInterfaces = append(karydiaConfigInterfaces, karydiaAdmission)
+		karydiaControllers = append(karydiaControllers, karydiaAdmission)
 	}
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
@@ -196,7 +194,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
 		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
-		karydiaConfigInterfaces = append(karydiaConfigInterfaces, reconciler)
+		karydiaControllers = append(karydiaControllers, reconciler)
 	}
 
 	if enableOPAAdmission {
@@ -223,7 +221,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	}
 
 	karydiaInformerFactory = karydiainformers.NewSharedInformerFactory(karydiaClientset, resyncInterval)
-	karydiaConfigReconciler := controller.NewConfigReconciler(*karydiaConfig, karydiaConfigInterfaces, karydiaClientset, karydiaInformerFactory.Karydia().V1alpha1().KarydiaConfigs())
+	karydiaConfigReconciler := controller.NewConfigReconciler(*karydiaConfig, karydiaControllers, karydiaClientset, karydiaInformerFactory.Karydia().V1alpha1().KarydiaConfigs())
 
 	var wg sync.WaitGroup
 

@@ -21,6 +21,6 @@ metadata:
     app: karydia
   name: karydia-config
 spec:
-  automountServiceAccountToken: "forbidden"
+  automountServiceAccountToken: "change-default"
   seccompProfile: "docker/default"
   networkPolicy: "kube-system:karydia-default-network-policy"

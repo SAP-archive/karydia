@@ -38,7 +38,7 @@ type KarydiaAdmission struct {
 	karydiaConfig *v1alpha1.KarydiaConfig
 }
 func (k *KarydiaAdmission) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
-	k.karydiaConfig = karydiaConfig.DeepCopy()
+	k.karydiaConfig = &karydiaConfig
 	return nil
 }
 

@@ -2,14 +2,14 @@
 
 | Feature | CLI flags | manifests/config.yml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
-| Karydia Config | `--config-custom-resource` | `name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
+| Karydia Config | `--config` | `name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
 | Default Network Policy ([demo](demos/network/network.md))| `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `networkPolicy` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
 | Open Policy Agent | `--enable-opa-admission` | | None | Implemented |
 | Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | `seccompProfile` <br /> `automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
 
-With `--config-custom-resource` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `manifests/config.yml`:
+With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `manifests/config.yml`:
 ```
 metadata:
   name: karydia-config
