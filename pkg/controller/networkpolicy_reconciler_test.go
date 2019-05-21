@@ -82,7 +82,7 @@ func (f *fixture) newReconciler() (*NetworkpolicyReconciler, kubeinformers.Share
 	f.kubeclient = k8sfake.NewSimpleClientset(f.kubeobjects...)
 	k8sI := kubeinformers.NewSharedInformerFactory(f.kubeclient, noResyncPeriodFunc())
 
-	reconciler := NewNetworkpolicyReconciler(f.kubeclient, k8sI.Networking().V1().NetworkPolicies(), k8sI.Core().V1().Namespaces(), f.defaultNetworkPolicies, "karydia-default-network-policy", f.namespaceExclude)
+	reconciler := NewNetworkpolicyReconciler(f.kubeclient, k8sI.Networking().V1().NetworkPolicies(), k8sI.Core().V1().Namespaces(), f.defaultNetworkPolicies, "default:karydia-default-network-policy", f.namespaceExclude)
 
 	reconciler.networkPoliciesSynced = alwaysReady
 	reconciler.namespacesSynced = alwaysReady

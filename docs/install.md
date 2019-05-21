@@ -20,7 +20,15 @@ To make the certificate available to karydia, we need to create a secret.
 
 ### Deploy karydia
 
-First, create a configmap that holds the default network policy that
+First, register the karydia config custom resource definition (CRD) followed by the creation of a karydia config
+custom resource that holds the karydia default config which should be used.
+
+```
+kubectl apply -f manifests/crd-config.yml
+kubectl apply -f manifests/config.yml
+```
+
+After that, create a configmap that holds the default network policy that
 karydia should use. Note that this is only necessary if karydia is
 deployed with `--enable-default-network-policy`.
 
