@@ -56,6 +56,10 @@ required = [
   name = "github.com/spf13/viper"
   version = "1.2.1"
 
+[[constraint]]
+  name = "k8s.io/apiextensions-apiserver"
+  version = "kubernetes-1.14.2"
+
 [prune]
   go-tests = true
   non-go = true

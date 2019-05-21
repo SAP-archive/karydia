@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +19,8 @@ package controller
 import (
 	"bytes"
 	"fmt"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -53,10 +57,30 @@ type NetworkpolicyReconciler struct {
 	namespaceWorkqueue     workqueue.RateLimitingInterface
 }
 
+func (reconciler *NetworkpolicyReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
+	defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
+	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
+	if len(group) < 2 {
+		return fmt.Errorf("NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+	} else {
+		name := group[1]
+		reconciler.defaultNetworkPolicyName = name
+	}
+	return nil
+}
+
 func NewNetworkpolicyReconciler(
 	kubeclientset kubernetes.Interface,
 	networkpolicyInformer networkpolicyInformer.NetworkPolicyInformer, namespaceInformer namespaceInformer.NamespaceInformer,
-	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
+	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyIdentifier string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
+
+	defaultNetworkPolicyName := ""
+	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
+	if len(group) < 2 {
+		fmt.Errorf("NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+	} else {
+		defaultNetworkPolicyName = group[1]
+	}
 
 	reconciler := &NetworkpolicyReconciler{
 		defaultNetworkPolicyName:     defaultNetworkPolicyName,
