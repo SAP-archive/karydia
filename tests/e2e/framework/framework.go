@@ -17,18 +17,28 @@
 package framework
 
 import (
+	"bytes"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/client/clientset/versioned"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/tools/clientcmd"
 	"net"
+	"os"
 	"time"
 
+	clientset "github.com/karydia/karydia/pkg/client/clientset/versioned"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	certsv1beta1 "k8s.io/api/certificates/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextension "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -43,6 +53,8 @@ import (
 
 type Framework struct {
 	KubeClientset kubernetes.Interface
+	ApiExtClientset apiextension.Interface
+	KarydiaClientset versioned.Interface
 
 	Namespace string
 }
@@ -52,9 +64,26 @@ func Setup(server, kubeconfig, namespace string) (*Framework, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create clientset: %v", err)
 	}
+	cfg, err := clientcmd.BuildConfigFromFlags(server, kubeconfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+	ApiExtClientset, err := apiextension.NewForConfig(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build api extension clientset: %v\n", err)
+		os.Exit(1)
+	}
+	KarydiaClientset, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build karydia clientset: %v\n", err)
+		os.Exit(1)
+	}
 
 	return &Framework{
 		KubeClientset: KubeClientset,
+		ApiExtClientset: ApiExtClientset,
+		KarydiaClientset: KarydiaClientset,
 		Namespace:     namespace,
 	}, nil
 }
@@ -125,6 +154,85 @@ func (f *Framework) CreateTestNamespaceWithAnnotation(annotations map[string]str
 	return ns, nil
 }
 
+func (f *Framework) SetupKarydiaConfig() error {
+	// Create CRD
+	crdYaml := `
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: karydiaconfigs.karydia.gardener.cloud
+spec:
+  group: karydia.gardener.cloud
+  version: v1alpha1
+  scope: Cluster
+  names:
+    plural: karydiaconfigs
+    singular: karydiaconfig
+    kind: KarydiaConfig
+    shortNames:
+      - kc
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:
+            automountServiceAccountToken:
+              type: string
+            seccompProfile:
+              type: string
+            networkPolicy:
+              type: string
+`
+	crdObject := &v1beta1.CustomResourceDefinition{}
+	crdDecoder := yaml.NewYAMLOrJSONDecoder(bytes.NewReader([]byte(crdYaml)), 1000)
+	if err := crdDecoder.Decode(&crdObject); err != nil {
+		return err
+	}
+	_, err := f.ApiExtClientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crdObject)
+	if err != nil {
+		return fmt.Errorf("failed to create: %v", crdObject)
+	}
+	if err := wait.Poll(1 * time.Second, 20 * time.Second, func()(bool, error) {
+		_, err := f.ApiExtClientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crdObject.Name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("custom resource definition did not come up")
+	}
+
+	// Create custom resource
+	crObject := &v1alpha1.KarydiaConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Labels: map[string]string{
+				"app": "karydia-e2e-test",
+			},
+			Name: "karydia-config",
+		},
+		Spec: v1alpha1.KarydiaConfigSpec{
+			AutomountServiceAccountToken: "",
+			SeccompProfile: "",
+			NetworkPolicy: "kube-system:karydia-default-network-policy",
+		},
+	}
+	_, err = f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Create(crObject)
+	if err != nil {
+		return fmt.Errorf("failed to create: %v", crObject)
+	}
+	if err := wait.Poll(1 * time.Second, 20 * time.Second, func()(bool, error) {
+		_, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(crObject.Name, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		return fmt.Errorf("custom resource did not come up")
+	}
+
+	return nil
+}
+
 func (f *Framework) SetupKarydia() error {
 	// Create service account
 	sa := &corev1.ServiceAccount{
@@ -135,6 +243,11 @@ func (f *Framework) SetupKarydia() error {
 	}
 	if _, err := f.KubeClientset.CoreV1().ServiceAccounts(f.Namespace).Create(sa); err != nil {
 		return fmt.Errorf("failed to create service account: %v", err)
+	}
+
+	// Create karydia config
+	if err := f.SetupKarydiaConfig(); err != nil {
+		return fmt.Errorf("failed to setup karydia config: %v", err)
 	}
 
 	// Create deployment
@@ -476,6 +589,22 @@ func (f *Framework) DeleteWebhook() error {
 	return nil
 }
 
+func (f *Framework) DeleteKarydiaConfig() error {
+	// Delete custom resource
+	err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Delete("karydia-config", &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete: karydia-config")
+	}
+
+	// Delete CRD
+	err = f.ApiExtClientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete("karydiaconfigs.karydia.gardener.cloud", &metav1.DeleteOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to delete: karydiaconfigs.karydia.gardener.cloud")
+	}
+
+	return nil
+}
+
 func (f *Framework) DeleteAll() error {
 	zero := int64(0)
 	ls := labels.SelectorFromSet(map[string]string{
@@ -499,6 +628,11 @@ func (f *Framework) DeleteAll() error {
 	err = f.KubeClientset.CoreV1().Pods("default").Delete("karydia-e2e-test-pod", &metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to delete pod in default namespace")
+	}
+
+	// Delete karydia config
+	if err := f.DeleteKarydiaConfig(); err != nil {
+		return fmt.Errorf("failed to delete karydia config: %v", err)
 	}
 	return nil
 }
