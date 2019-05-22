@@ -29,7 +29,7 @@ Two parameters are expected:
 `manifests/deployment.yml` (e.g. `karydia/karydia`)
 - DEV_DOCKER_IMAGE which is the dev container image (e.g. `karydia/karydia-dev` OR your docker registry image from the previous step)
 ```
-scripts/generate-deployment-dev karydia/karydia eu.gcr.io/gardener-project/karydia/karydia-dev
+scripts/generate-deployment-dev eu.gcr.io/gardener-project/karydia/karydia eu.gcr.io/gardener-project/karydia/karydia-dev
 ```
 
 ## <a name="getting-started"></a> Getting started

@@ -23,8 +23,8 @@
 set -e
 
 # Setup
-PROD_IMAGE="$1"	# e.g. 'karydia/karydia'
-DEV_IMAGE="$2"	# e.g. 'karydia/karydia-dev'
+PROD_IMAGE="$1"	# e.g. 'eu.gcr.io/gardener-project/karydia/karydia'
+DEV_IMAGE="$2"	# e.g. 'eu.gcr.io/gardener-project/karydia/karydia-dev'
 PROD_YAML='manifests/deployment.yml'
 DEV_YAML='manifests-dev/deployment-dev.yml'
 DEV_CMD_FIRST=(

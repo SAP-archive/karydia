@@ -222,7 +222,7 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: karydia
-        image: karydia/karydia:0.1.0
+        image: eu.gcr.io/gardener-project/karydia/karydia:0.0.1
         imagePullPolicy: IfNotPresent
         command:
           - karydia
