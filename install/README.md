@@ -34,6 +34,6 @@ time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
 ## Development
 If you want to install the deployment image, simply run:
 ```
-helm install ./install/charts --name karydia --set dev=true
+helm install ./install/charts --name karydia --set dev.active=true
 ```
-Otherwise you can set ```dev``` to ```true``` in the ```values.yaml``` file.
+Otherwise, you can set `dev.active` to `true` in the `values.yaml` file.

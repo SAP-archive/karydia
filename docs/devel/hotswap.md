@@ -17,32 +17,12 @@ Build the dev karydia container:
 make container-dev
 ```
 and push it to your docker registry.
-Adjust `manifests-dev/deployment-dev.yml` to your docker registry image manually or just use the next step.
-
-## [OPTIONAL] Re-Generate the `manifests-dev/deployment-dev.yml`
-
-You can use `scripts/generate-deployment-dev` to automatically re-generate the
-`manifests-dev/deployment-dev.yml` from `install/charts/templates/deployment.yml`.
-
-Two parameters are expected:
-- PROD_DOCKER_IMAGE which is the mentioned image under the karydia container spec at
-`manifests/deployment.yml` (e.g. `karydia/karydia`)
-- DEV_DOCKER_IMAGE which is the dev container image (e.g. `karydia/karydia-dev` OR your docker registry image from the previous step)
-```
-scripts/generate-deployment-dev karydia/karydia eu.gcr.io/gardener-project/karydia/karydia-dev
-```
 
 ## <a name="getting-started"></a> Getting started
 
-Follow the steps of [installing karydia](../install/README.md)
+Follow the steps of [installing karydia](../install/README.md) using the parameter `--set dev.active=true`.
 
-Switch from karydia prod to dev Kubernetes deployment:
-```
-kubectl delete -f install/charts/templates/deployment.yml
-kubectl apply -f manifests-dev/deployment-dev.yml
-```
-
-Develop a new feature
+Develop a new feature.
 
 ### Live testing
 
@@ -89,25 +69,13 @@ YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	procs never ended 	CLOSE_WRITE,CL
 ```
 Issue & solution: __waiting timeout issue occured - try again or try to increase timeouts manually__
 
-1. add script parameter `-t` with a desired increase value, e.g. `5`, at `manifests-dev/deployment-dev.yml`
-```
-[...]
-        command:
-        - hotswap-dev
-+       - -t5
-        - -r
-[...]
-```
-2. deploy changes and try `make deploy-dev` again
-```
-kubectl apply -f manifests-dev/deployment-dev.yml
-```
+1. add script parameter `-t` with a desired increase value, e.g. `5` by using helm install  --set dev.active=true --set dev.timeout=true --set dev.timeoutValue=5'.
 
 Possible reason: failing / incomplete `kubectl cp` or `karydia` shutdown takes too long
 
 #### If there are no outputs
 
-Issue & solution: __you may use an incomplete karydia installation or a wrong deployment, e.g. `manifests/deployment.yml` instead of `manifests-dev/deployment-dev.yml` - start from scratch and jump to [Getting started](#getting-started)__
+Issue & solution: __you may use an incomplete karydia installation or a wrong deployment, e.g. did not set `--set dev.active=true` - start from scratch and jump to [Getting started](#getting-started)__
 
 ### - Where are the files located within the karydia container?
 
@@ -123,4 +91,3 @@ karydia.log     | /go/src/github.com/karydia/karydia | potentially some addition
 hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
 karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
 karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
-

@@ -5,3 +5,6 @@ bin/
 
 karydia*.pem
 cov.out
+
+manifests/
+manifests-dev/
