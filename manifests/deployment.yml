@@ -30,7 +30,7 @@ spec:
       containers:
       - name: karydia
         image: eu.gcr.io/gardener-project/karydia/karydia #TODO: add version number
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command:
           - karydia
           - runserver
