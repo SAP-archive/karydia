@@ -222,7 +222,8 @@ spec:
       automountServiceAccountToken: false
       containers:
       - name: karydia
-        image: eu.gcr.io/gardener-project/karydia/karydia #TODO: add version number
+        # TODO: Add version number
+        image: eu.gcr.io/gardener-project/karydia/karydia
         imagePullPolicy: IfNotPresent
         command:
           - karydia
