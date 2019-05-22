@@ -17,24 +17,25 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: karydiasecuritypolicies.{{ .Values.metadata.apiGroup }}
+  name: karydiaconfigs.{{ .Values.metadata.apiGroup }}
 spec:
   group: {{ .Values.metadata.apiGroup }}
   version: v1alpha1
   scope: Cluster
   names:
-    kind: KarydiaSecurityPolicy
-    plural: karydiasecuritypolicies
+    plural: karydiaconfigs
+    singular: karydiaconfig
+    kind: KarydiaConfig
     shortNames:
-      - ksp
+      - kc
   validation:
     openAPIV3Schema:
       properties:
         spec:
           properties:
-            pod:
-              properties:
-                automountServiceAccountToken:
-                  type: string
-                seccompProfile:
-                  type: string
+            automountServiceAccountToken:
+              type: string
+            seccompProfile:
+              type: string
+            networkPolicy:
+              type: string

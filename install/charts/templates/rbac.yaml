@@ -25,6 +25,17 @@ metadata:
 kind: ClusterRole
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
+  name: {{ .Values.metadata.name }}-view-kc
+rules:
+- apiGroups: ["karydia.gardener.cloud"]
+  resources: ["karydiaconfigs"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+kind: ClusterRole
+apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
+metadata:
   name: {{ .Values.metadata.name }}-networkpolicies
 rules:
 - apiGroups: ["networking.k8s.io"]
@@ -59,6 +70,21 @@ subjects:
 roleRef:
   kind: ClusterRole
   name: {{ .Values.metadata.name }}-networkpolicies
+  apiGroup: {{ .Values.rbac.apiGroup }}
+
+---
+
+kind: ClusterRoleBinding
+apiVersion:  {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
+metadata:
+  name: {{ .Values.metadata.name }}-view-kc
+subjects:
+- kind: ServiceAccount
+  namespace: {{ .Values.metadata.namespace }}
+  name: {{ .Values.rbac.serviceAccount }}
+roleRef:
+  kind: ClusterRole
+  name: {{ .Values.metadata.name }}-view-kc
   apiGroup: {{ .Values.rbac.apiGroup }}
 
 ---
