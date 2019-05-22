@@ -29,8 +29,8 @@ import (
 func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var patches patchOperations
 
-	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if annotated {
+	seccompProfile := k.getSeccompProfileSetting(ns)
+	if seccompProfile != "" {
 		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
 	}
 	return k8sutil.MutatingAdmissionResponse(patches.toBytes())
@@ -39,17 +39,25 @@ func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1b
 func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
 
-	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if annotated {
+	seccompProfile := k.getSeccompProfileSetting(ns)
+	if seccompProfile != "" {
 		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
 	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
+func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) string {
+	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
+	if !annotated {
+		seccompProfile = k.karydiaConfig.Spec.SeccompProfile
+	}
+	return seccompProfile
+}
+
 func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
-	seccompPod, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
-	if !ok || seccompPod != nsAnnotation {
+	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
+	if !ok {
 		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", nsAnnotation)
 		validationErrors = append(validationErrors, validationErrorMsg)
 	}

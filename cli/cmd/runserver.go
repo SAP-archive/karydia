@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +19,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	karydiainformers "github.com/karydia/karydia/pkg/client/informers/externalversions"
 	"net/http"
 	"os"
 	"os/signal"
@@ -36,6 +39,7 @@ import (
 
 	karydiaadmission "github.com/karydia/karydia/pkg/admission/karydia"
 	opaadmission "github.com/karydia/karydia/pkg/admission/opa"
+	clientset "github.com/karydia/karydia/pkg/client/clientset/versioned"
 	"github.com/karydia/karydia/pkg/controller"
 	"github.com/karydia/karydia/pkg/k8sutil"
 	"github.com/karydia/karydia/pkg/server"
@@ -53,6 +57,8 @@ var runserverCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runserverCmd)
+
+	runserverCmd.Flags().String("config", "karydia-config", "Custom Resource where to load the configuration from, in the format <name>")
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
@@ -74,7 +80,6 @@ func init() {
 
 	runserverCmd.Flags().Bool("enable-default-network-policy", false, "Whether to install a default network policy in namespaces")
 	runserverCmd.Flags().StringSlice("default-network-policy-excludes", []string{"kube-system"}, "List of namespaces where the default network policy should not be installed")
-	runserverCmd.Flags().String("default-network-policy-configmap", "kube-system:karydia-default-network-policy", "Configmap where to load the default network policy from, in the format <namespace>:<name>")
 }
 
 func runserverFunc(cmd *cobra.Command, args []string) {
@@ -84,6 +89,8 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		enableOPAAdmission         = viper.GetBool("enable-opa-admission")
 		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
 		kubeInformerFactory        kubeinformers.SharedInformerFactory
+		karydiaInformerFactory     karydiainformers.SharedInformerFactory
+		karydiaControllers         = []controller.ControllerInterface{}
 	)
 	if enableDefaultNetworkPolicy {
 		enableController = true
@@ -113,9 +120,31 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build kubeconfig: %v\n", err)
+		os.Exit(1)
+	}
+	karydiaClientset, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to build karydia clientset: %v\n", err)
+		os.Exit(1)
+	}
+
+	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config"), metav1.GetOptions{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr,"Failed to load karydia config: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stdout, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	fmt.Fprintf(os.Stdout, "KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+
 	if enableKarydiaAdmission {
 		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
 			KubeClientset: kubeClientset,
+			KarydiaConfig: karydiaConfig,
 		})
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
@@ -123,14 +152,15 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		}
 
 		webHook.RegisterAdmissionPlugin(karydiaAdmission)
+		karydiaControllers = append(karydiaControllers, karydiaAdmission)
 	}
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
-		defaultNetworkPolicyIdentifier := viper.GetString("default-network-policy-configmap")
+		defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
 		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
 		if len(group) < 2 {
-			fmt.Fprintf(os.Stderr, "default-network-policy-configmap must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+			fmt.Fprintf(os.Stderr, "NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
 			os.Exit(1)
 		}
 		namespace := group[0]
@@ -145,18 +175,16 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
 			os.Exit(1)
 		}
-		defaultNetworkPolicies["karydia-default-network-policy"] = &policy
+		defaultNetworkPolicies[karydiaConfig.Spec.NetworkPolicy] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
-
 	if enableController {
 		cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error building kubeconfig: %v", err)
 			os.Exit(1)
 		}
-
 		kubeClientset, err := kubernetes.NewForConfig(cfg)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error building kubernetes clientset: %v", err)
@@ -165,8 +193,8 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
-		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, "karydia-default-network-policy", viper.GetStringSlice("default-network-policy-excludes"))
-
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
+		karydiaControllers = append(karydiaControllers, reconciler)
 	}
 
 	if enableOPAAdmission {
@@ -192,6 +220,9 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	karydiaInformerFactory = karydiainformers.NewSharedInformerFactory(karydiaClientset, resyncInterval)
+	karydiaConfigReconciler := controller.NewConfigReconciler(*karydiaConfig, karydiaControllers, karydiaClientset, karydiaInformerFactory.Karydia().V1alpha1().KarydiaConfigs())
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -213,6 +244,15 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 		if err := s.Shutdown(shutdownCtx); err != nil {
 			fmt.Fprintf(os.Stderr, "HTTP Shutdown error: %v\n", err)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		karydiaInformerFactory.Start(ctx.Done())
+		if err := karydiaConfigReconciler.Run(2, ctx.Done()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error running config reconciler: %v\n", err)
 		}
 	}()
 
