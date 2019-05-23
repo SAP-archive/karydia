@@ -235,6 +235,29 @@ func TestReconcileNetworkPolicyDelete(t *testing.T) {
 	}
 }
 
+func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "default"
+	f := newFixture(t)
+	newNetworkPolicy := &networkingv1.NetworkPolicy{}
+	newNetworkPolicy.Name = "karydia-default-network-policy"
+	newNetworkPolicy.Namespace = "default"
+
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	f.runReconcile(getKey(newNetworkPolicy, t))
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Errorf("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+		t.Errorf("No reconcilation happened")
+	}
+
+	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 2)
+	f.runReconcile(getKey(newNetworkPolicy, t))
+}
+
 func TestReconcileNetworkPolicyCreateNamespace(t *testing.T) {
 	f := newFixture(t)
 	newNamespace := &coreV1.Namespace{}
