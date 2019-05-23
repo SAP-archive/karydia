@@ -18,6 +18,10 @@ dev:
   active: false
   timeout: false
   timeoutValue: 5
+config:
+  automountServiceAccountToken: "change-default"
+  seccompProfile: "docker/default"
+  networkPolicy: "kube-system:karydia-default-network-policy"
 metadata:
   name: karydia
   apiGroup: karydia.gardener.cloud

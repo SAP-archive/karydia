@@ -9,14 +9,14 @@
 
 ## Karydia Config
 
-With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `manifests/config.yml`:
+With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `install/charts/templates/config.yaml`:
 ```
 metadata:
   name: karydia-config
 ```
-If you want to adjust the default karydia behavior you can just modify the specific values at `manifests/config.yml` and re-deploy this file to your karydia-controlled cluster:
+If you want to adjust the default karydia behavior you can just modify the specific values at `instal/charts/values.yaml` and re-deploy these changes to your karydia-controlled cluster:
 ```
-kubectl apply -f manifests/config.yml
+helm upgrade karydia ./install/charts
 ```
 
 ## Default NetworkPolicy
