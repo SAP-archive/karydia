@@ -32,7 +32,7 @@ time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
 ```
 
 ## Development
-If you want to install the deployment image, simply run:
+If you want to install the development image, simply run:
 ```
 helm install ./install/charts --name karydia --set dev.active=true
 ```
