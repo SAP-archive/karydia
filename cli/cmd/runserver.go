@@ -175,7 +175,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
 			os.Exit(1)
 		}
-		defaultNetworkPolicies[karydiaConfig.Spec.NetworkPolicy] = &policy
+		defaultNetworkPolicies[name] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
