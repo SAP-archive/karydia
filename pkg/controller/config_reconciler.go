@@ -255,6 +255,10 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 			return err
 		}
 	}
+	klog.Infof("KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	klog.Infof("KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	klog.Infof("KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	klog.Infof("KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
 	return nil
 }
 

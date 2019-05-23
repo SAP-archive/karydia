@@ -16,6 +16,8 @@ package controller
 
 import (
 	"bytes"
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -138,6 +140,54 @@ func networkPoliciesAreEqual(defaultNetworkPolicy, networkPolicy *networkingv1.N
 	actualSpec, _ := networkPolicy.Spec.Marshal()
 	desiredSpec, _ := defaultNetworkPolicy.Spec.Marshal()
 	return bytes.Equal(actualSpec, desiredSpec)
+}
+
+func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
+	assert := assert.New(t)
+	f := newFixture(t)
+	reconciler, _ := f.newReconciler()
+	networkPolicyNames := []string{"testNP0", "testNP1", "testNP2"}
+	invalidNetworkPolicy0 := networkPolicyNames[0]
+	invalidNetworkPolicy1 := "ns/" + networkPolicyNames[1]
+	validNetworkPolicy := "ns:" + networkPolicyNames[2]
+	newConfig := v1alpha1.KarydiaConfig{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name: "testConfig",
+			ResourceVersion: "1",
+		},
+		Spec: v1alpha1.KarydiaConfigSpec{
+			AutomountServiceAccountToken: "testASAT",
+			SeccompProfile:               "testSP",
+			NetworkPolicy:                invalidNetworkPolicy0,
+		},
+	}
+
+	// first check for different config values
+	assert.NotEqual(networkPolicyNames[0], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
+	// try update with wrong network policy name
+	assert.Error(reconciler.UpdateConfig(newConfig), "config update should fail because of wrong network policy name")
+	// check for different config values again
+	assert.NotEqual(networkPolicyNames[0], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal after failed update")
+
+	// change network policy name to valid one
+	newConfig.Spec.NetworkPolicy = validNetworkPolicy
+	// first check for different config values
+	assert.NotEqual(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
+	// try update with right network policy name
+	assert.NoError(reconciler.UpdateConfig(newConfig), "config update should succeed because of right network policy name")
+	// check for equal config values
+	assert.Equal(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "config values should be equal after succeeded update")
+
+	// change network policy name to another invalid one
+	newConfig.Spec.NetworkPolicy = invalidNetworkPolicy1
+	// first check for different config values
+	assert.NotEqual(networkPolicyNames[1], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
+	// try update with wrong network policy name
+	assert.Error(reconciler.UpdateConfig(newConfig), "config update should fail because of wrong network policy name")
+	// check for different config values again
+	assert.NotEqual(networkPolicyNames[1], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal after failed update")
+	// check for still equal valid config values
+	assert.Equal(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "valid config values should still be equal")
 }
 
 func TestReconcileNetworkPolicyUpate(t *testing.T) {
