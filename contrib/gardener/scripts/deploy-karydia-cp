@@ -224,7 +224,7 @@ spec:
       - name: karydia
         # TODO: Add version number
         image: eu.gcr.io/gardener-project/karydia/karydia
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         command:
           - karydia
           - runserver
