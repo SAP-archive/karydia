@@ -23,7 +23,7 @@ kubectl delete -n kube-system deployment karydia || true
 eval $(minikube docker-env)
 make container
 helm template ./install/charts/ --output-dir manifests -x ./templates/deployment.yaml 
-cat manifests/karydia/templates/deployment.yml | sed -e 's|image: karydia/karydia.*|image: karydia/karydia|' | kubectl apply -f -
+cat manifests/deployment.yml | sed -e 's|image: eu.gcr.io/gardener-project/karydia/karydia.*|image: eu.gcr.io/gardener-project/karydia/karydia|' | kubectl apply -f -
 ```
 
 These steps allow you to test new code without having to push the container
