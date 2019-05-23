@@ -29,8 +29,9 @@ spec:
       serviceAccount: karydia
       containers:
       - name: karydia
-        image: karydia/karydia:0.1.0
-        imagePullPolicy: IfNotPresent
+        # TODO: Add version number
+        image: eu.gcr.io/gardener-project/karydia/karydia
+        imagePullPolicy: Always
         command:
           - karydia
           - runserver

@@ -15,8 +15,8 @@
 # limitations under the License.
 
 DEV_POSTFIX=-dev
-PROD_IMAGE=karydia/karydia
-DEV_IMAGE=eu.gcr.io/gardener-project/$(PROD_IMAGE)$(DEV_POSTFIX)
+PROD_IMAGE=eu.gcr.io/gardener-project/karydia/karydia
+DEV_IMAGE=$(PROD_IMAGE)$(DEV_POSTFIX)
 
 KUBERNETES_SERVER ?= ""
 KUBECONFIG_PATH ?= "$(HOME)/.kube/config"
