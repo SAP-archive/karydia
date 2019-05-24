@@ -69,7 +69,7 @@ YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	procs never ended 	CLOSE_WRITE,CL
 ```
 Issue & solution: __waiting timeout issue occured - try again or try to increase timeouts manually__
 
-1. add script parameter `-t` with a desired increase value, e.g. `5` by using helm install  --set dev.active=true --set dev.timeout=true --set dev.timeoutValue=5'.
+1. add script parameter `-t` with a desired increase value, e.g. `5` by using `helm install  --set dev.active=true --set dev.timeout=true --set dev.timeoutValue=5`.
 
 Possible reason: failing / incomplete `kubectl cp` or `karydia` shutdown takes too long
 
