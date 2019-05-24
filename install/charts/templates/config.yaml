@@ -19,7 +19,7 @@ kind: KarydiaConfig
 metadata:
   labels:
     app: {{ .Values.metadata.labelApp }}
-  name: {{ .Values.metadata.name }}-config
+  name: {{ .Values.config.name }}
 spec:
   automountServiceAccountToken: "{{ .Values.config.automountServiceAccountToken }}"
   seccompProfile: "{{ .Values.config.seccompProfile }}"
