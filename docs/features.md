@@ -1,20 +1,20 @@
 # karydia features
 
-| Feature | CLI flags | manifests/config.yml keys | Control with Kubernetes resources | Status |
+| Feature | CLI flags | install/charts/values.yaml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
-| Karydia Config | `--config` | `name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
-| Default Network Policy ([demo](demos/network/network.md))| `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `networkPolicy` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
+| Karydia Config | `--config` | `config.name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
+| Default Network Policy ([demo](demos/network/network.md))| `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `config.networkPolicy` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
 | Open Policy Agent | `--enable-opa-admission` | | None | Implemented |
-| Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | `seccompProfile` <br /> `automountServiceAccountToken` | Annotations on namespaces | Implemented |
+| Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | `config.seccompProfile` <br /> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
 
-With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `install/charts/templates/config.yaml`:
+With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `install/charts/values.yaml`:
 ```
-metadata:
-  name: karydia-config
+config:
+  name: "karydia-config"
 ```
-If you want to adjust the default karydia behavior you can just modify the specific values at `instal/charts/values.yaml` and re-deploy these changes to your karydia-controlled cluster:
+If you want to adjust the default karydia behavior you can just modify the specific values at `install/charts/values.yaml` and re-deploy these changes to your karydia-controlled cluster:
 ```
 helm upgrade karydia ./install/charts
 ```
@@ -22,11 +22,11 @@ helm upgrade karydia ./install/charts
 ## Default NetworkPolicy
 
 When `--enable-default-network-policy` is set, karydia takes the network policy
-found at deployed custom resource yaml `manifests/config.yml` with key `networkPolicy` and installs it into all namespaces.
+found at deployed custom resource yaml `instal/charts/templates/config.yaml` with key `networkPolicy` and installs it into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
-Please note: an update of `networkPolicy` at `manifests/config.yml` does not update
+Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
 previously deployed network policies. New namespaces created while karydia was
 not running will not be updated when karydia starts.
 
