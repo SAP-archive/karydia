@@ -31,7 +31,7 @@ unshare --user whoami
 ## Install karydia
 See [install instructions](/install/README.md) for more information.
 
-## Create a Pod with seccomp profile
+## Create a pod with seccomp profile enforced by karaydia
 You can create a simple pod and execute an interacitve shell in it by running:
 ```
 kubectl run -i --tty busybox --image=busybox -- sh
@@ -58,8 +58,6 @@ unshare --user whoami
 
 => Operation not permitted
 ```
-
-## Create a cluster with seccomp profile enforced by karaydia
 
 # Overview of "docker/default" seccomp
 An overview of the permitted sycalls can be found on the docker [website](https://docs.docker.com/engine/security/seccomp/).
