@@ -3,7 +3,7 @@
 ## Create a Pod without seccomp profile
 You can create a simple pod and execute an interacitve shell in it by running:
 ```
-kubectl run -i --tty busybox --image=busybox -- sh
+kubectl run --rm -i --tty busybox --image=busybox -- sh
 ```
 
 Next, show that no seccomp profile is deployed ("0 = SECCOMP_MODE_DISABLED"):
@@ -34,7 +34,7 @@ See [install instructions](/install/README.md) for more information.
 ## Create a pod with seccomp profile enforced by karaydia
 You can create a simple pod and execute an interacitve shell in it by running:
 ```
-kubectl run -i --tty busybox --image=busybox -- sh
+kubectl run --rm -i --tty busybox --image=busybox -- sh
 ```
 
 Next, show that default seccomp profile is deployed ("2 = SECCOMP_MODE_FILTER"):
