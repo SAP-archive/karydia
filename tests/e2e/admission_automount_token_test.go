@@ -41,7 +41,7 @@ type AutomountTokenTestCase struct {
 
 func TestAutomountServiceAccountToken(t *testing.T) {
 	testCases := []AutomountTokenTestCase{
-		{"default", nil, nil, nil, true},
+		{"default", nil, nil, nil, false},
 		{"default", nil, nil, &vTrue, true},
 		{"default", nil, nil, &vFalse, false},
 		{"default", nil, &vTrue, nil, true},
@@ -277,6 +277,126 @@ func TestAutomountServiceAccountTokenEditServiceAccount(t *testing.T) {
 
 	if sAcc.AutomountServiceAccountToken == nil {
 		t.Fatalf("expected updated service account to have automoutnServiceAccountToken set to false but is nil")
+	}
+}
+
+func TestAutomountServiceAccountTokenDefaultServiceAccountFromConfig(t *testing.T) {
+	var namespace *corev1.Namespace
+	var err error
+
+	annotation := map[string]string{}
+	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
+	if err != nil {
+		t.Fatalf("failed to create test namespace: %v", err)
+	}
+
+	ns := namespace.ObjectMeta.Name
+	timeout := 3000 * time.Millisecond
+	if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
+		t.Fatalf("default service account not created: %v", err)
+	}
+	sAcc, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get service account: %v", err)
+	}
+
+	if *sAcc.AutomountServiceAccountToken != false {
+		t.Fatalf("expected service account to have automountServiceAccountToken set to false but is %v",
+			sAcc.AutomountServiceAccountToken)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: ns,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("failed to create pod: %v", err)
+	}
+
+	if createdPod.Spec.AutomountServiceAccountToken != nil {
+		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+	}
+
+	if !(len(createdPod.Spec.Volumes) == 0) {
+		t.Fatalf("expected is mounted to be false but is true")
+	}
+
+	timeout = 2 * time.Minute
+	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
+		t.Fatalf("pod never reached state running")
+	}
+}
+
+func TestAutomountServiceAccountTokenDedicatedServiceAccountFromConfig(t *testing.T) {
+	var namespace *corev1.Namespace
+	var err error
+
+	annotation := map[string]string{}
+	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
+	if err != nil {
+		t.Fatalf("failed to create test namespace: %v", err)
+	}
+
+	ns := namespace.ObjectMeta.Name
+	timeout := 3000 * time.Millisecond
+	sAcc, err := f.CreateServiceAccount("dedicated", ns)
+	if err != nil {
+		t.Fatalf("failed to create service account: %v", err)
+	}
+	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("dedicated", metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get service account: %v", err)
+	}
+
+	if sAcc.AutomountServiceAccountToken != nil {
+		t.Fatalf("expected service account to have automountServiceAccountToken set to nil but is %v",
+			sAcc.AutomountServiceAccountToken)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: ns,
+		},
+		Spec: corev1.PodSpec{
+			ServiceAccountName: sAcc.Name,
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("failed to create pod: %v", err)
+	}
+
+	if createdPod.Spec.AutomountServiceAccountToken != nil {
+		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+	}
+
+	if !(len(createdPod.Spec.Volumes) == 1) {
+		t.Fatalf("expected is mounted to be true but is false")
+	}
+
+	timeout = 2 * time.Minute
+	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
+		t.Fatalf("pod never reached state running")
 	}
 }
 

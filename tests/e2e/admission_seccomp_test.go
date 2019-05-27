@@ -109,7 +109,7 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 	}
 }
 
-func TestSeccompWithoutNamespaceAnnotationUndefinedProfile(t *testing.T) {
+func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) {
 	annotation := map[string]string{}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -138,8 +138,49 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfile(t *testing.T) {
 		t.Fatalf("failed to create pod: %v", err)
 	}
 
-	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "" {
-		t.Fatalf("expected seccomp profile to be undefined but is %v", profile)
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "docker/default" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "docker/default", profile)
+	}
+
+	timeout := 2 * time.Minute
+	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
+		t.Fatalf("pod never reached state running")
+	}
+}
+
+func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) {
+	annotation := map[string]string{
+		"karydia.gardener.cloud/seccompProfile": "unconfined",
+	}
+	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
+	if err != nil {
+		t.Fatalf("failed to create test namespace: %v", err)
+	}
+
+	ns := namespace.ObjectMeta.Name
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: ns,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+
+	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("failed to create pod: %v", err)
+	}
+
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "unconfined" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "unconfined", profile)
 	}
 
 	timeout := 2 * time.Minute
