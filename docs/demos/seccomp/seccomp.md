@@ -1,1 +1,0 @@
-![](seccomp.gif)
