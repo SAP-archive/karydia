@@ -69,7 +69,7 @@ YYYY-MM-DD HH:MM:SS UTC	ERR	root  	karydia-dev	procs never ended 	CLOSE_WRITE,CL
 ```
 Issue & solution: __waiting timeout issue occured - try again or try to increase timeouts manually__
 
-1. add script parameter `-t` with a desired increase value, e.g. `5` by using `helm install --set dev.active=true --set dev.timeoutIncreaseValue=5`.
+1. add script parameter `-t` with a desired increase value, e.g. `5` by using `helm upgrade --set dev.active=true --set dev.timeoutIncreaseValue=5`.
 
 2. deploy changes and try `make deploy-dev` again
 
@@ -93,3 +93,4 @@ karydia.log     | /go/src/github.com/karydia/karydia | potentially some addition
 hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
 karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
 karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
+
