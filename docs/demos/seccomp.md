@@ -60,4 +60,4 @@ unshare --user whoami
 ```
 
 # Overview of "docker/default" seccomp
-An overview of the permitted sycalls can be found on the docker [website](https://docs.docker.com/engine/security/seccomp/).
+An overview of the not permitted sycalls can be found on the docker [website](https://docs.docker.com/engine/security/seccomp/).
