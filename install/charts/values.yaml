@@ -16,8 +16,7 @@
 
 dev:
   active: false
-  timeout: false
-  timeoutValue: 5
+  timeoutIncreaseValue: 0
 config:
   name: "karydia-config"
   automountServiceAccountToken: "change-default"
