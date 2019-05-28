@@ -49,13 +49,21 @@ type Config struct {
 	KarydiaConfig *v1alpha1.KarydiaConfig
 }
 
+type Setting struct {
+	value string
+	src   string
+}
+
 type patchOperation struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
 	Value interface{} `json:"value,omitempty"`
 }
 
-type patchOperations []patchOperation
+type Patches struct {
+	operations []patchOperation
+	annotated  bool
+}
 
 func New(config *Config) (*KarydiaAdmission, error) {
 	logger := logrus.New()
@@ -128,8 +136,8 @@ func (k *KarydiaAdmission) getNamespaceFromAdmissionRequest(ar v1beta1.Admission
 	return namespace, nil
 }
 
-func (patches *patchOperations) toBytes() []byte {
-	patchBytes, err := json.Marshal(patches)
+func (patches *Patches) toBytes() []byte {
+	patchBytes, err := json.Marshal(patches.operations)
 	if err != nil {
 		return nil
 	}
