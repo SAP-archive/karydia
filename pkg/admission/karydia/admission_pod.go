@@ -18,6 +18,7 @@ package karydia
 
 import (
 	"fmt"
+	"strings"
 
 	"k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,11 +28,11 @@ import (
 )
 
 func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
-	var patches patchOperations
+	var patches Patches
 
-	seccompProfile := k.getSeccompProfileSetting(ns)
-	if seccompProfile != "" {
-		patches = mutatePodSeccompProfile(*pod, seccompProfile, patches)
+	setting := k.getSeccompProfileSetting(ns)
+	if setting.value != "" {
+		patches = mutatePodSeccompProfile(*pod, setting, patches)
 	}
 	return k8sutil.MutatingAdmissionResponse(patches.toBytes())
 }
@@ -39,53 +40,38 @@ func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1b
 func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
 
-	seccompProfile := k.getSeccompProfileSetting(ns)
-	if seccompProfile != "" {
-		validationErrors = validatePodSeccompProfile(*pod, seccompProfile, validationErrors)
+	setting := k.getSeccompProfileSetting(ns)
+	if setting.value != "" {
+		validationErrors = validatePodSeccompProfile(*pod, setting, validationErrors)
 	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
-func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) string {
+func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Setting {
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
+	src := "namespace"
 	if !annotated {
 		seccompProfile = k.karydiaConfig.Spec.SeccompProfile
+		src = "config"
 	}
-	return seccompProfile
+	return Setting{value: seccompProfile, src: src}
 }
 
-func validatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, validationErrors []string) []string {
+func validatePodSeccompProfile(pod corev1.Pod, setting Setting, validationErrors []string) []string {
 	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 	if !ok {
-		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", nsAnnotation)
+		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", setting.value)
 		validationErrors = append(validationErrors, validationErrorMsg)
 	}
 	return validationErrors
 }
 
-func mutatePodSeccompProfile(pod corev1.Pod, nsAnnotation string, patches patchOperations) patchOperations {
+func mutatePodSeccompProfile(pod corev1.Pod, setting Setting, patches Patches) Patches {
 	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 	if !ok {
-		if len(pod.ObjectMeta.Annotations) == 0 {
-			// If no annotation object exists yet, we have
-			// to create it. Otherwise we will encounter
-			// the following error:
-			// 'jsonpatch add operation does not apply: doc is missing path: "/metadata/annotations..."'
-			patches = append(patches, patchOperation{
-				Op:   "add",
-				Path: "/metadata/annotations",
-				Value: map[string]string{
-					"seccomp.security.alpha.kubernetes.io/pod": nsAnnotation,
-				},
-			})
-		} else {
-			patches = append(patches, patchOperation{
-				Op:    "add",
-				Path:  "/metadata/annotations/seccomp.security.alpha.kubernetes.io~1pod",
-				Value: nsAnnotation,
-			})
-		}
+		annotatePod(pod, &patches, "seccomp.security.alpha.kubernetes.io/pod", setting.value)
+		annotatePod(pod, &patches, "karydia.gardener.cloud/seccompProfile.internal", setting.src+"/"+setting.value)
 	}
 	return patches
 }
@@ -98,4 +84,23 @@ func decodePod(raw []byte) (*corev1.Pod, error) {
 		return nil, err
 	}
 	return pod, nil
+}
+
+func annotatePod(resource corev1.Pod, patches *Patches, key string, value string) {
+	if len(resource.ObjectMeta.Annotations) == 0 && !patches.annotated {
+		patches.operations = append(patches.operations, patchOperation{
+			Op:   "add",
+			Path: "/metadata/annotations",
+			Value: map[string]string{
+				key: value,
+			},
+		})
+		patches.annotated = true
+	} else {
+		patches.operations = append(patches.operations, patchOperation{
+			Op:    "add",
+			Path:  "/metadata/annotations/" + strings.Replace(key, "/", "~1", -1),
+			Value: value,
+		})
+	}
 }

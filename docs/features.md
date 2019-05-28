@@ -62,6 +62,13 @@ It is configured with the following namespace annotations:
 |karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all` 
 |karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
+Karydia annotates the mutated resources with the at the time and context valid security settings:
+
+| Resource | Annotation | Possible values |
+|---|---|---|
+| Pod |karydia.gardener.cloud/seccompProfile.internal | (`config` \| `namespace`) /(\<`profile-name`\>)
+| ServiceAccount | karydia.gardener.cloud/automountServiceAccountToken.internal | (`config` \| `namespace`) /(`change-default` \| `change-all`)|
+
 ### karydia.gardener.cloud/automountServiceAccountToken
 
 The feature defaults a service account's `automountServiceAccountToken` to false in cases 5, 6 and 7 of the following table. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
