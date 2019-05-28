@@ -80,7 +80,7 @@ After that, you can repeat the following commands to rebuild and test changes:
 kubectl delete -n kube-system deployment karydia || true
 eval $(minikube docker-env)
 make container
-cat manifests/deployment.yml | sed -e 's|image: karydia/karydia.*|image: karydia/karydia|' | kubectl apply -f -
+cat manifests/deployment.yml | sed -e 's|image: eu.gcr.io/gardener-project/karydia/karydia.*|image: eu.gcr.io/gardener-project/karydia/karydia|' | kubectl apply -f -
 ```
 
 These steps allow you to test new code without having to push the container

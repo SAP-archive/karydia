@@ -211,8 +211,8 @@ spec:
 			Name: "karydia-config",
 		},
 		Spec: v1alpha1.KarydiaConfigSpec{
-			AutomountServiceAccountToken: "",
-			SeccompProfile: "",
+			AutomountServiceAccountToken: "change-default",
+			SeccompProfile: "docker/default",
 			NetworkPolicy: "kube-system:karydia-default-network-policy",
 		},
 	}
@@ -269,7 +269,7 @@ func (f *Framework) SetupKarydia() error {
 					Containers: []corev1.Container{
 						{
 							Name:            "karydia",
-							Image:           "karydia/karydia",
+							Image:           "eu.gcr.io/gardener-project/karydia/karydia",
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Command: []string{
 								"karydia",
