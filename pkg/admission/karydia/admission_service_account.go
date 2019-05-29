@@ -17,6 +17,8 @@
 package karydia
 
 import (
+	"strings"
+
 	"k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 
@@ -25,11 +27,11 @@ import (
 )
 
 func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
-	var patches patchOperations
+	var patches Patches
 
-	automountServiceAccountToken := k.getAutomountServiceAccountTokenSetting(ns)
-	if automountServiceAccountToken != "" {
-		patches = mutateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, patches)
+	setting := k.getAutomountServiceAccountTokenSetting(ns)
+	if setting.value != "" {
+		patches = mutateServiceAccountTokenMount(*sAcc, setting, patches)
 	}
 
 	return k8sutil.MutatingAdmissionResponse(patches.toBytes())
@@ -38,28 +40,30 @@ func (k *KarydiaAdmission) mutateServiceAccount(sAcc *corev1.ServiceAccount, ns 
 func (k *KarydiaAdmission) validateServiceAccount(sAcc *corev1.ServiceAccount, ns *corev1.Namespace) *v1beta1.AdmissionResponse {
 	var validationErrors []string
 
-	automountServiceAccountToken := k.getAutomountServiceAccountTokenSetting(ns)
-	if automountServiceAccountToken != "" {
-		validationErrors = validateServiceAccountTokenMount(*sAcc, automountServiceAccountToken, validationErrors)
+	setting := k.getAutomountServiceAccountTokenSetting(ns)
+	if setting.value != "" {
+		validationErrors = validateServiceAccountTokenMount(*sAcc, setting, validationErrors)
 	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
-func (k *KarydiaAdmission) getAutomountServiceAccountTokenSetting(ns *corev1.Namespace) string {
+func (k *KarydiaAdmission) getAutomountServiceAccountTokenSetting(ns *corev1.Namespace) Setting {
 	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
+	src := "namespace"
 	if !annotated {
 		automountServiceAccountToken = k.karydiaConfig.Spec.AutomountServiceAccountToken
+		src = "config"
 	}
-	return automountServiceAccountToken
+	return Setting{value: automountServiceAccountToken, src: src}
 }
 
-func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, validationErrors []string) []string {
-	if nsAnnotation == "change-default" {
+func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, setting Setting, validationErrors []string) []string {
+	if setting.value == "change-default" {
 		if automountServiceAccountTokenUndefined(&sAcc) && sAcc.Name == "default" {
 			validationErrors = append(validationErrors, "implicit automount of default service account token not allowed")
 		}
-	} else if nsAnnotation == "change-all" {
+	} else if setting.value == "change-all" {
 		if automountServiceAccountTokenUndefined(&sAcc) {
 			validationErrors = append(validationErrors, "implicit automount of service account token not allowed")
 		}
@@ -67,14 +71,16 @@ func validateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation s
 	return validationErrors
 }
 
-func mutateServiceAccountTokenMount(sAcc corev1.ServiceAccount, nsAnnotation string, patches patchOperations) patchOperations {
-	if nsAnnotation == "change-default" {
+func mutateServiceAccountTokenMount(sAcc corev1.ServiceAccount, setting Setting, patches Patches) Patches {
+	if setting.value == "change-default" {
 		if automountServiceAccountTokenUndefined(&sAcc) && sAcc.Name == "default" {
-			patches = append(patches, patchOperation{Op: "add", Path: "/automountServiceAccountToken", Value: false})
+			patches.operations = append(patches.operations, patchOperation{Op: "add", Path: "/automountServiceAccountToken", Value: false})
+			patches.operations = append(patches.operations, annotateServiceAccount(sAcc, "karydia.gardener.cloud/automountServiceAccountToken.internal", setting.src+"/"+setting.value))
 		}
-	} else if nsAnnotation == "change-all" {
+	} else if setting.value == "change-all" {
 		if automountServiceAccountTokenUndefined(&sAcc) {
-			patches = append(patches, patchOperation{Op: "add", Path: "/automountServiceAccountToken", Value: false})
+			patches.operations = append(patches.operations, patchOperation{Op: "add", Path: "/automountServiceAccountToken", Value: false})
+			patches.operations = append(patches.operations, annotateServiceAccount(sAcc, "karydia.gardener.cloud/automountServiceAccountToken.internal", setting.src+"/"+setting.value))
 		}
 	}
 	return patches
@@ -92,4 +98,21 @@ func decodeServiceAccount(raw []byte) (*corev1.ServiceAccount, error) {
 		return nil, err
 	}
 	return sAcc, nil
+}
+
+func annotateServiceAccount(resource corev1.ServiceAccount, key string, value string) patchOperation {
+	if len(resource.ObjectMeta.Annotations) == 0 {
+		return patchOperation{
+			Op:   "add",
+			Path: "/metadata/annotations",
+			Value: map[string]string{
+				key: value,
+			},
+		}
+	}
+	return patchOperation{
+		Op:    "add",
+		Path:  "/metadata/annotations/" + strings.Replace(key, "/", "~1", -1),
+		Value: value,
+	}
 }

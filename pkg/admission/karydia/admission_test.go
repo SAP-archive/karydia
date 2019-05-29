@@ -86,9 +86,11 @@ func TestPodPlain(t *testing.T) {
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
-	if len(patches) != 1 {
-		t.Errorf("expected number of patches to be 1 but is %v", len(patches))
+	if len(patches) != 2 {
+		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
 	}
+
+	t.Log(patches)
 
 	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
 	if err != nil {
@@ -97,14 +99,14 @@ func TestPodPlain(t *testing.T) {
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Errorf("expected validation response to be false but is %v", validationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
 	}
 
 }
@@ -224,8 +226,8 @@ func TestServiceAccountPlain(t *testing.T) {
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
-	if len(patches) != 1 {
-		t.Errorf("expected number of patches to be but is %v", len(patches))
+	if len(patches) != 2 {
+		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
 	}
 
 	mutatedServiceAccount, err := patchServiceAccountRaw(*servieAccount, mutationResponse.Patch)
@@ -369,8 +371,8 @@ func TestServiceAccountDefault(t *testing.T) {
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
-	if len(patches) != 1 {
-		t.Errorf("expected number of patches to be 1 but is %v", len(patches))
+	if len(patches) != 2 {
+		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
 	}
 
 	mutatedServiceAccount, err := patchServiceAccountRaw(*servieAccount, mutationResponse.Patch)
