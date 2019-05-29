@@ -30,35 +30,36 @@ import (
  * kubectl annotate ns default karydia.gardener.cloud/automountServiceAccountToken=change-default
  */
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "default"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-default", patches)
-	if len(patches) != 1 {
-		t.Errorf("expected 1 patches but got: %+v", patches)
+	setting := Setting{value: "change-default", src: "namespace"}
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 2 {
+		t.Errorf("expected 2 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// One validation error expected for initial pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountFalse(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 	var automount = false
 
@@ -66,29 +67,31 @@ func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountFalse(t 
 	sAcc.Name = "default"
 	sAcc.AutomountServiceAccountToken = &(automount)
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-default", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "change-default", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountTrue(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 	var automount = true
 
@@ -96,77 +99,83 @@ func TestServiceAccountChangeDefaultAnnotationDefaultServiceAccountMountTrue(t *
 	sAcc.Name = "default"
 	sAcc.AutomountServiceAccountToken = &(automount)
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-default", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "change-default", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeDefaultAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "specific"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-default", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "change-default", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-default", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 func TestServiceAccountRandomAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "default"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "random", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "random", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "random", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "random", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
@@ -178,63 +187,67 @@ func TestServiceAccountRandomAnnotationDefaultServiceAccountMountUndefined(t *te
  * kubectl annotate ns default karydia.gardener.cloud/automountServiceAccountToken=change-all
  */
 func TestServiceAccountChangeAllAnnotationDefaultServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "default"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-all", patches)
-	if len(patches) != 1 {
-		t.Errorf("expected 1 patches but got: %+v", patches)
+	setting := Setting{value: "change-all", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 2 {
+		t.Errorf("expected 2 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// One validation error expected for initial pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "specific"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-all", patches)
-	if len(patches) != 1 {
-		t.Errorf("expected 1 patches but got: %+v", patches)
+	setting := Setting{value: "change-all", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 2 {
+		t.Errorf("expected 2 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// One validation error expected for initial pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountFalse(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 	var automount = false
 
@@ -242,29 +255,31 @@ func TestServiceAccountChangeAllAnnotationSpecificServiceAccountMountFalse(t *te
 	sAcc.Name = "specific"
 	sAcc.AutomountServiceAccountToken = &(automount)
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-all", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "change-all", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountChangeAllAnnotationspecificServiceAccountMountTrue(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 	var automount = true
 
@@ -272,57 +287,61 @@ func TestServiceAccountChangeAllAnnotationspecificServiceAccountMountTrue(t *tes
 	sAcc.Name = "specific"
 	sAcc.AutomountServiceAccountToken = &(automount)
 
-	patches = mutateServiceAccountTokenMount(sAcc, "change-all", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "change-all", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "change-all", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 func TestServiceAccountRandomAnnotationSpecificServiceAccountMountUndefined(t *testing.T) {
-	var patches patchOperations
+	var patches Patches
 	var validationErrors []string
 
 	sAcc := corev1.ServiceAccount{}
 	sAcc.Name = "specific"
 
-	patches = mutateServiceAccountTokenMount(sAcc, "random", patches)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "random", src: "namespace"}
+
+	patches = mutateServiceAccountTokenMount(sAcc, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
 	mutatedServiceAccount, err := patchServiceAccount(sAcc, patches)
 	if err != nil {
 		t.Errorf("failed to apply patches: %+v", err)
 	}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, "random", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(mutatedServiceAccount, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation errors expected for mutated pod
-	validationErrors = validateServiceAccountTokenMount(sAcc, "random", validationErrors)
+	validationErrors = validateServiceAccountTokenMount(sAcc, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
 /* Helper functions */
-func patchPod(pod corev1.Pod, patches patchOperations) (corev1.Pod, error) {
+func patchPod(pod corev1.Pod, patches Patches) (corev1.Pod, error) {
 	var podJSON []byte
 	podJSON, err := json.Marshal(&pod)
 	if err != nil {
@@ -344,7 +363,7 @@ func patchPod(pod corev1.Pod, patches patchOperations) (corev1.Pod, error) {
 	return podPatched, nil
 }
 
-func patchServiceAccount(sAcc corev1.ServiceAccount, patches patchOperations) (corev1.ServiceAccount, error) {
+func patchServiceAccount(sAcc corev1.ServiceAccount, patches Patches) (corev1.ServiceAccount, error) {
 	var podJSON []byte
 	podJSON, err := json.Marshal(&sAcc)
 	if err != nil {
