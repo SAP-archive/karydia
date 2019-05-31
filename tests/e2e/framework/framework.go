@@ -18,6 +18,8 @@ package framework
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -395,7 +397,7 @@ func (f *Framework) ConfigureWebhook() error {
 	// Partially adapted from
 	// https://github.com/kubernetes/kubernetes/blob/master/test/e2e/auth/certificates.go
 
-	privateKey, err := cert.NewPrivateKey()
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return err
 	}
