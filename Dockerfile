@@ -16,8 +16,8 @@ ARG golangImageTag=1.12.3
 
 # build
 FROM golang:${golangImageTag} as build-stage
-RUN mkdir -p /go/src/github.com/karydia/karydia/
-WORKDIR /go/src/github.com/karydia/karydia/
+RUN mkdir -p /github.com/karydia/karydia/
+WORKDIR /github.com/karydia/karydia/
 COPY ./ ./
 RUN make
 RUN make test
@@ -26,11 +26,11 @@ RUN make test
 FROM build-stage as dev-image
 RUN apt-get -qq update && apt-get -qq install inotify-tools lsof
 RUN go get -u github.com/go-delve/delve/cmd/dlv
-COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
+COPY --from=build-stage /github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 COPY ./scripts/hotswap-dev /usr/local/bin/hotswap-dev
 
 # prod-image (production usage)
 FROM alpine:3.9 as prod-image
-COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
+COPY --from=build-stage /github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 USER 65534:65534
 

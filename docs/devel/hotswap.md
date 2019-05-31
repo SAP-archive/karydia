@@ -116,11 +116,11 @@ With the following command it is possible to connect to bash terminal within the
 kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
 ```
 
-File            | Location                           | Description
---------------- | ---------------------------------- | ---------------------------------
-hotswap-dev.log | /go/src/github.com/karydia/karydia | hotswap logs like the ones mentioned above, e.g. infos about restarts and / or errors
-karydia.log     | /go/src/github.com/karydia/karydia | potentially some additional logs from specified run command
-hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
-karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
-karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
+File            | Location                    | Description
+--------------- | --------------------------- | ---------------------------------
+hotswap-dev.log | /github.com/karydia/karydia | hotswap logs like the ones mentioned above, e.g. infos about restarts and / or errors
+karydia.log     | /github.com/karydia/karydia | potentially some additional logs from specified run command
+hotswap-dev     | /usr/local/bin              | hotswap-dev script bound to main container process
+karydia         | /usr/local/bin              | karydia binary called from hotswap-dev script
+karydia-dev     | /usr/local/bin              | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
 
