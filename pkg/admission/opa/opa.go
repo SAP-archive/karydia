@@ -99,7 +99,7 @@ func (o *OPAAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed bool) *
 	}
 }
 
-// Borrowed from https://github.com/Azure/kubernetes-policy-controller/blob/master/pkg/server/server.go
+// Borrowed from https://github.com/open-policy-agent/gatekeeper/blob/822c45e8e4026cd8eede8039ae4f478056b05e6b/pkg/server/server.go
 func createPatchFromOPAResult(result []map[string]interface{}, mutationAllowed bool) (bool, string, []byte, error) {
 	var msg string
 	bs, err := json.Marshal(result)

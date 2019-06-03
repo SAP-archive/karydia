@@ -5,6 +5,7 @@
 package ast
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -83,6 +84,7 @@ var Keywords = [...]string{
 	"null",
 	"true",
 	"false",
+	"some",
 }
 
 // IsKeyword returns true if s is a language keyword.
@@ -185,6 +187,12 @@ type (
 		With      []*With     `json:"with,omitempty"`
 	}
 
+	// SomeDecl represents a variable declaration statement. The symbols are variables.
+	SomeDecl struct {
+		Location *Location `json:"-"`
+		Symbols  []*Term   `json:"symbols"`
+	}
+
 	// With represents a modifier on an expression.
 	With struct {
 		Location *Location `json:"-"`
@@ -284,6 +292,13 @@ func (c *Comment) SetLoc(loc *Location) {
 
 func (c *Comment) String() string {
 	return "#" + string(c.Text)
+}
+
+// Equal returns true if this comment equals the other comment.
+// Unlike other equality checks on AST nodes, comment equality
+// depends on location.
+func (c *Comment) Equal(other *Comment) bool {
+	return c.Location.Equal(other.Location) && bytes.Equal(c.Text, other.Text)
 }
 
 // Compare returns an integer indicating whether pkg is less than, equal to,
@@ -842,9 +857,10 @@ func (expr *Expr) Equal(other *Expr) bool {
 //
 // Expressions are compared as follows:
 //
-// 1. Preceding expression (by Index) is always less than the other expression.
-// 2. Non-negated expressions are always less than than negated expressions.
-// 3. Single term expressions are always less than built-in expressions.
+// 1. Declarations are always less than other expressions.
+// 2. Preceding expression (by Index) is always less than the other expression.
+// 3. Non-negated expressions are always less than than negated expressions.
+// 4. Single term expressions are always less than built-in expressions.
 //
 // Otherwise, the expression terms are compared normally. If both expressions
 // have the same terms, the modifiers are compared.
@@ -856,6 +872,14 @@ func (expr *Expr) Compare(other *Expr) int {
 		}
 		return -1
 	} else if other == nil {
+		return 1
+	}
+
+	o1 := expr.sortOrder()
+	o2 := other.sortOrder()
+	if o1 < o2 {
+		return -1
+	} else if o2 < o1 {
 		return 1
 	}
 
@@ -875,24 +899,32 @@ func (expr *Expr) Compare(other *Expr) int {
 
 	switch t := expr.Terms.(type) {
 	case *Term:
-		u, ok := other.Terms.(*Term)
-		if !ok {
-			return -1
-		}
-		if cmp := Compare(t.Value, u.Value); cmp != 0 {
+		if cmp := Compare(t.Value, other.Terms.(*Term).Value); cmp != 0 {
 			return cmp
 		}
 	case []*Term:
-		u, ok := other.Terms.([]*Term)
-		if !ok {
-			return 1
+		if cmp := termSliceCompare(t, other.Terms.([]*Term)); cmp != 0 {
+			return cmp
 		}
-		if cmp := termSliceCompare(t, u); cmp != 0 {
+	case *SomeDecl:
+		if cmp := Compare(t, other.Terms.(*SomeDecl)); cmp != 0 {
 			return cmp
 		}
 	}
 
 	return withSliceCompare(expr.With, other.With)
+}
+
+func (expr *Expr) sortOrder() int {
+	switch expr.Terms.(type) {
+	case *SomeDecl:
+		return 0
+	case *Term:
+		return 1
+	case []*Term:
+		return 2
+	}
+	return -1
 }
 
 // Copy returns a deep copy of expr.
@@ -901,6 +933,8 @@ func (expr *Expr) Copy() *Expr {
 	cpy := *expr
 
 	switch ts := expr.Terms.(type) {
+	case *SomeDecl:
+		cpy.Terms = ts.Copy()
 	case []*Term:
 		cpyTs := make([]*Term, len(ts))
 		for i := range ts {
@@ -923,6 +957,8 @@ func (expr *Expr) Copy() *Expr {
 func (expr *Expr) Hash() int {
 	s := expr.Index
 	switch ts := expr.Terms.(type) {
+	case *SomeDecl:
+		s += ts.Hash()
 	case []*Term:
 		for _, t := range ts {
 			s += t.Value.Hash()
@@ -1057,12 +1093,14 @@ func (expr *Expr) String() string {
 	}
 	switch t := expr.Terms.(type) {
 	case []*Term:
-		if expr.IsEquality() {
+		if expr.IsEquality() && validEqAssignArgCount(expr) {
 			buf = append(buf, fmt.Sprintf("%v %v %v", t[1], Equality.Infix, t[2]))
 		} else {
 			buf = append(buf, Call(t).String())
 		}
 	case *Term:
+		buf = append(buf, t.String())
+	case *SomeDecl:
 		buf = append(buf, t.String())
 	}
 
@@ -1094,6 +1132,42 @@ func (expr *Expr) Vars(params VarVisitorParams) VarSet {
 // The builtin operator must be the first term.
 func NewBuiltinExpr(terms ...*Term) *Expr {
 	return &Expr{Terms: terms}
+}
+
+func (d *SomeDecl) String() string {
+	buf := make([]string, len(d.Symbols))
+	for i := range buf {
+		buf[i] = d.Symbols[i].String()
+	}
+	return "var " + strings.Join(buf, ", ")
+}
+
+// SetLoc sets the Location on d.
+func (d *SomeDecl) SetLoc(loc *Location) {
+	d.Location = loc
+}
+
+// Loc returns the Location of d.
+func (d *SomeDecl) Loc() *Location {
+	return d.Location
+}
+
+// Copy returns a deep copy of d.
+func (d *SomeDecl) Copy() *SomeDecl {
+	cpy := *d
+	cpy.Symbols = termSliceCopy(d.Symbols)
+	return &cpy
+}
+
+// Compare returns an integer indicating whether d is less than, equal to, or
+// greater than other.
+func (d *SomeDecl) Compare(other *SomeDecl) int {
+	return termSliceCompare(d.Symbols, other.Symbols)
+}
+
+// Hash returns a hash code of d.
+func (d *SomeDecl) Hash() int {
+	return termSliceHash(d.Symbols)
 }
 
 func (w *With) String() string {
@@ -1227,3 +1301,9 @@ type ruleSlice []*Rule
 func (s ruleSlice) Less(i, j int) bool { return Compare(s[i], s[j]) < 0 }
 func (s ruleSlice) Swap(i, j int)      { x := s[i]; s[i] = s[j]; s[j] = x }
 func (s ruleSlice) Len() int           { return len(s) }
+
+// Returns true if the equality or assignment expression referred to by expr
+// has a valid number of arguments.
+func validEqAssignArgCount(expr *Expr) bool {
+	return len(expr.Operands()) == 2
+}

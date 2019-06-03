@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG golangImageTag=1.12.3
+ARG golangImageTag=1.12.5
 
 # build
 FROM golang:${golangImageTag} as build-stage
