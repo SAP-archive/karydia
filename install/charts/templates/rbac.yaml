@@ -115,36 +115,6 @@ roleRef:
 
 ---
 
-# Define role for OPA/kube-mgmt to update configmaps with policy status.
-kind: Role
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  namespace: {{ .Values.namespace.name }}
-  name: configmap-modifier
-rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["update", "patch", "get"]
-
----
-
-# Grant OPA/kube-mgmt role defined above.
-kind: RoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  namespace: {{ .Values.namespace.name }}
-  name: {{ .Values.namespace.name }}-configmap-modifier
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: Role
-  name: configmap-modifier
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
 kind: ClusterRole
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:

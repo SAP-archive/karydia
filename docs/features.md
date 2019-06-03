@@ -4,7 +4,6 @@
 |---------|-----------|---------------------------|-----------------------------------|--------|
 | Karydia Config | `--config` | `config.name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
 | Default Network Policy ([demo](demos/network/network.md))| `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `config.networkPolicy` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
-| Open Policy Agent | `--enable-opa-admission` | | None | Implemented |
 | Karydia Admission <br/> - seccomp ([demo](demos/seccomp/seccomp.md)) <br/> - service account token automount ([demo](demos/automount-service-account-token/automount-service-account-token.md)) | `--enable-karydia-admission` | `config.seccompProfile` <br /> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
@@ -32,16 +31,6 @@ not running will not be updated when karydia starts.
 
 The network policy is expected to be found under `.data.policy` in the
 configmap.
-
-## Open Policy Agent
-
-When `--enable-opa-admission` is set, karydia will implement an admission
-controller that forwards the request to an [Open Policy
-Agent](https://www.openpolicyagent.org/) endpoint specified by
-`--opa-api-endpoint`.
-
-Complex policies can be loaded in OPA using the rego language without needing
-additional code in Golang.
 
 ## Karydia Admission
 
