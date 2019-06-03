@@ -35,28 +35,28 @@ import (
 
 // reconciler (controller) struct
 type ConfigReconciler struct {
-	config		v1alpha1.KarydiaConfig
-	controllers	[]ControllerInterface
+	config      v1alpha1.KarydiaConfig
+	controllers []ControllerInterface
 
 	// clientset for own API group
-	clientset	versioned.Interface
-	lister		v1alpha13.KarydiaConfigLister
-	synced		cache.InformerSynced
+	clientset versioned.Interface
+	lister    v1alpha13.KarydiaConfigLister
+	synced    cache.InformerSynced
 	// rate limited work queue
 	// This is used to queue work to be processed instead of performing it as
 	// soon as a change happens. This means we can ensure we only process a
 	// fixed amount of resources at a time, and makes it easy to ensure we are
 	// never processing the same item simultaneously in two different workers.
-	workqueue	workqueue.RateLimitingInterface
+	workqueue workqueue.RateLimitingInterface
 }
 
 // reconciler (controller) setup
-func NewConfigReconciler (
-	karydiaConfig			v1alpha1.KarydiaConfig,
-	karydiaControllers		[]ControllerInterface,
-	karydiaClientset		versioned.Interface,
-	karydiaConfigInformer	v1alpha12.KarydiaConfigInformer,
-	) *ConfigReconciler {
+func NewConfigReconciler(
+	karydiaConfig v1alpha1.KarydiaConfig,
+	karydiaControllers []ControllerInterface,
+	karydiaClientset versioned.Interface,
+	karydiaConfigInformer v1alpha12.KarydiaConfigInformer,
+) *ConfigReconciler {
 	reconciler := &ConfigReconciler{
 		config:      karydiaConfig,
 		controllers: karydiaControllers,
