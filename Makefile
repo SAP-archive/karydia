@@ -59,9 +59,19 @@ debug-dev:
 codegen:
 	hack/update-codegen.sh
 
-.PHONY: test
-test:
+.PHONY: test-only
+test-only:
 	go test $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
+
+.PHONY: fmt
+fmt:
+	@if [ -n "$(shell gofmt -l pkg cli tests)" ]; then \
+    		echo "Go code is not formatted!";\
+    		exit 1;\
+	fi
+
+.PHONY: test
+test: fmt test-only
 
 .PHONY: test-coverage
 test-coverage:
