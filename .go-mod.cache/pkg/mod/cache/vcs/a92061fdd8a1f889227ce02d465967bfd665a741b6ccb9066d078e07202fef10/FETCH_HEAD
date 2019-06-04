@@ -1,0 +1,14 @@
+d6b5f863fedc902171a86f927660a948c98042d0		branch 'apisjson' of https://github.com/googleapis/gnostic
+b1bcdb8b89225d901c6861895f12129dad4c8c69		branch 'gnostic-go-generator' of https://github.com/googleapis/gnostic
+bcaf8dd071f3db3607173a18e2a6ce6ad170f8b9		branch 'issue-82' of https://github.com/googleapis/gnostic
+7b353caf9d4fd8fa6ad147344971b2b7dde77187		branch 'issue-85' of https://github.com/googleapis/gnostic
+5cc16bc0653e3540fb6919c6c25d7956beb1bade		branch 'linter' of https://github.com/googleapis/gnostic
+0a2f4f010d3b79437c966a9068f59ca3606c1cd3		branch 'master' of https://github.com/googleapis/gnostic
+3ce168e535ec50be726719c75af2f807cb07930c		branch 'mdk/lint-responses' of https://github.com/googleapis/gnostic
+568f2dc8310b4810405466809a3f1ed0c3a7c9f6		branch 'mdk/linter-updates' of https://github.com/googleapis/gnostic
+540b24903cf26557fb13493cb9a43804da98461a		branch 'openapi-3.0.1' of https://github.com/googleapis/gnostic
+bdfbb3901c7f4e88b2c7dd36e1e014ae04284ef9		branch 'protoc-gen-openapi' of https://github.com/googleapis/gnostic
+eb969b0c02e69814ce0733658b60a76f3973a50a		branch 'service' of https://github.com/googleapis/gnostic
+6d3e269d942e77cfe54ca407e06ce22b2df20f02		branch 'swift-linter' of https://github.com/googleapis/gnostic
+ee43cbb60db7bd22502942cccbc39059117352ab		tag 'v0.1.0' of https://github.com/googleapis/gnostic
+7c663266750e7d82587642f65e60bc4083f1f84e		tag 'v0.2.0' of https://github.com/googleapis/gnostic

@@ -1,0 +1,9 @@
+a1331f0b4ab4823f6c757c2130ae4259ad9f4aec		branch 'api-v1' of https://github.com/golang/protobuf
+ea2076d064f474809968a6092f74841bb2e8790b		branch 'api-v2' of https://github.com/golang/protobuf
+03b73243717400f83562f1f944edc5f34215c927		branch 'dev' of https://github.com/golang/protobuf
+b285ee9cfc6c881bb20c0d8dc73370ea9b9ec90f		branch 'master' of https://github.com/golang/protobuf
+925541529c1fa6821df4e44ce2723319eb2be768		tag 'v1.0.0' of https://github.com/golang/protobuf
+b4deda0973fb4c70b50d226b1af49f3da59f5265		tag 'v1.1.0' of https://github.com/golang/protobuf
+aa810b61a9c79d51363740d207bb46cf8e620ed5		tag 'v1.2.0' of https://github.com/golang/protobuf
+c823c79ea1570fb5ff454033735a8e68575d1d0f		tag 'v1.3.0' of https://github.com/golang/protobuf
+b5d812f8a3706043e23a9cd5babf2e5423744d30		tag 'v1.3.1' of https://github.com/golang/protobuf

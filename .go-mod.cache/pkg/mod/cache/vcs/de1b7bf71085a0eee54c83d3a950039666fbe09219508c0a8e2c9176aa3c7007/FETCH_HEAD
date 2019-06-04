@@ -1,0 +1,4 @@
+61d79177faf5b8e0953fa431eb0838c0a0187f93		branch 'lapack/fix-dgelqf-work-query' of https://github.com/gonum/netlib
+ca7aa84dfbd9c50f07cd40b896a08a2d0a19be3c		branch 'lapack/parameter-checks' of https://github.com/gonum/netlib
+76723241ea4ea9096177178f67ff221166249992		branch 'master' of https://github.com/gonum/netlib
+6ba862f851241ccea6153086a5651e0d46b00418		branch 'mergeblas' of https://github.com/gonum/netlib

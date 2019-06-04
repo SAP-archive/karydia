@@ -1,0 +1,9 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+	ignorecase = true
+	precomposeunicode = true
+[remote "origin"]
+	url = https://gitlab.com/cznic/xc
+	fetch = +refs/heads/*:refs/remotes/origin/*

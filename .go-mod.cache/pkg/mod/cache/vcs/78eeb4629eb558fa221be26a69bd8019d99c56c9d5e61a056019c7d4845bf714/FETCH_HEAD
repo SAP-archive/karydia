@@ -1,0 +1,9 @@
+89d80287644767070914e30199b4d959e491bd3d		branch 'addlog' of https://github.com/prometheus/common
+a348e5af9bb8a589d1241d84e6cb9c6e391aa74e		branch 'fish-http-config-expose-keepalive' of https://github.com/prometheus/common
+dcce92215bd6abe534daa3ba9bb9c44a45e17ab3		branch 'makefile_common' of https://github.com/prometheus/common
+17f5ca1748182ddf24fc33a5a7caaaf790a52fcc		branch 'master' of https://github.com/prometheus/common
+0b8a5ddc637c7efaa06b4834e0856b5dd538deb7		tag 'v0.1.0' of https://github.com/prometheus/common
+32ed9dd9e1e3276ea7bf6c7914043cc1246d51b9		tag 'v0.2.0' of https://github.com/prometheus/common
+a82f4c12f983cc2649298185f296632953e50d3e		tag 'v0.3.0' of https://github.com/prometheus/common
+1ba88736f028e37bc17328369e94a537ae9e0234		tag 'v0.4.0' of https://github.com/prometheus/common
+7d6a80ca5263a2575832c437c6f35181243c4bec		tag 'v0.4.1' of https://github.com/prometheus/common

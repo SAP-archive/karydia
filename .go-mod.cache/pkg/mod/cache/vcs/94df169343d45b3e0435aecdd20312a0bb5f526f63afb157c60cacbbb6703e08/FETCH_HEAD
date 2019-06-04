@@ -1,0 +1,8 @@
+e47dbaa3ae213035f0ee6566dc3e0a16b925f703		branch 'fix_typo' of https://github.com/kubernetes/klog
+2b38dbf13fe5caa6723370de77ceef2200840cee		branch 'flag_defaults' of https://github.com/kubernetes/klog
+78315d914a8af2453db4864e69230b647b1ff711		branch 'master' of https://github.com/kubernetes/klog
+a5bc97fbc634d635061f3146511332c7e313a55a		tag 'v0.1.0' of https://github.com/kubernetes/klog
+71442cd4037d612096940ceb0f3fec3f7fff66e0		tag 'v0.2.0' of https://github.com/kubernetes/klog
+e531227889390a39d9533dde61f590fe9f4b0035		tag 'v0.3.0' of https://github.com/kubernetes/klog
+89e63fd5117f8c20208186ef85f096703a280c20		tag 'v0.3.1' of https://github.com/kubernetes/klog
+78315d914a8af2453db4864e69230b647b1ff711		tag 'v0.3.2' of https://github.com/kubernetes/klog

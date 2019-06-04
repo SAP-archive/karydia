@@ -1,0 +1,12 @@
+51d6538a90f86fe93ac480b35f37b2be17fef232		branch 'master' of https://gopkg.in/yaml.v2
+a64b8214730256be97296f5ff52587aa78769445		branch 'devel' of https://gopkg.in/yaml.v2
+cd515839285fe1a31b92193360172d59f818c9b8		branch 'rename-imports' of https://gopkg.in/yaml.v2
+9f9df34309c04878acc86042b16630b0f696e1de		branch 'v1' of https://gopkg.in/yaml.v2
+7b8349ac747c6a24702b762d2c4fd9266cf4f1d6		branch 'v2' of https://gopkg.in/yaml.v2
+55513cacd4ae8b250e3a9084ab9d8c407b1ed618		branch 'v3' of https://gopkg.in/yaml.v2
+81087af14b39a630865df8e697291769bc4e8b99		tag 'v2.0.0' of https://gopkg.in/yaml.v2
+cb71201d00a1226edf8f89fb39955595fe32dfef		tag 'v2.1.0' of https://gopkg.in/yaml.v2
+e79af3cd3f56bc2f6ad8cb2b626b0c106c71c80c		tag 'v2.1.1' of https://gopkg.in/yaml.v2
+86f5ed62f8a0ee96bd888d2efdfd6d4fb100a4eb		tag 'v2.2.0' of https://gopkg.in/yaml.v2
+5420a8b6744d3b0345ab293f6fcba19c978f1183		tag 'v2.2.1' of https://gopkg.in/yaml.v2
+51d6538a90f86fe93ac480b35f37b2be17fef232		tag 'v2.2.2' of https://gopkg.in/yaml.v2

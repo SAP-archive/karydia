@@ -1,0 +1,6 @@
+e734e0cca38eab26ce0f94a99e06fc017c380f39		branch '002-pool-128' of https://github.com/rogpeppe/fastuuid
+c1d0f516b2aacb18e8fc597a522d054462e6211c		branch '003-no-xor' of https://github.com/rogpeppe/fastuuid
+0752dedcfc1c9410800f4cd4f6329de94d984909		branch '004-contended-benchmark' of https://github.com/rogpeppe/fastuuid
+f8cc0d34a06cb01497e9d3d8aadfdcb9cb271242		branch 'master' of https://github.com/rogpeppe/fastuuid
+211734a23c1d29f2454d53e28ea793ea2ab522e1		tag 'v1.0.0' of https://github.com/rogpeppe/fastuuid
+d31f08d431b94b3760b9d945ab41e6c50ebd22aa		tag 'v1.1.0' of https://github.com/rogpeppe/fastuuid

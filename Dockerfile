@@ -19,6 +19,7 @@ FROM golang:${golangImageTag} as build-stage
 RUN mkdir -p /github.com/karydia/karydia/
 WORKDIR /github.com/karydia/karydia/
 COPY ./ ./
+RUN cp -R .go-mod.cache/* /go/
 RUN make
 RUN make test
 

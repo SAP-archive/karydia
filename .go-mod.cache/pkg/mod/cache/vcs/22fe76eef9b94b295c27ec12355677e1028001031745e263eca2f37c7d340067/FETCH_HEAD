@@ -1,0 +1,5 @@
+f442ecb314a3679150c272e2b9713d8deed5955d		branch 'feature-serverside-apply' of https://github.com/kubernetes/kube-openapi
+db7b694dc208eead64d38030265f702db593fcf2		branch 'master' of https://github.com/kubernetes/kube-openapi
+39cb288412c48cb533ba4be5d6c28620b9a0c1b4		branch 'release-1.10' of https://github.com/kubernetes/kube-openapi
+0c329704159e3b051aafac400b15baacf2a94a04		branch 'release-1.8' of https://github.com/kubernetes/kube-openapi
+7ee50c0aa8059d610950c952a9ed7a5e33ab336a		branch 'release-1.9' of https://github.com/kubernetes/kube-openapi

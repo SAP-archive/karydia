@@ -1,0 +1,12 @@
+15bda1275ef9dfc9ce1966370e1dd6164f48d121		branch 'fix-definitions-omitempty' of https://github.com/go-openapi/spec
+18bafbca2dda31ef9513032a0d6d26ed55dfcd9e		branch 'fixSpelling' of https://github.com/go-openapi/spec
+b2056d62a953adee01fed8ee65a046bd8f0419d5		branch 'master' of https://github.com/go-openapi/spec
+4d01a2dbaeba40a5dd1593600bf34a88545c4b86		branch 'revert-79-fix-circular' of https://github.com/go-openapi/spec
+f7d3cf6f35d45b7a668eb45ac9219049717f7765		branch 'transitiveResolverLocalRefCheck' of https://github.com/go-openapi/spec
+6671f28117be5761e2d6578d7ecce6c80c9f043d		tag '0.15.0' of https://github.com/go-openapi/spec
+fc48a7a3a953a2817b34c02bf5fddc22dab8598e		tag '0.16.0' of https://github.com/go-openapi/spec
+496f93c74354a656f3ebc6f1af55eb24210f6eb5		tag 'v0.17.0' of https://github.com/go-openapi/spec
+d680c8fa21fc681379932a12ca68c5f673955e22		tag 'v0.17.1' of https://github.com/go-openapi/spec
+8cb48a82300056c942267880826dc701b6fdaa38		tag 'v0.17.2' of https://github.com/go-openapi/spec
+40b749be81c2c0cf50ab78f8f391c7fa653273d2		tag 'v0.18.0' of https://github.com/go-openapi/spec
+bcc463b98179a313f19dafa66925ee9815331cec		tag 'v0.19.0' of https://github.com/go-openapi/spec

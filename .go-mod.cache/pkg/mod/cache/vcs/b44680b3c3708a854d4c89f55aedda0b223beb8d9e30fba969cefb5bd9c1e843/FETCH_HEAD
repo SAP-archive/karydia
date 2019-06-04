@@ -1,0 +1,12 @@
+8aaa1484dc108aa23dcf2d4a09371c0c9e280f6b		branch 'master' of https://go.googlesource.com/tools
+e7e52e73e2735bea994c85b62483cc6376dd8d74		branch 'release-branch.go1.10' of https://go.googlesource.com/tools
+e9f45831faab4562ce3f53f7196b67c08f948e86		branch 'release-branch.go1.11' of https://go.googlesource.com/tools
+aa82965741a9fecd12b026fbb3d3c6ed3231b8f8		branch 'release-branch.go1.12' of https://go.googlesource.com/tools
+f8f91591b720f65816369d36e577b525d0926902		branch 'release-branch.go1.2' of https://go.googlesource.com/tools
+b5e7da4a16c82e64159ccf8eda8babcecef44b88		branch 'release-branch.go1.3' of https://go.googlesource.com/tools
+abf43428cc239218424c7a44dc9b5987cd351c3e		branch 'release-branch.go1.4' of https://go.googlesource.com/tools
+d02228d1857b9f49cd0252788516ff5584266eb6		branch 'release-branch.go1.5' of https://go.googlesource.com/tools
+c887be1b2ebd11663d4bf2fbca508c449172339e		branch 'release-branch.go1.6' of https://go.googlesource.com/tools
+6220cba6419b2bf78aad19d85c347ecc0fda2b53		branch 'release-branch.go1.7' of https://go.googlesource.com/tools
+3b2b05e9f5aeacb2e336feb4fb2a59f3955d75ee		branch 'release-branch.go1.8' of https://go.googlesource.com/tools
+5d2fd3ccab986d52112bf301d47a819783339d0e		branch 'release-branch.go1.9' of https://go.googlesource.com/tools

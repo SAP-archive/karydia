@@ -1,0 +1,5 @@
+1dc9a6cbc91aacc3e8b2d63db4d2e957a5394ac4		branch 'bjk/cpufreq_mux' of https://github.com/prometheus/procfs
+8cb9cb4c6d9ed4aba18f9c1fdf1a1c37f56d6838		branch 'makefile_common' of https://github.com/prometheus/procfs
+833678b5bb319f2d20a475cb165c6cc59c2cc77c		branch 'master' of https://github.com/prometheus/procfs
+b785910ff11da82535a659953c095e5f6728d14e		branch 'superq/thermal' of https://github.com/prometheus/procfs
+35bfdb8c16e3737d7f866fb650f22260bf3e65b8		tag 'v0.0.1' of https://github.com/prometheus/procfs

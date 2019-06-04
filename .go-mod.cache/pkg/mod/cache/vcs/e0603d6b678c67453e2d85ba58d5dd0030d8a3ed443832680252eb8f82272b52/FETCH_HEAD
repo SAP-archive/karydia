@@ -1,0 +1,157 @@
+2d35c87225ce3fddb144562f0a06fbce958959e0		tag 'v2.0.0' of https://github.com/coreos/etcd
+2d9ab9a1c5697c726ee7515199a9ff72311c619c		tag 'v2.0.0-rc.1' of https://github.com/coreos/etcd
+dd0dfdb2bbf7a128d6e7902ba4730a5f10c04704		tag 'v2.0.1' of https://github.com/coreos/etcd
+1c326d3b6bf0d886f5d39eaa5debc2811808bfa0		tag 'v2.0.10' of https://github.com/coreos/etcd
+777151ff70344da81fb575808bf150a543dfcb8a		tag 'v2.0.11' of https://github.com/coreos/etcd
+3885ca8f4b35db251b837feccd7b2684bb2573c5		tag 'v2.0.12' of https://github.com/coreos/etcd
+30f613160ab9f017f2ac869614224bff012e9c42		tag 'v2.0.13' of https://github.com/coreos/etcd
+fb2ba989b786c6e701f8c73ea4c52286d2dd7f98		tag 'v2.0.2' of https://github.com/coreos/etcd
+4c8da7e5ba691cd93bf28454c865d96a077960bf		tag 'v2.0.3' of https://github.com/coreos/etcd
+f8613be9fa6fdf2ec83041f02d255d66addcaa57		tag 'v2.0.4' of https://github.com/coreos/etcd
+62407bf8420ca55f7f5939459ddd9ae73b609500		tag 'v2.0.5' of https://github.com/coreos/etcd
+7d831e649407a432197d3d9114ed015ad87c0798		tag 'v2.0.6' of https://github.com/coreos/etcd
+d4aa47d6f5877932009b0d3cf15547599bbcaad8		tag 'v2.0.7' of https://github.com/coreos/etcd
+82c9ceafe3c9a81a09d504981728d47e060c4ad5		tag 'v2.0.8' of https://github.com/coreos/etcd
+00167dd84a7c3007b942c59dc62f66b1ac2956c1		tag 'v2.0.9' of https://github.com/coreos/etcd
+9ab9b5d3cf934c89f7d4d83caa451df63fbde042		tag 'v2.1.0' of https://github.com/coreos/etcd
+b1266ac9b39e9f8c18025b4a04b95519e6201b72		tag 'v2.1.0-alpha.0' of https://github.com/coreos/etcd
+b805978ade1c8685d16e5f5d07c8d49fc0383047		tag 'v2.1.0-alpha.1' of https://github.com/coreos/etcd
+baa290d3e4e20ec262297321bea9b63ba0f29d26		tag 'v2.1.0-rc.0' of https://github.com/coreos/etcd
+0096edf58288f06ece3aa1618c7c9fb86bda56ba		tag 'v2.1.1' of https://github.com/coreos/etcd
+ebb42cbb70c500cdcaafe0e90b2936c5a90403e5		tag 'v2.1.2' of https://github.com/coreos/etcd
+b515d6076d04475d0e272289229eda18f9f2a83c		tag 'v2.1.3' of https://github.com/coreos/etcd
+2ea6402acec7a5ffb4e3cfa79a25fe9b8fc4d96f		tag 'v2.2.0' of https://github.com/coreos/etcd
+227506ac23819a23785ad9c9787ee06d0965ebcf		tag 'v2.2.0-alpha.0' of https://github.com/coreos/etcd
+75d2047a0ec8e2815a2bad7f503144cbece245c5		tag 'v2.2.0-alpha.1' of https://github.com/coreos/etcd
+5249923d28742a7e1802d611e018b805008e0379		tag 'v2.2.0-rc.0' of https://github.com/coreos/etcd
+ca6582581e1faeafc7f182655701045e4f8669b5		tag 'v2.2.1' of https://github.com/coreos/etcd
+cd0853cfc28fb1e874416493daec58c8bec0ca89		tag 'v2.2.2' of https://github.com/coreos/etcd
+bb952c4b99e525e5ee0b5d9c65d48403784d55b3		tag 'v2.2.3' of https://github.com/coreos/etcd
+0af9b8cebcd161f93c7a8856a14c57f4ca4454b2		tag 'v2.2.4' of https://github.com/coreos/etcd
+aa96ab4c2df311f5429c71454604e02230b89636		tag 'v2.2.5' of https://github.com/coreos/etcd
+e9ef69008b3390a96698b580c3d0db99509d8ecc		tag 'v2.3.0' of https://github.com/coreos/etcd
+1cfbed31b5e02063ad59663c3f8ac79c6fff3f3c		tag 'v2.3.0-alpha.0' of https://github.com/coreos/etcd
+9070616d117bb62c65ab607b11dcfb0b97da43a2		tag 'v2.3.0-alpha.1' of https://github.com/coreos/etcd
+792daeba062745b4eff87c4525dab8357ebf8517		tag 'v2.3.1' of https://github.com/coreos/etcd
+2d54b873f22578e9b1b2384201451168abd3d8e6		tag 'v2.3.2' of https://github.com/coreos/etcd
+a5e2109c46e6c9fc9bc4e288bc683cf7ce55a32b		tag 'v2.3.3' of https://github.com/coreos/etcd
+3e132265461fbafb68edd37a97e42b77ad2bc477		tag 'v2.3.4' of https://github.com/coreos/etcd
+16eb58a41491343bad427ff1ed0f33fc701a8df9		tag 'v2.3.5' of https://github.com/coreos/etcd
+d879488c5097b9e84aad3ad40a255e917e6cfca5		tag 'v2.3.6' of https://github.com/coreos/etcd
+2ecb2acc24fd90b08e21715a8f5bbc81f6a28294		tag 'v2.3.7' of https://github.com/coreos/etcd
+c29372170c4da60020371cefab1be1150474285c		tag 'v2.3.8' of https://github.com/coreos/etcd
+f95fe92c4b15cc08b876de27d2b6a78085181094		tag 'v3.0.0' of https://github.com/coreos/etcd
+dd63a0e6cba384f468d385ac09564dda3e5ef7a1		tag 'v3.0.0-beta.0' of https://github.com/coreos/etcd
+2f3ad5989f1acafd50b7b6c11c5011d839e450d2		tag 'v3.0.1' of https://github.com/coreos/etcd
+311c14e465553ff843b3646b0d610408a0d75b7b		tag 'v3.0.10' of https://github.com/coreos/etcd
+5d6e344b1bf32f8a5e34a37d8e96bba2f905063a		tag 'v3.0.11' of https://github.com/coreos/etcd
+63caffd4d0bdf1daf4dda2268a997be91ad12707		tag 'v3.0.12' of https://github.com/coreos/etcd
+f6735597b8f60abaab9b3f18fa5bf7c6c165497e		tag 'v3.0.13' of https://github.com/coreos/etcd
+05784c29f3789d49b48b1dbb96b2c74c5124c754		tag 'v3.0.14' of https://github.com/coreos/etcd
+fd10d7f8c1b411ec0f4487c8d646987cb289b4f1		tag 'v3.0.15' of https://github.com/coreos/etcd
+ba1d38fa4d97884b9da26e2828b8768602a69446		tag 'v3.0.16' of https://github.com/coreos/etcd
+a49c64139431ef928d98df9ddf63c4b742e3d6b1		tag 'v3.0.17' of https://github.com/coreos/etcd
+55c02feb4a93d653c962217349e3a1fb40260b64		tag 'v3.0.2' of https://github.com/coreos/etcd
+f0b7919f0edd70ea4a0aadc6492497670f120219		tag 'v3.0.3' of https://github.com/coreos/etcd
+3dfbf5225b6a0f79eb5eb5b86b8d97fec44fb61a		tag 'v3.0.4' of https://github.com/coreos/etcd
+ced4e31832292aa993545219dd64fb4d494d9dc1		tag 'v3.0.5' of https://github.com/coreos/etcd
+0a8bac916997420a1279507d5db591a718625410		tag 'v3.0.6' of https://github.com/coreos/etcd
+400f63d2c31855cc595d657a76df800ecc2afa8b		tag 'v3.0.7' of https://github.com/coreos/etcd
+9d2598aa0c9161bcafd4b6c053b029ede09de04a		tag 'v3.0.8' of https://github.com/coreos/etcd
+c0094f812116e33bf0319f8cddcb7c3572a698e2		tag 'v3.0.9' of https://github.com/coreos/etcd
+efbdc588734edeeb23300abff8e4d81cb3b6e43b		tag 'v3.1.0' of https://github.com/coreos/etcd
+c910b9beb657847c5b1e79bfc262f6ec32efe46a		tag 'v3.1.0-alpha.0' of https://github.com/coreos/etcd
+e129b7c592155878a45f5daf5808d3d801306ee6		tag 'v3.1.0-alpha.1' of https://github.com/coreos/etcd
+18813c62bb32de629cb3dbb78e21f851c3f3453a		tag 'v3.1.0-rc.0' of https://github.com/coreos/etcd
+763aaaa481dfaea45f3a55ccfe98163b9ace4882		tag 'v3.1.0-rc.1' of https://github.com/coreos/etcd
+5b8373a4e9b05cd63e35b40dae6f22fe81eec02c		tag 'v3.1.1' of https://github.com/coreos/etcd
+cba6a57763a1f3025166d16238b1a55cb70ed901		tag 'v3.1.10' of https://github.com/coreos/etcd
+e9b86b00a4145439d88cccd3b3a9330643fcd31c		tag 'v3.1.11' of https://github.com/coreos/etcd
+8f7036cf8ceb44fd2128526def3419a01cef93bd		tag 'v3.1.12' of https://github.com/coreos/etcd
+e33b0376ec1efca997843c136c738268cbc0fe23		tag 'v3.1.13' of https://github.com/coreos/etcd
+3e761c058c0adc141fa1b1d4681734a5c2d21be2		tag 'v3.1.14' of https://github.com/coreos/etcd
+3bb9947afc73edcd70c04cdde422eff25c051a28		tag 'v3.1.15' of https://github.com/coreos/etcd
+35c2fd1079f5c379dc5074362713886246fd723d		tag 'v3.1.16' of https://github.com/coreos/etcd
+1e30a08bc0bffa5e0231f2b36cd48f1644fd212a		tag 'v3.1.17' of https://github.com/coreos/etcd
+379482d40e08f206858d256f5c0ff371aa2393f8		tag 'v3.1.18' of https://github.com/coreos/etcd
+f7bcf793ca311ab73e3e8cc5311fef6a53e0b8a2		tag 'v3.1.19' of https://github.com/coreos/etcd
+cbe1d37ff0f6342a7ca596f7547c4c72f75299a7		tag 'v3.1.2' of https://github.com/coreos/etcd
+b0c2176962fe31ac0225523283262185a7b814f6		tag 'v3.1.20' of https://github.com/coreos/etcd
+6df280b90fb4ec7157526c74cc96fd22bcaca36d		tag 'v3.1.3' of https://github.com/coreos/etcd
+2269d13b13ccf45a1280c89255205a9ec7c47cde		tag 'v3.1.4' of https://github.com/coreos/etcd
+44a017e24e7804f56ec4495209282c349c1f3055		tag 'v3.1.5' of https://github.com/coreos/etcd
+785ec889d5e386212d5ef7e66b03aeff51535d01		tag 'v3.1.6' of https://github.com/coreos/etcd
+3e631ba4a9fd0ecc696b1c1a74471b840f6de4d0		tag 'v3.1.7' of https://github.com/coreos/etcd
+ee6b304c7f71bfe64df4eb09cdb62bb63988297f		tag 'v3.1.8' of https://github.com/coreos/etcd
+6353c29f7d4bb026aa289a03bd542140eb715f5c		tag 'v3.1.9' of https://github.com/coreos/etcd
+69e0a78da9d7b76e5dae12b2c0ad6126656faed3		tag 'v3.2.0' of https://github.com/coreos/etcd
+bcae6c3147eb0887acc2581cf54044dfd20b977f		tag 'v3.2.0-rc.0' of https://github.com/coreos/etcd
+0e2095de3e929cf4fb1fff63653bd1fd9093ed3c		tag 'v3.2.0-rc.1' of https://github.com/coreos/etcd
+dca6d90fa8419b6e81f2577b772a3a1f381c69b2		tag 'v3.2.1' of https://github.com/coreos/etcd
+797fe2f340f6b9eac30d44d398d5e72dd2d373fb		tag 'v3.2.10' of https://github.com/coreos/etcd
+d32f9092434ecdce0c78c09f39d17435c25923b8		tag 'v3.2.11' of https://github.com/coreos/etcd
+5c5c891274749fa28a2fe4bc377f2ca6c19940c8		tag 'v3.2.12' of https://github.com/coreos/etcd
+2c5007b6a40394c2a7a533e58489ecc0175c0636		tag 'v3.2.13' of https://github.com/coreos/etcd
+f7f11d9138881db3c0f3c7bd2b088987dc73350a		tag 'v3.2.14' of https://github.com/coreos/etcd
+3e3957cd8d90486b019535b5c67205c3c5a0d7d9		tag 'v3.2.15' of https://github.com/coreos/etcd
+ef0cabc40c837e395091994f31222ce6c792dfdf		tag 'v3.2.16' of https://github.com/coreos/etcd
+11fb9e10f5523901974203457ab17e09e7833cbf		tag 'v3.2.17' of https://github.com/coreos/etcd
+d5eda119447b8ce030edd875348c77d6b37db048		tag 'v3.2.18' of https://github.com/coreos/etcd
+b812e23ffe344e0a40c2e1ec0adf8ff687519aa0		tag 'v3.2.19' of https://github.com/coreos/etcd
+182182840c58dd1d9dab484704ae9c86c2a77355		tag 'v3.2.2' of https://github.com/coreos/etcd
+6f9d5805f5be0e8c1b55fc9b6c3c2d95fe16a11d		tag 'v3.2.20' of https://github.com/coreos/etcd
+ba2d650b6e91e45dc7eee430518c918b3b9d0111		tag 'v3.2.21' of https://github.com/coreos/etcd
+06fc0c4c1a6b5fa3dfb2a699f28fd43da4c352a3		tag 'v3.2.22' of https://github.com/coreos/etcd
+f8c3c3a6aface983298697ac9eb3b1d1e0390128		tag 'v3.2.23' of https://github.com/coreos/etcd
+9011d333826d67ee4bf9b9fd1c3d6f93a6d9e178		tag 'v3.2.24' of https://github.com/coreos/etcd
+50f1d82c12ed3ca1a7af3fa8b4eccc3b32471895		tag 'v3.2.25' of https://github.com/coreos/etcd
+c413d7a0e3d51fd00fe19fd9e8d66ab8d7fa4355		tag 'v3.2.26' of https://github.com/coreos/etcd
+02f6e4a49e5be8cefada709bf1489e8a23e0b68c		tag 'v3.2.3' of https://github.com/coreos/etcd
+1c61e46e6e098b2f414790b1cbff7f200bdcf401		tag 'v3.2.4' of https://github.com/coreos/etcd
+60ad1c44bb68e8638e94142d692798d6803d580d		tag 'v3.2.5' of https://github.com/coreos/etcd
+f574e9cf10231271dbef25e6ca39433ca09ebec5		tag 'v3.2.6' of https://github.com/coreos/etcd
+9da8b08172cec992320f4488bacc06a4500e0381		tag 'v3.2.7' of https://github.com/coreos/etcd
+1814318013519f6eee4154004a0b42c09e22d063		tag 'v3.2.8' of https://github.com/coreos/etcd
+58a681f4056e6ac47561668f682c2e2ceb3dfa1c		tag 'v3.2.9' of https://github.com/coreos/etcd
+b8115a53c8b3e6997c4411090d66573a887f2c22		tag 'v3.3.0' of https://github.com/coreos/etcd
+a5d1ae14b52fe0fc64d87561d01fc969b4984320		tag 'v3.3.0-rc.0' of https://github.com/coreos/etcd
+7375762e401970349c3fd3d82d4b5e84307895b4		tag 'v3.3.0-rc.1' of https://github.com/coreos/etcd
+df5cec083d6f4d553d6f72897a46eb47445cf9bf		tag 'v3.3.0-rc.2' of https://github.com/coreos/etcd
+35f75b4d6332771d698042a6e5927250f3b6c4f4		tag 'v3.3.0-rc.3' of https://github.com/coreos/etcd
+234496ceaa2c6727c0f5a3269d38345b51889ed4		tag 'v3.3.0-rc.4' of https://github.com/coreos/etcd
+a577a3481e11bc5649a68f79b2cb8561697895bb		tag 'v3.3.1' of https://github.com/coreos/etcd
+198152ef5dfd181866917188fb2f013a9ce11ad1		tag 'v3.3.11' of https://github.com/coreos/etcd
+0a6d36228fbd4d9656d1b913070a1e79299b3ccf		tag 'v3.3.12' of https://github.com/coreos/etcd
+1aa3d4036677a2e4e0d024177446f6459f0e1ea1		tag 'v3.3.13' of https://github.com/coreos/etcd
+4abe3501599a575391ff8426324333cad4a4f356		tag 'v3.3.2' of https://github.com/coreos/etcd
+83c5c2f5fe3cebb423946150344b7b14203392c5		tag 'v3.3.3' of https://github.com/coreos/etcd
+3b480116d7d9d741306e6c7b7192a6eb7a959dd5		tag 'v3.3.4' of https://github.com/coreos/etcd
+234750e692aec277cda43feb0670080b37aa4a2e		tag 'v3.3.5' of https://github.com/coreos/etcd
+4fb13893ffd911e1ea1fc3954be9302fc0d3ad59		tag 'v3.3.6' of https://github.com/coreos/etcd
+aa3db7062a69c9589d7dd8986aa2d8ee5e7ab3e8		tag 'v3.3.7' of https://github.com/coreos/etcd
+a54e1eb34a96e080e86370a6726fff9f260cf3d8		tag 'v3.3.8' of https://github.com/coreos/etcd
+fe93d5894f0fcbd2ccbbfe892d83afa0d6054694		tag 'v3.3.9' of https://github.com/coreos/etcd
+20ca21a3f7122cf7caa91cb0e9b9c69be9279950	not-for-merge	tag '0' of https://github.com/coreos/etcd
+2403fe79c1372329d63a51e54e37cec677acca27	not-for-merge	tag 'v0.1.0' of https://github.com/coreos/etcd
+7b289043c7beced434be4334fb909ba0b16b57b1	not-for-merge	tag 'v0.1.1' of https://github.com/coreos/etcd
+5589b6faabc822255c87b096c57afaef9fa47d6f	not-for-merge	tag 'v0.1.2' of https://github.com/coreos/etcd
+f04fdf139be1c0ab615b08b254e60e073662fea8	not-for-merge	tag 'v0.2.0' of https://github.com/coreos/etcd
+e2e035cac84c1a971df68bda66ae15ac84f367bb	not-for-merge	tag 'v0.2.0-rc0' of https://github.com/coreos/etcd
+f4991004261ec442a3b58637fe9d175e057a4254	not-for-merge	tag 'v0.2.0-rc1' of https://github.com/coreos/etcd
+ab2e9ab6aa5b5cafc2921c0922c2b7ffc7467605	not-for-merge	tag 'v0.2.0-rc2' of https://github.com/coreos/etcd
+9435e7ddfc52224681b29b40c947d5eb9f867eec	not-for-merge	tag 'v0.2.0-rc3' of https://github.com/coreos/etcd
+c766afbcc785b62ed16ce2ffa021fa4a49f1b10a	not-for-merge	tag 'v0.2.0-rc4' of https://github.com/coreos/etcd
+a64347612e7468fe8592c1498460216e87691ff8	not-for-merge	tag 'v0.3.0' of https://github.com/coreos/etcd
+1da0a01aa88e2b3f5046522728ea81b80c4773bd	not-for-merge	tag 'v0.4.0' of https://github.com/coreos/etcd
+935d251513f80d8448334f72560e3cbc8d9028f8	not-for-merge	tag 'v0.4.1' of https://github.com/coreos/etcd
+53a484f1e050158e1e6cdb9a87f07168dd7938bc	not-for-merge	tag 'v0.4.2' of https://github.com/coreos/etcd
+367f8734f0828cce95e40450d37cd0eb3f2848d5	not-for-merge	tag 'v0.4.3' of https://github.com/coreos/etcd
+2d466256b201b921124b9a1e6115b48f3cd88fc1	not-for-merge	tag 'v0.4.4' of https://github.com/coreos/etcd
+e44c748cefffbbb4c2c905cf0ab38a6a7994ab1e	not-for-merge	tag 'v0.4.5' of https://github.com/coreos/etcd
+a381ff00db76ff4aaef165432a5a1a3c4fe187d9	not-for-merge	tag 'v0.4.6' of https://github.com/coreos/etcd
+1beb0d32817782943aae35b3365daa4e927c3eb0	not-for-merge	tag 'v0.5.0-alpha.0' of https://github.com/coreos/etcd
+351804f6c00d108195d9815ea9c1309845482cf3	not-for-merge	tag 'v0.5.0-alpha.1' of https://github.com/coreos/etcd
+e45e26abc4ffe5dff3cc32a58d69cacf38268a6a	not-for-merge	tag 'v0.5.0-alpha.2' of https://github.com/coreos/etcd
+a82ca568bc158f21fc28ccf5e87c6ca0732998c3	not-for-merge	tag 'v0.5.0-alpha.3' of https://github.com/coreos/etcd
+5c20d6d287fa458e45a94f4f140adb34991fdd20	not-for-merge	tag 'v0.5.0-alpha.4' of https://github.com/coreos/etcd
+0a16bb4ab99c18819fcbbaed67141677e92c63f3	not-for-merge	tag 'v0.5.0-alpha.5' of https://github.com/coreos/etcd

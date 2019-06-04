@@ -1,0 +1,4 @@
+42f80515abfed431577ebeded4ab86390ce0a5cd		branch 'jba-regen' of https://github.com/google/go-genproto
+fb225487d10142b5bcc35abfc6cb9a0609614976		branch 'master' of https://github.com/google/go-genproto
+c20d9fe49eb17a5b7c6c757afc1b00b0023d4371		branch 'revert-119-regen28' of https://github.com/google/go-genproto
+90b0afc75da989590cd8c89872df744e4933605c		branch 'revert-80-regen3' of https://github.com/google/go-genproto
