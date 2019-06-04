@@ -1,7 +1,7 @@
 .*.sw[po]
 
 .idea/
-bin/
+/bin/
 
 karydia*.pem
 cov.out
