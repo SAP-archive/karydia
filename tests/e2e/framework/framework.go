@@ -519,7 +519,7 @@ func (f *Framework) ConfigureWebhook() error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: webhookName,
 		},
-		Webhooks: []admissionv1beta1.Webhook{
+		Webhooks: []admissionv1beta1.MutatingWebhook{
 			{
 				Name: webhookName,
 				Rules: []admissionv1beta1.RuleWithOperations{{
@@ -548,7 +548,7 @@ func (f *Framework) ConfigureWebhook() error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: webhookName,
 		},
-		Webhooks: []admissionv1beta1.Webhook{
+		Webhooks: []admissionv1beta1.ValidatingWebhook{
 			{
 				Name: webhookName,
 				Rules: []admissionv1beta1.RuleWithOperations{{
