@@ -122,18 +122,18 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to build kubeconfig: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to build kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 	karydiaClientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to build karydia clientset: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to build karydia clientset: %v\n", err)
 		os.Exit(1)
 	}
 
 	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config"), metav1.GetOptions{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to load karydia config: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to load karydia config: %v\n", err)
 		os.Exit(1)
 	}
 	fmt.Fprintf(os.Stdout, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
