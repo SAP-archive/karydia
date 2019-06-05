@@ -30,7 +30,7 @@ COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/loca
 COPY ./scripts/hotswap-dev /usr/local/bin/hotswap-dev
 
 # prod-image (production usage)
-FROM k8s.gcr.io/debian-base-amd64:1.0.0 as prod-image
+FROM alpine:3.9 as prod-image
 COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 USER 65534:65534
 
