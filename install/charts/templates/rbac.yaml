@@ -75,7 +75,7 @@ roleRef:
 ---
 
 kind: ClusterRoleBinding
-apiVersion:  {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
+apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
   name: {{ .Values.metadata.name }}-view-kc
 subjects:
