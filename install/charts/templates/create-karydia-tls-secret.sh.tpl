@@ -1,3 +1,6 @@
+{{ define "create-karydia-tls-secret.sh.tpl" }}
+#!/bin/bash
+
 # Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 # This file is licensed under the Apache Software License, v. 2 except as
 # noted otherwise in the LICENSE file.
@@ -14,13 +17,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: karydia.gardener.cloud/v1alpha1
-kind: KarydiaConfig
-metadata:
-  labels:
-    app: karydia
-  name: karydia-config
-spec:
-  automountServiceAccountToken: "change-default"
-  seccompProfile: "docker/default"
-  networkPolicy: "kube-system:karydia-default-network-policy"
+set -euo pipefail
+
+readonly secret_name="${SECRET_NAME:-karydia-tls}"
+readonly cert_path="${CERT_PATH:-karydia.pem}"
+readonly key_path="${KEY_PATH:-karydia-key.pem}"
+readonly namespace="${NAMESPACE:-kube-system}"
+
+kubectl create secret generic "${secret_name}" \
+  --from-file=key.pem="${key_path}" \
+  --from-file=cert.pem="${cert_path}" \
+  --dry-run -o yaml |
+  kubectl -n "${namespace}" apply -f -
+{{ end }}

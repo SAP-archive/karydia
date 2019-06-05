@@ -5,3 +5,5 @@ bin/
 
 karydia*.pem
 cov.out
+
+manifests/

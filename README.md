@@ -17,7 +17,7 @@ can be used on any Kubernetes cluster.
 
 ## Installing karydia
 
-See [installing karydia](docs/install.md).
+See [installing karydia](install/README.md).
 
 ## Demo
 

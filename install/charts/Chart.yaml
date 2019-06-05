@@ -1,4 +1,6 @@
-# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+# Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+# This file is licensed under the Apache Software License, v. 2 except as
+# noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,15 +15,14 @@
 # limitations under the License.
 
 apiVersion: v1
-kind: Service
-metadata:
-  name: karydia
-  namespace: kube-system
-  labels:
-    app: karydia
-spec:
-  ports:
-  - port: 443
-    targetPort: 33333
-  selector:
-    app: karydia
+name: karydia
+version: 0.1.0
+description: A Helm chart for karydia
+keywords:
+  - karydia
+  - kubernetes
+  - security
+sources:
+  - https://github.com/karydia/karydia
+engine: gotpl
+icon: https://raw.githubusercontent.com/karydia/karydia/simple-install-option/logo/Karydia%400.5x.png
