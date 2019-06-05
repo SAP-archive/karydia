@@ -53,6 +53,7 @@ webhooks:
         - namespaces
         - pods
         - pods/status
+        - serviceaccounts
         - endpoints
         - persistentvolumes
         - validatingwebhookconfigurations
@@ -87,6 +88,7 @@ webhooks:
         - namespaces
         - pods
         - pods/status
+        - serviceaccounts
         - endpoints
         - persistentvolumes
         - validatingwebhookconfigurations
