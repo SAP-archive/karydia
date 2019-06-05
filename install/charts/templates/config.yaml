@@ -14,28 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
+apiVersion: karydia.gardener.cloud/v1alpha1
+kind: KarydiaConfig
 metadata:
-  name: karydiaconfigs.karydia.gardener.cloud
+  labels:
+    app: {{ .Values.metadata.labelApp }}
+  name: {{ .Values.config.name }}
 spec:
-  group: karydia.gardener.cloud
-  version: v1alpha1
-  scope: Cluster
-  names:
-    plural: karydiaconfigs
-    singular: karydiaconfig
-    kind: KarydiaConfig
-    shortNames:
-      - kc
-  validation:
-    openAPIV3Schema:
-      properties:
-        spec:
-          properties:
-            automountServiceAccountToken:
-              type: string
-            seccompProfile:
-              type: string
-            networkPolicy:
-              type: string
+  automountServiceAccountToken: "{{ .Values.config.automountServiceAccountToken }}"
+  seccompProfile: "{{ .Values.config.seccompProfile }}"
+  networkPolicy: "{{ .Values.config.networkPolicy }}"
