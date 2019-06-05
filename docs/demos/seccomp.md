@@ -31,7 +31,7 @@ unshare --user whoami
 ## Install karydia
 See [install instructions](/install/README.md) for more information.
 
-## Create a pod with seccomp profile enforced by karaydia
+## Create a pod with seccomp profile enforced by karydia
 You can create a simple pod and execute an interacitve shell in it by running:
 ```
 kubectl run --rm -i --tty busybox --image=busybox -- sh
