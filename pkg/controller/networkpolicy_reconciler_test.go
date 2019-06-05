@@ -152,7 +152,7 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 	validNetworkPolicy := "ns:" + networkPolicyNames[2]
 	newConfig := v1alpha1.KarydiaConfig{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name: "testConfig",
+			Name:            "testConfig",
 			ResourceVersion: "1",
 		},
 		Spec: v1alpha1.KarydiaConfigSpec{

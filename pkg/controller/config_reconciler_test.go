@@ -43,6 +43,7 @@ type testSettings struct {
 	sharedInformerFactory externalversions.SharedInformerFactory
 	waitTimeoutSeconds    time.Duration
 }
+
 func newTestSettings(t *testing.T, kubeObjects []runtime.Object, karydiaControllers []ControllerInterface) *testSettings {
 	clientset := fake.NewSimpleClientset(kubeObjects...)
 	sharedInformerFactory := externalversions.NewSharedInformerFactory(clientset, noResyncPeriodFunc())
@@ -58,27 +59,28 @@ func newTestSettings(t *testing.T, kubeObjects []runtime.Object, karydiaControll
 }
 
 type testConfigParams struct {
-	automountServiceAccountToken	string
-	seccompProfile					string
-	networkPolicy					string
+	automountServiceAccountToken string
+	seccompProfile               string
+	networkPolicy                string
 }
 type testConfig struct {
-	t		*testing.T
-	config	v1alpha1.KarydiaConfig
+	t      *testing.T
+	config v1alpha1.KarydiaConfig
 }
+
 func newTestConfig(t *testing.T, resourceVersion string, params testConfigParams) *testConfig {
 	configName := "testConfig"
 	return &testConfig{
 		t: t,
 		config: v1alpha1.KarydiaConfig{
 			ObjectMeta: meta_v1.ObjectMeta{
-				Name: configName,
+				Name:            configName,
 				ResourceVersion: resourceVersion,
 			},
 			Spec: v1alpha1.KarydiaConfigSpec{
 				AutomountServiceAccountToken: params.automountServiceAccountToken,
-				SeccompProfile: params.seccompProfile,
-				NetworkPolicy: params.networkPolicy,
+				SeccompProfile:               params.seccompProfile,
+				NetworkPolicy:                params.networkPolicy,
 			},
 		},
 	}
@@ -89,10 +91,11 @@ type testControllerInterface interface {
 	isUpdated() bool
 }
 type testController struct {
-	name				string
-	updated				bool
-	updateError			error
+	name        string
+	updated     bool
+	updateError error
 }
+
 func (c *testController) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	if c.updateError != nil {
 		c.updated = false
@@ -109,9 +112,9 @@ func TestNewConfigReconciler(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 
@@ -141,9 +144,9 @@ func TestConfigReconciler_syncConfigHandlerWithoutConfigElement(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -174,9 +177,9 @@ func TestConfigReconciler_enqueueConfig(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -202,9 +205,9 @@ func TestConfigReconciler_reconcileIsNeeded(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -226,9 +229,9 @@ func TestConfigReconciler_UpdateConfigWithoutControllers(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -253,9 +256,9 @@ func TestConfigReconciler_UpdateConfigWithController(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -296,9 +299,9 @@ func TestConfigReconciler_UpdateConfigWithControllers(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	controller0 := testController{name: "testController0"}
 	controller1 := testController{name: "testController1"}
@@ -350,9 +353,9 @@ func TestConfigReconciler_UpdateConfigWithControllersAndError(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	controller0 := testController{name: "testController0"}
 	controller1 := testController{name: "testController1", updateError: fmt.Errorf("test config update error")}
@@ -404,9 +407,9 @@ func TestConfigReconciler_createConfig(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -426,14 +429,14 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	newC := newTestConfig(t, "2", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"newValue",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "newValue",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -482,7 +485,7 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	assert.NoError(err)
 	// with cache update
 	s.sharedInformerFactory.WaitForCacheSync(ctx.Done())
-	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
+	if err := wait.PollImmediate(1*time.Millisecond, s.waitTimeoutSeconds, func() (bool, error) {
 		_, err := r.lister.Get(c.config.Name)
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -505,19 +508,19 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	newC := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"newValue",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "newValue",
 	})
 	differentC := newTestConfig(t, "2", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"differentValue",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "differentValue",
 	})
 	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -542,7 +545,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	assert.True(errors.IsAlreadyExists(err))
 	// but without cache update because operation failed
 	s.sharedInformerFactory.WaitForCacheSync(ctx.Done())
-	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
+	if err := wait.PollImmediate(1*time.Millisecond, s.waitTimeoutSeconds, func() (bool, error) {
 		_, err := r.lister.Get(c.config.Name)
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -604,7 +607,7 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	assert.False(controller.updated)
 	// and re-synced cache
 	s.sharedInformerFactory.WaitForCacheSync(ctx.Done())
-	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
+	if err := wait.PollImmediate(1*time.Millisecond, s.waitTimeoutSeconds, func() (bool, error) {
 		_, err := r.lister.Get(c.config.Name)
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -624,14 +627,14 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	// setup
 	assert := assert.New(t)
 	c := newTestConfig(t, "1", testConfigParams{
-		automountServiceAccountToken:	"testAutomountServiceAccountToken",
-		seccompProfile:					"testSeccompProfile",
-		networkPolicy:					"testNetworkPolicy",
+		automountServiceAccountToken: "testAutomountServiceAccountToken",
+		seccompProfile:               "testSeccompProfile",
+		networkPolicy:                "testNetworkPolicy",
 	})
 	differentC := newTestConfig(t, "2", testConfigParams{
-		automountServiceAccountToken:	"differentAutomountServiceAccountToken",
-		seccompProfile:					"differentSeccompProfile",
-		networkPolicy:					"differentNetworkPolicy",
+		automountServiceAccountToken: "differentAutomountServiceAccountToken",
+		seccompProfile:               "differentSeccompProfile",
+		networkPolicy:                "differentNetworkPolicy",
 	})
 	differentC.config.Name = "differentName"
 	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
@@ -661,7 +664,7 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	assert.NoError(err)
 	assert.Equal(&differentC.config, e)
 	s.sharedInformerFactory.WaitForCacheSync(ctx.Done())
-	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
+	if err := wait.PollImmediate(1*time.Millisecond, s.waitTimeoutSeconds, func() (bool, error) {
 		_, err := r.lister.Get(c.config.Name)
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -670,7 +673,7 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	}); err != nil {
 		t.FailNow()
 	}
-	if err := wait.PollImmediate(1 * time.Millisecond, s.waitTimeoutSeconds, func()(bool, error) {
+	if err := wait.PollImmediate(1*time.Millisecond, s.waitTimeoutSeconds, func() (bool, error) {
 		_, err := r.lister.Get(differentC.config.Name)
 		if errors.IsNotFound(err) {
 			return false, nil

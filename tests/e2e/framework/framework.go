@@ -52,8 +52,8 @@ import (
 )
 
 type Framework struct {
-	KubeClientset kubernetes.Interface
-	ApiExtClientset apiextension.Interface
+	KubeClientset    kubernetes.Interface
+	ApiExtClientset  apiextension.Interface
 	KarydiaClientset versioned.Interface
 
 	Namespace string
@@ -66,25 +66,25 @@ func Setup(server, kubeconfig, namespace string) (*Framework, error) {
 	}
 	cfg, err := clientcmd.BuildConfigFromFlags(server, kubeconfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to build kubeconfig: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to build kubeconfig: %v\n", err)
 		os.Exit(1)
 	}
 	ApiExtClientset, err := apiextension.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to build api extension clientset: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to build api extension clientset: %v\n", err)
 		os.Exit(1)
 	}
 	KarydiaClientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr,"Failed to build karydia clientset: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to build karydia clientset: %v\n", err)
 		os.Exit(1)
 	}
 
 	return &Framework{
-		KubeClientset: KubeClientset,
-		ApiExtClientset: ApiExtClientset,
+		KubeClientset:    KubeClientset,
+		ApiExtClientset:  ApiExtClientset,
 		KarydiaClientset: KarydiaClientset,
-		Namespace:     namespace,
+		Namespace:        namespace,
 	}, nil
 }
 
@@ -192,7 +192,7 @@ spec:
 	if err != nil {
 		return fmt.Errorf("failed to create: %v", crdObject)
 	}
-	if err := wait.Poll(1 * time.Second, 20 * time.Second, func()(bool, error) {
+	if err := wait.Poll(1*time.Second, 20*time.Second, func() (bool, error) {
 		_, err := f.ApiExtClientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(crdObject.Name, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			return false, nil
@@ -212,15 +212,15 @@ spec:
 		},
 		Spec: v1alpha1.KarydiaConfigSpec{
 			AutomountServiceAccountToken: "change-default",
-			SeccompProfile: "docker/default",
-			NetworkPolicy: "kube-system:karydia-default-network-policy",
+			SeccompProfile:               "docker/default",
+			NetworkPolicy:                "kube-system:karydia-default-network-policy",
 		},
 	}
 	_, err = f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Create(crObject)
 	if err != nil {
 		return fmt.Errorf("failed to create: %v", crObject)
 	}
-	if err := wait.Poll(1 * time.Second, 20 * time.Second, func()(bool, error) {
+	if err := wait.Poll(1*time.Second, 20*time.Second, func() (bool, error) {
 		_, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(crObject.Name, metav1.GetOptions{})
 		if errors.IsNotFound(err) {
 			return false, nil

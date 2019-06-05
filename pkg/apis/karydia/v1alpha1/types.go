@@ -40,7 +40,6 @@ type KarydiaConfigSpec struct {
 	// SeccompProfile can be used to set a default seccomp profile
 	SeccompProfile string `json:"seccompProfile"`
 
-
 	// NetworkPolicy can be used to set a default network policy
 	NetworkPolicy string `json:"networkPolicy"`
 }
