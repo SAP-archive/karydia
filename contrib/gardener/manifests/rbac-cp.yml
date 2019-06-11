@@ -81,3 +81,34 @@ roleRef:
   kind: ClusterRole
   name: karydia-view-kc
   apiGroup: rbac.authorization.k8s.io
+
+---
+
+# Define role for kube-mgmt to cache the resources
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubemgmt-cacher
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "persistentvolumes", "pods", "endpoints"]
+  verbs: ["get", "watch", "list"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+# Grant kube-mgmt role defined above.
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubemgmt-cacher
+subjects:
+- kind: User
+  name: system:kubemgmt
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: kubemgmt-cacher
+  apiGroup: rbac.authorization.k8s.io
