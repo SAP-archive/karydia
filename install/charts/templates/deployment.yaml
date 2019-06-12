@@ -57,8 +57,12 @@ spec:
           - /etc/karydia/tls/cert.pem
           - --tls-key
           - /etc/karydia/tls/key.pem
+          {{- if .Values.features.defaultNetworkPolicy }}
           - --enable-default-network-policy
+          {{- end }}
+          {{- if .Values.features.karydiaAdmission }}
           - --enable-karydia-admission
+          {{- end }}
         volumeMounts:
           - name: {{ .Values.metadata.name }}-tls
             mountPath: "/etc/karydia/tls"
