@@ -38,7 +38,8 @@ func TestPodPlain(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "runtime/default",
+		"karydia.gardener.cloud/seccompProfile":     "runtime/default",
+		"karydia.gardener.cloud/podSecurityContext": "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -117,7 +118,8 @@ func TestPodCorrectSeccomp(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "runtime/default",
+		"karydia.gardener.cloud/seccompProfile":     "runtime/default",
+		"karydia.gardener.cloud/podSecurityContext": "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -185,6 +187,7 @@ func TestServiceAccountPlain(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
+		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -256,6 +259,7 @@ func TestServiceAccountAutomountDefined(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
+		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -330,6 +334,7 @@ func TestServiceAccountDefault(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-default",
+		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -507,6 +512,7 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-default",
+		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 

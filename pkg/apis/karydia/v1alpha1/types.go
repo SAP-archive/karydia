@@ -42,6 +42,9 @@ type KarydiaConfigSpec struct {
 
 	// NetworkPolicy can be used to set a default network policy
 	NetworkPolicy string `json:"networkPolicy"`
+
+	// PodSecurityContext can be used to set a pod security context
+	PodSecurityContext string `json:"podSecurityContext"`
 }
 
 type KarydiaConfigStatus struct {

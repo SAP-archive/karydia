@@ -34,6 +34,10 @@ func (k *KarydiaAdmission) mutatePod(pod *corev1.Pod, ns *corev1.Namespace) *v1b
 	if setting.value != "" {
 		patches = mutatePodSeccompProfile(*pod, setting, patches)
 	}
+	setting = k.getSecurityContextSetting(ns)
+	if setting.value != "" {
+		patches = mutatePodSecurityContext(*pod, setting, patches)
+	}
 	return k8sutil.MutatingAdmissionResponse(patches.toBytes())
 }
 
@@ -58,6 +62,16 @@ func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Settin
 	return Setting{value: seccompProfile, src: src}
 }
 
+func (k *KarydiaAdmission) getSecurityContextSetting(ns *corev1.Namespace) Setting {
+	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/podSecurityContext"]
+	src := "namespace"
+	if !annotated {
+		seccompProfile = k.karydiaConfig.Spec.PodSecurityContext
+		src = "config"
+	}
+	return Setting{value: seccompProfile, src: src}
+}
+
 func validatePodSeccompProfile(pod corev1.Pod, setting Setting, validationErrors []string) []string {
 	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 	if !ok {
@@ -73,6 +87,15 @@ func mutatePodSeccompProfile(pod corev1.Pod, setting Setting, patches Patches) P
 		annotatePod(pod, &patches, "seccomp.security.alpha.kubernetes.io/pod", setting.value)
 		annotatePod(pod, &patches, "karydia.gardener.cloud/seccompProfile.internal", setting.src+"/"+setting.value)
 	}
+	return patches
+}
+
+func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) Patches {
+	var uid int64 = 65534
+	var gid int64 = 65534
+	setPodSecurityContext(pod, &patches, &uid, &gid)
+	annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+
 	return patches
 }
 
@@ -101,6 +124,19 @@ func annotatePod(resource corev1.Pod, patches *Patches, key string, value string
 			Op:    "add",
 			Path:  "/metadata/annotations/" + strings.Replace(key, "/", "~1", -1),
 			Value: value,
+		})
+	}
+}
+
+func setPodSecurityContext(resource corev1.Pod, patches *Patches, uid *int64, gid *int64) {
+	if resource.Spec.SecurityContext == nil {
+		patches.operations = append(patches.operations, patchOperation{
+			Op:   "add",
+			Path: "/spec/securitycontext",
+			Value: corev1.SecurityContext{
+				RunAsUser:  uid,
+				RunAsGroup: gid,
+			},
 		})
 	}
 }
