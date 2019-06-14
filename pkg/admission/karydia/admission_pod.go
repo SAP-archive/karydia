@@ -48,14 +48,20 @@ func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v
 	if setting.value != "" {
 		validationErrors = validatePodSeccompProfile(*pod, setting, validationErrors)
 	}
+	setting = k.getSecurityContextSetting(ns)
+	if setting.value != "" {
+		validationErrors = validatePodSecurityContext(*pod, setting, validationErrors)
+	}
 
 	return k8sutil.ValidatingAdmissionResponse(validationErrors)
 }
 
 func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Setting {
+	var src string
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	src := "namespace"
-	if !annotated {
+	if annotated {
+		src = "namespace"
+	} else if k.karydiaConfig != nil {
 		seccompProfile = k.karydiaConfig.Spec.SeccompProfile
 		src = "config"
 	}
@@ -63,19 +69,29 @@ func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Settin
 }
 
 func (k *KarydiaAdmission) getSecurityContextSetting(ns *corev1.Namespace) Setting {
-	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/podSecurityContext"]
-	src := "namespace"
-	if !annotated {
-		seccompProfile = k.karydiaConfig.Spec.PodSecurityContext
+	var src string
+	securityContext, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/podSecurityContext"]
+	if annotated {
+		src = "namespace"
+	} else if k.karydiaConfig != nil {
+		securityContext = k.karydiaConfig.Spec.PodSecurityContext
 		src = "config"
 	}
-	return Setting{value: seccompProfile, src: src}
+	return Setting{value: securityContext, src: src}
 }
 
 func validatePodSeccompProfile(pod corev1.Pod, setting Setting, validationErrors []string) []string {
 	_, ok := pod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]
 	if !ok {
 		validationErrorMsg := fmt.Sprintf("seccomp profile ('seccomp.security.alpha.kubernetes.io/pod') must be '%s'", setting.value)
+		validationErrors = append(validationErrors, validationErrorMsg)
+	}
+	return validationErrors
+}
+
+func validatePodSecurityContext(pod corev1.Pod, setting Setting, validationErrors []string) []string {
+	if pod.Spec.SecurityContext == nil {
+		validationErrorMsg := fmt.Sprintf("security context must be defined")
 		validationErrors = append(validationErrors, validationErrorMsg)
 	}
 	return validationErrors
@@ -93,8 +109,17 @@ func mutatePodSeccompProfile(pod corev1.Pod, setting Setting, patches Patches) P
 func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) Patches {
 	var uid int64 = 65534
 	var gid int64 = 65534
-	setPodSecurityContext(pod, &patches, &uid, &gid)
-	annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+	if pod.Spec.SecurityContext == nil {
+		patches.operations = append(patches.operations, patchOperation{
+			Op:   "add",
+			Path: "/spec/securitycontext",
+			Value: corev1.SecurityContext{
+				RunAsUser:  &uid,
+				RunAsGroup: &gid,
+			},
+		})
+		annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+	}
 
 	return patches
 }
@@ -124,19 +149,6 @@ func annotatePod(resource corev1.Pod, patches *Patches, key string, value string
 			Op:    "add",
 			Path:  "/metadata/annotations/" + strings.Replace(key, "/", "~1", -1),
 			Value: value,
-		})
-	}
-}
-
-func setPodSecurityContext(resource corev1.Pod, patches *Patches, uid *int64, gid *int64) {
-	if resource.Spec.SecurityContext == nil {
-		patches.operations = append(patches.operations, patchOperation{
-			Op:   "add",
-			Path: "/spec/securitycontext",
-			Value: corev1.SecurityContext{
-				RunAsUser:  uid,
-				RunAsGroup: gid,
-			},
 		})
 	}
 }

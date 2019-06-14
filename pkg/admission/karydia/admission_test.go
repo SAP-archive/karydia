@@ -32,13 +32,92 @@ import (
 )
 
 /* Admission with ´mutating and validating webhook */
-func TestPodPlain(t *testing.T) {
+func TestPodPlainSeccomp(t *testing.T) {
 	var kubeobjects []runtime.Object
 
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/seccompProfile":     "runtime/default",
+		"karydia.gardener.cloud/podSecurityContext": "nobody",
+	}
+	kubeobjects = append(kubeobjects, namespace)
+
+	kubeclient := k8sfake.NewSimpleClientset(kubeobjects...)
+
+	karydiaAdmission, err := New(&Config{
+		KubeClientset: kubeclient,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
+		os.Exit(1)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: "special",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+	rawPod, _ := json.Marshal(pod)
+
+	ar := v1beta1.AdmissionReview{
+		Request: &v1beta1.AdmissionRequest{
+			Operation: "CREATE",
+			Namespace: "special",
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object: runtime.RawExtension{
+				Raw: rawPod,
+			},
+		},
+	}
+
+	mutationResponse := karydiaAdmission.Admit(ar, true)
+	if !mutationResponse.Allowed {
+		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+	}
+
+	var patches []patchOperation
+	err = json.Unmarshal(mutationResponse.Patch, &patches)
+	if len(patches) != 4 {
+		t.Errorf("expected number of patches to be 4 but is %v", len(patches))
+	}
+
+	t.Log(patches)
+
+	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+
+	validationResponse := karydiaAdmission.Admit(ar, false)
+	if validationResponse.Allowed {
+		t.Errorf("expected validation response to be false but is %v", validationResponse.Allowed)
+	}
+
+	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
+
+	validationResponse = karydiaAdmission.Admit(ar, false)
+	if !validationResponse.Allowed {
+		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+	}
+
+}
+
+func TestPodPlainSecContext(t *testing.T) {
+	var kubeobjects []runtime.Object
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "special"
+	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/podSecurityContext": "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
@@ -112,14 +191,97 @@ func TestPodPlain(t *testing.T) {
 
 }
 
+func TestPodDefinedSecContext(t *testing.T) {
+	var kubeobjects []runtime.Object
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "special"
+	namespace.Annotations = map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "nobody",
+	}
+	kubeobjects = append(kubeobjects, namespace)
+
+	kubeclient := k8sfake.NewSimpleClientset(kubeobjects...)
+
+	karydiaAdmission, err := New(&Config{
+		KubeClientset: kubeclient,
+	})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
+		os.Exit(1)
+	}
+
+	var uid int64 = 1000
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: "special",
+		},
+		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				RunAsUser: &uid,
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+	}
+	rawPod, _ := json.Marshal(pod)
+
+	ar := v1beta1.AdmissionReview{
+		Request: &v1beta1.AdmissionRequest{
+			Operation: "CREATE",
+			Namespace: "special",
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object: runtime.RawExtension{
+				Raw: rawPod,
+			},
+		},
+	}
+
+	mutationResponse := karydiaAdmission.Admit(ar, true)
+	if !mutationResponse.Allowed {
+		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+	}
+
+	var patches []patchOperation
+	err = json.Unmarshal(mutationResponse.Patch, &patches)
+	if len(patches) != 0 {
+		t.Errorf("expected number of patches to be 0 but is %v", len(patches))
+	}
+
+	t.Log(patches)
+
+	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+
+	validationResponse := karydiaAdmission.Admit(ar, false)
+	if !validationResponse.Allowed {
+		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+	}
+
+	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
+
+	validationResponse = karydiaAdmission.Admit(ar, false)
+	if !validationResponse.Allowed {
+		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+	}
+
+}
+
 func TestPodCorrectSeccomp(t *testing.T) {
 	var kubeobjects []runtime.Object
 
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
-		"karydia.gardener.cloud/seccompProfile":     "runtime/default",
-		"karydia.gardener.cloud/podSecurityContext": "nobody",
+		"karydia.gardener.cloud/seccompProfile": "docker/default",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -187,7 +349,6 @@ func TestServiceAccountPlain(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
-		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -259,7 +420,6 @@ func TestServiceAccountAutomountDefined(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
-		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -334,7 +494,6 @@ func TestServiceAccountDefault(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-default",
-		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -512,7 +671,6 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-default",
-		"karydia.gardener.cloud/podSecurityContext":           "nobody",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
