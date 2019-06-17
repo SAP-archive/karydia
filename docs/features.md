@@ -3,8 +3,8 @@
 | Feature | CLI flags | install/charts/values.yaml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
 | Karydia Config | `--config` | `config.name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
-| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `feature.defaultNetworkPolicy` <br/> `config.networkPolicy` <br/> `config.defaultNetworkPolicyExcludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
-| Karydia Admission <br/> - seccomp ([demo](demos/seccomp.md)) <br/> - service account token automount | `--enable-karydia-admission` | `feature.karydiaAdmission` <br/> `config.seccompProfile` <br/> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
+| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `features.defaultNetworkPolicy` <br/> `config.networkPolicy` <br/> `config.defaultNetworkPolicyExcludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
+| Karydia Admission <br/> - seccomp ([demo](demos/seccomp.md)) <br/> - service account token automount | `--enable-karydia-admission` | `features.karydiaAdmission` <br/> `config.seccompProfile` <br/> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
 
