@@ -306,24 +306,6 @@ func (f *Framework) SetupKarydia() error {
 								},
 							},
 						},
-						{
-							Name:            "opa",
-							Image:           "openpolicyagent/opa:0.10.2",
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"run",
-								"--server",
-								"--addr=http://127.0.0.1:8181",
-							},
-						},
-						{
-							Name:            "kube-mgmt",
-							Image:           "openpolicyagent/kube-mgmt:0.7",
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"--replicate-cluster=v1/pods",
-							},
-						},
 					},
 					Volumes: []corev1.Volume{
 						{

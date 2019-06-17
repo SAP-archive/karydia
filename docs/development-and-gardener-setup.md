@@ -34,8 +34,7 @@ image to a registry at each iteration.
 In a Gardener setup, you might want to install karydia in both the shoot
 cluster and in the shoot's control plane (i.e. the shoot's namespace in
 the seed cluster). Installation instructions for the latter differ from
-the general installation and are explained below (plus some additional
-configuration of demo OPA policies).
+the general installation and are explained below.
 
 Two independent karydia installations make sense if you want to separate
 concerns, for example to split policies configured by the operator

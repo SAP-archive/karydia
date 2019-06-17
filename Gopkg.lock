@@ -2,17 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:9a307b20ca00c55cdf6c912fae836eac824c9b5dbc93fc1d0f586906387c1580"
-  name = "github.com/Azure/kubernetes-policy-controller"
-  packages = [
-    "pkg/opa",
-    "pkg/policies/types",
-  ]
-  pruneopts = "NUT"
-  revision = "36456700d21bbf092ddafb3501b1c0dc13d7b9d9"
-
-[[projects]]
   digest = "1:d8ebbd207f3d3266d4423ce4860c9f3794956306ded6c7ba312ecc69cdfbf04c"
   name = "github.com/PuerkitoBio/purell"
   packages = ["."]
@@ -35,14 +24,6 @@
   pruneopts = "NUT"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
-
-[[projects]]
-  digest = "1:ae1324b4cdc4301e33f5dcd86f9aa3b5dbe1380267ba213e63760fc991d7a6ac"
-  name = "github.com/dchest/siphash"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "ca249f45189071f5d44dc6401334e3572037b9cb"
-  version = "v1.2.0"
 
 [[projects]]
   digest = "1:3537d33c077a9666720dc987fddfecb07270606ac0a58f67abd08e3b252c0a45"
@@ -298,24 +279,6 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:f401304d8f0c743062a5a5ffe3ba7814ff58f1ea7c7ab6284ed09cf6ecde2e04"
-  name = "github.com/open-policy-agent/opa"
-  packages = [
-    "ast",
-    "metrics",
-    "server/types",
-    "storage",
-    "topdown",
-    "topdown/builtins",
-    "topdown/copypropagation",
-    "types",
-    "util",
-  ]
-  pruneopts = "NUT"
-  revision = "9fbff4c3302fa82dde5d3cc6ca15be528d77911b"
-  version = "v0.9.2"
-
-[[projects]]
   digest = "1:51ea800cff51752ff68e12e04106f5887b4daec6f9356721238c28019f0b42db"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
@@ -340,36 +303,12 @@
   version = "v2.0.1"
 
 [[projects]]
-  digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   pruneopts = "NUT"
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:120b256a4d3cd2946ffa4b87102731c2f004aed6d836dc2fba400ed9398696e7"
-  name = "github.com/rcrowley/go-metrics"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "3113b8401b8a98917cde58f8bbd42a1b1c03b1fd"
-
-[[projects]]
-  digest = "1:344dabfda6f714c61a5656e6a4c954af45ccb77e8a57bbb6010bff7300ff7f7c"
-  name = "github.com/rite2nikhil/opa"
-  packages = ["util"]
-  pruneopts = "NUT"
-  revision = "9fbff4c3302fa82dde5d3cc6ca15be528d77911b"
-  version = "v0.9.2"
 
 [[projects]]
   digest = "1:ecf78eacf406c42f07f66d6b79fda24d2b92dc711bfd0760d0c931678f9621fe"
@@ -437,14 +376,6 @@
   pruneopts = "NUT"
   revision = "ffdc059bfe9ce6a4e144ba849dbedead332c6053"
   version = "v1.3.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:6a40e0195c69e51f11e0ec54b936b472a97015cf2e3a645224937b71d65528ee"
-  name = "github.com/yashtewari/glob-intersection"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "5c77d914dd0ba7bedca923f97232d37137e038f3"
 
 [[projects]]
   branch = "master"
@@ -964,12 +895,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Azure/kubernetes-policy-controller/pkg/opa",
-    "github.com/Azure/kubernetes-policy-controller/pkg/policies/types",
     "github.com/evanphx/json-patch",
     "github.com/ghodss/yaml",
     "github.com/mitchellh/go-homedir",
-    "github.com/open-policy-agent/opa/util",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
