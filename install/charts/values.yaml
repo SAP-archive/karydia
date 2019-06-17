@@ -22,6 +22,7 @@ config:
   automountServiceAccountToken: "change-default"
   seccompProfile: "docker/default"
   networkPolicy: "kube-system:karydia-default-network-policy"
+  defaultNetworkPolicyExcludes: ""
 dev:
   active: false
   timeoutIncreaseValue: 0
