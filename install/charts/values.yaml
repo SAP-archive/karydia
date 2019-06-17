@@ -27,8 +27,6 @@ metadata:
   apiGroup: "karydia.gardener.cloud"
   namespace: "kube-system"
   labelApp: "karydia"
-namespace:
-  name: "opa"
 rbac:
   apiGroup: "rbac.authorization.k8s.io"
   apiVersion: "/v1"

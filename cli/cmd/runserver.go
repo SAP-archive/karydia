@@ -38,7 +38,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	karydiaadmission "github.com/karydia/karydia/pkg/admission/karydia"
-	opaadmission "github.com/karydia/karydia/pkg/admission/opa"
 	clientset "github.com/karydia/karydia/pkg/client/clientset/versioned"
 	"github.com/karydia/karydia/pkg/controller"
 	"github.com/karydia/karydia/pkg/k8sutil"
@@ -62,15 +61,7 @@ func init() {
 
 	runserverCmd.Flags().String("addr", "0.0.0.0:33333", "Address to listen on")
 
-	runserverCmd.Flags().Bool("enable-opa-admission", false, "Enable the OPA admission plugin")
 	runserverCmd.Flags().Bool("enable-karydia-admission", false, "Enable the Karydia admission plugin")
-
-	// TODO(schu): the '/v1' currently is required since the OPA package
-	// from kubernetes-policy-controller that we use does not include that
-	// in the URL when sending requests.
-	// IMHO it should since the package should set the API version
-	// it's written for.
-	runserverCmd.Flags().String("opa-api-endpoint", "http://127.0.0.1:8181/v1", "Open Policy Agent API endpoint")
 
 	runserverCmd.Flags().String("tls-cert", "cert.pem", "Path to TLS certificate file")
 	runserverCmd.Flags().String("tls-key", "key.pem", "Path to TLS private key file")
@@ -86,7 +77,6 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	var (
 		enableController           bool
 		enableDefaultNetworkPolicy = viper.GetBool("enable-default-network-policy")
-		enableOPAAdmission         = viper.GetBool("enable-opa-admission")
 		enableKarydiaAdmission     = viper.GetBool("enable-karydia-admission")
 		kubeInformerFactory        kubeinformers.SharedInformerFactory
 		karydiaInformerFactory     karydiainformers.SharedInformerFactory
@@ -195,18 +185,6 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
 		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
 		karydiaControllers = append(karydiaControllers, reconciler)
-	}
-
-	if enableOPAAdmission {
-		opaAdmission, err := opaadmission.New(&opaadmission.Config{
-			OPAURL: viper.GetString("opa-api-endpoint"),
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load opa admission: %v\n", err)
-			os.Exit(1)
-		}
-
-		webHook.RegisterAdmissionPlugin(opaAdmission)
 	}
 
 	serverConfig := &server.Config{
