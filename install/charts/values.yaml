@@ -14,14 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dev:
-  active: false
-  timeoutIncreaseValue: 0
+features:
+  defaultNetworkPolicy: true
+  karydiaAdmission: true
 config:
   name: "karydia-config"
   automountServiceAccountToken: "change-default"
   seccompProfile: "docker/default"
   networkPolicy: "kube-system:karydia-default-network-policy"
+  defaultNetworkPolicyExcludes: ""
+dev:
+  active: false
+  timeoutIncreaseValue: 0
 metadata:
   name: "karydia"
   apiGroup: "karydia.gardener.cloud"
