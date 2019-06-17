@@ -21,3 +21,7 @@ package v1alpha1
 // KarydiaConfigListerExpansion allows custom methods to be added to
 // KarydiaConfigLister.
 type KarydiaConfigListerExpansion interface{}
+
+// KarydiaNetworkPolicyListerExpansion allows custom methods to be added to
+// KarydiaNetworkPolicyLister.
+type KarydiaNetworkPolicyListerExpansion interface{}

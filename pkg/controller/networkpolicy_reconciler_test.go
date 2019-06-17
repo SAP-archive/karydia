@@ -16,11 +16,12 @@ package controller
 
 import (
 	"bytes"
-	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
+	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/client/clientset/versioned/fake"
+	"github.com/stretchr/testify/assert"
 	networkingv1 "k8s.io/api/networking/v1"
 
 	coreV1 "k8s.io/api/core/v1"
@@ -39,7 +40,8 @@ var (
 type fixture struct {
 	t *testing.T
 
-	kubeclient *k8sfake.Clientset
+	kubeclient    *k8sfake.Clientset
+	karydiaClient *fake.Clientset
 
 	// Objects to put in the store.
 	networkPolicy []*networkingv1.NetworkPolicy
@@ -47,6 +49,7 @@ type fixture struct {
 
 	// Objects from here preloaded into NewSimpleFake.
 	kubeobjects []runtime.Object
+	objects     []runtime.Object
 
 	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy
 
@@ -57,6 +60,7 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{}
 	f.t = t
 	f.kubeobjects = []runtime.Object{}
+	f.objects = []runtime.Object{}
 	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 2)
 
 	defaultNetworkPolicy := networkingv1.NetworkPolicy{}
@@ -82,9 +86,11 @@ func newFixture(t *testing.T) *fixture {
 func (f *fixture) newReconciler() (*NetworkpolicyReconciler, kubeinformers.SharedInformerFactory) {
 
 	f.kubeclient = k8sfake.NewSimpleClientset(f.kubeobjects...)
+	f.karydiaClient = fake.NewSimpleClientset(f.objects...)
+
 	k8sI := kubeinformers.NewSharedInformerFactory(f.kubeclient, noResyncPeriodFunc())
 
-	reconciler := NewNetworkpolicyReconciler(f.kubeclient, k8sI.Networking().V1().NetworkPolicies(), k8sI.Core().V1().Namespaces(), f.defaultNetworkPolicies, "default:karydia-default-network-policy", f.namespaceExclude)
+	reconciler := NewNetworkpolicyReconciler(f.kubeclient, f.karydiaClient, k8sI.Networking().V1().NetworkPolicies(), k8sI.Core().V1().Namespaces(), f.defaultNetworkPolicies, "karydia-default-network-policy", f.namespaceExclude)
 
 	reconciler.networkPoliciesSynced = alwaysReady
 	reconciler.namespacesSynced = alwaysReady
@@ -146,10 +152,10 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 	assert := assert.New(t)
 	f := newFixture(t)
 	reconciler, _ := f.newReconciler()
-	networkPolicyNames := []string{"testNP0", "testNP1", "testNP2"}
-	invalidNetworkPolicy0 := networkPolicyNames[0]
-	invalidNetworkPolicy1 := "ns/" + networkPolicyNames[1]
-	validNetworkPolicy := "ns:" + networkPolicyNames[2]
+	reconciler.defaultNetworkPolicyName = "default"
+
+	newNetworkpolicyName := "newName"
+
 	newConfig := v1alpha1.KarydiaConfig{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:            "testConfig",
@@ -158,36 +164,17 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 		Spec: v1alpha1.KarydiaConfigSpec{
 			AutomountServiceAccountToken: "testASAT",
 			SeccompProfile:               "testSP",
-			NetworkPolicy:                invalidNetworkPolicy0,
+			NetworkPolicy:                newNetworkpolicyName,
 		},
 	}
 
 	// first check for different config values
-	assert.NotEqual(networkPolicyNames[0], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
-	// try update with wrong network policy name
-	assert.Error(reconciler.UpdateConfig(newConfig), "config update should fail because of wrong network policy name")
-	// check for different config values again
-	assert.NotEqual(networkPolicyNames[0], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal after failed update")
-
-	// change network policy name to valid one
-	newConfig.Spec.NetworkPolicy = validNetworkPolicy
-	// first check for different config values
-	assert.NotEqual(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
+	assert.NotEqual(newNetworkpolicyName, reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
 	// try update with right network policy name
 	assert.NoError(reconciler.UpdateConfig(newConfig), "config update should succeed because of right network policy name")
 	// check for equal config values
-	assert.Equal(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "config values should be equal after succeeded update")
+	assert.Equal(newNetworkpolicyName, reconciler.defaultNetworkPolicyName, "config values should be equal after succeeded update")
 
-	// change network policy name to another invalid one
-	newConfig.Spec.NetworkPolicy = invalidNetworkPolicy1
-	// first check for different config values
-	assert.NotEqual(networkPolicyNames[1], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
-	// try update with wrong network policy name
-	assert.Error(reconciler.UpdateConfig(newConfig), "config update should fail because of wrong network policy name")
-	// check for different config values again
-	assert.NotEqual(networkPolicyNames[1], reconciler.defaultNetworkPolicyName, "config values shouldn't be equal after failed update")
-	// check for still equal valid config values
-	assert.Equal(networkPolicyNames[2], reconciler.defaultNetworkPolicyName, "valid config values should still be equal")
 }
 
 func TestReconcileNetworkPolicyUpate(t *testing.T) {

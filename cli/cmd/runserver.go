@@ -19,16 +19,15 @@ package cmd
 import (
 	"context"
 	"fmt"
-	karydiainformers "github.com/karydia/karydia/pkg/client/informers/externalversions"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/ghodss/yaml"
+	karydiainformers "github.com/karydia/karydia/pkg/client/informers/externalversions"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -122,6 +121,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	}
 
 	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config"), metav1.GetOptions{})
+
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load karydia config: %v\n", err)
 		os.Exit(1)
@@ -147,25 +147,38 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
-		defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
-		group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
-		if len(group) < 2 {
-			fmt.Fprintf(os.Stderr, "NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
-			os.Exit(1)
-		}
-		namespace := group[0]
-		name := group[1]
-		networkPolicyConfigmap, err := kubeClientset.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+
+		// 	defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
+		// 	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
+		// 	if len(group) < 2 {
+		// 		fmt.Fprintf(os.Stderr, "NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
+		// 		os.Exit(1)
+		// 	}
+		// 	namespace := group[0]
+		// 	name := group[1]
+		// 	networkPolicyConfigmap, err := kubeClientset.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
+		// 	if err != nil {
+		// 		fmt.Fprintf(os.Stderr, "Failed to load KarydiaDefaultNetworkPolicy : %v\n", err)
+		// 		os.Exit(1)
+		// 	}
+		// 	var policy networkingv1.NetworkPolicy
+		// 	if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
+		// 		fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
+
+		// 		os.Exit(1)
+		// 	}
+		// 	defaultNetworkPolicies[name] = &policy
+		// }
+		karydiaDefaultNetworkPolicyName := karydiaConfig.Spec.NetworkPolicy
+		karydiaDefaulNetworkPolicy, err := karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(karydiaDefaultNetworkPolicyName, metav1.GetOptions{})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to get default network policy configmap %q in namespace %q: %v\n", name, namespace, err)
+			fmt.Fprintf(os.Stderr, "Failed to load KarydiaDefaultNetworkPolicy : %v\n", err)
 			os.Exit(1)
 		}
 		var policy networkingv1.NetworkPolicy
-		if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
-			os.Exit(1)
-		}
-		defaultNetworkPolicies[name] = &policy
+		policy.Spec = *karydiaDefaulNetworkPolicy.Spec.DeepCopy()
+		policy.Name = karydiaDefaultNetworkPolicyName
+		defaultNetworkPolicies[karydiaDefaultNetworkPolicyName] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
@@ -183,7 +196,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
-		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, karydiaClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
 		karydiaControllers = append(karydiaControllers, reconciler)
 	}
 

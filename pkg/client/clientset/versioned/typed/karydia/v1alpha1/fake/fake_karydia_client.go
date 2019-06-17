@@ -32,6 +32,10 @@ func (c *FakeKarydiaV1alpha1) KarydiaConfigs() v1alpha1.KarydiaConfigInterface {
 	return &FakeKarydiaConfigs{c}
 }
 
+func (c *FakeKarydiaV1alpha1) KarydiaNetworkPolicies() v1alpha1.KarydiaNetworkPolicyInterface {
+	return &FakeKarydiaNetworkPolicies{c}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeKarydiaV1alpha1) RESTClient() rest.Interface {

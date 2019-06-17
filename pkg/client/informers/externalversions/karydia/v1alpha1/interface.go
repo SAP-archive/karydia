@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// KarydiaConfigs returns a KarydiaConfigInformer.
 	KarydiaConfigs() KarydiaConfigInformer
+	// KarydiaNetworkPolicies returns a KarydiaNetworkPolicyInformer.
+	KarydiaNetworkPolicies() KarydiaNetworkPolicyInformer
 }
 
 type version struct {
@@ -42,4 +44,9 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // KarydiaConfigs returns a KarydiaConfigInformer.
 func (v *version) KarydiaConfigs() KarydiaConfigInformer {
 	return &karydiaConfigInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// KarydiaNetworkPolicies returns a KarydiaNetworkPolicyInformer.
+func (v *version) KarydiaNetworkPolicies() KarydiaNetworkPolicyInformer {
+	return &karydiaNetworkPolicyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
