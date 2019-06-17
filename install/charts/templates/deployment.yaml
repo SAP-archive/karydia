@@ -33,10 +33,11 @@ spec:
       - name: {{ .Values.metadata.name }}
         {{- if .Values.dev.active }}
         image: eu.gcr.io/gardener-project/karydia/karydia-dev
+        imagePullPolicy: IfNotPresent
         {{- else }}
         image: eu.gcr.io/gardener-project/karydia/karydia
-        {{- end }} 
         imagePullPolicy: Always
+        {{- end }} 
         command:
           {{- if .Values.dev.active }}
           - hotswap-dev
