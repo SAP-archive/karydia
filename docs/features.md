@@ -3,8 +3,8 @@
 | Feature | CLI flags | install/charts/values.yaml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
 | Karydia Config | `--config` | `config.name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
-| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `config.networkPolicy` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
-| Karydia Admission <br/> - seccomp ([demo](demos/seccomp.md)) <br/> - service account token automount | `--enable-karydia-admission` | `config.seccompProfile` <br /> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
+| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `feature.defaultNetworkPolicy` <br/> `config.networkPolicy` <br/> `config.defaultNetworkPolicyExcludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
+| Karydia Admission <br/> - seccomp ([demo](demos/seccomp.md)) <br/> - service account token automount | `--enable-karydia-admission` | `feature.karydiaAdmission` <br/> `config.seccompProfile` <br/> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
 
@@ -21,21 +21,21 @@ helm upgrade karydia ./install/charts
 ## Default NetworkPolicy
 
 When `--enable-default-network-policy` is set, karydia takes the network policy
-found at deployed custom resource yaml `instal/charts/templates/config.yaml` with key `networkPolicy` and installs it into all namespaces.
+found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` and installs it into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
+
+For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`.
 
 Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
 previously deployed network policies. New namespaces created while karydia was
 not running will not be updated when karydia starts.
 
-The network policy is expected to be found under `.data.policy` in the
-configmap.
+The network policy is expected to be found under `.data.policy` in the configmap.
 
 ## Karydia Admission
 
-Karydia Admission (`--enable-karydia-admission`) offers features with the goal
-of a secure-by-default cluster setup.
+Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable and configure this feature in the `install/charts/values.yaml` file.
 
 The features currently supported are:
 1. Secure-by-default mounting of service account tokens
