@@ -84,7 +84,7 @@ spec:
       initContainers:
       - name: pre-install-{{ .Values.metadata.name }}
         image: lachlanevenson/k8s-kubectl
-        command: ['sh', '-c', 'apk add --update --no-cache openssl && sh /tmp/create-karydia-certificate.sh && sh /tmp/create-karydia-tls-secret.sh && sh /tmp/example-default-network-policy.sh']
+        command: ['sh', '-c', 'apk add --update --no-cache openssl && sh /tmp/create-karydia-certificate.sh && sh /tmp/create-karydia-tls-secret.sh && sh /tmp/karydia-default-network-policy.sh']
         volumeMounts:
         - name: workdir
           mountPath: "/tmp"
