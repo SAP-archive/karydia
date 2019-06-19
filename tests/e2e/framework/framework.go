@@ -211,3 +211,13 @@ func (f *Framework) WaitDefaultServiceAccountCreated(ns string, timeout time.Dur
 		return true, nil
 	})
 }
+
+func (f *Framework) WaitNetworkPolicyCreatedCreated(ns string, name string, timeout time.Duration) error {
+	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.NetworkingV1().NetworkPolicies(ns).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+}
