@@ -1,4 +1,4 @@
-{{ define "example-default-network-policy.sh.tpl" }}
+{{ define "karydia-default-network-policy.sh.tpl" }}
 #!/bin/bash
 
 # Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
@@ -31,6 +31,29 @@ spec:
   podSelector: {}
   policyTypes:
   - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.250.0.0/16      # host network IP for AWS
+        - 169.254.169.254/16 # AWS = Google = Azure
+        - 100.100.0.0/16     # Ali Cloud Meta Data Services
+    # Block acces to kube-system namespace
+    # We have to allow DNS traffic to kube-system namespace
+    ports:
+    - port: 8053
+      protocol: UDP
+    - port: 8053
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+    to:
+    - namespaceSelector:
+        matchLabels:
+          role: kube-system
 EOF
 )
 
