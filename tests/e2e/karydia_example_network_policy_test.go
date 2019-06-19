@@ -33,10 +33,10 @@ const (
 )
 
 func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode int) {
-	cmd := exec.Command(command)
-	err := cmd.Run()
 	exitCode := Error
 
+	cmd := exec.Command(command)
+	err := cmd.Run()
 	if err != nil {
 		// try to get the exit code
 		if exitError, ok := err.(*exec.ExitError); ok {
