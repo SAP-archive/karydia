@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +18,6 @@ package k8sutil
 
 import (
 	"fmt"
-	"strings"
 
 	"k8s.io/api/admission/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +32,13 @@ func ErrToAdmissionResponse(err error) *v1beta1.AdmissionResponse {
 	}
 }
 
+func ValidatingAdmissionResponse(validationErrors []string) *v1beta1.AdmissionResponse {
+	if len(validationErrors) > 0 {
+		return ValidationErrorAdmissionResponse(validationErrors)
+	}
+	return AllowAdmissionResponse()
+}
+
 func ValidationErrorAdmissionResponse(validationErrors []string) *v1beta1.AdmissionResponse {
 	return &v1beta1.AdmissionResponse{
 		Allowed: false,
@@ -40,16 +48,14 @@ func ValidationErrorAdmissionResponse(validationErrors []string) *v1beta1.Admiss
 	}
 }
 
-func MutatingAdmissionResponse(patches []string) *v1beta1.AdmissionResponse {
+func MutatingAdmissionResponse(patchBytes []byte) *v1beta1.AdmissionResponse {
 	response := &v1beta1.AdmissionResponse{
 		Allowed: true,
 	}
 
-	if len(patches) > 0 {
-		patchesStr := strings.Join(patches, ",")
+	if patchBytes != nil {
 		patchType := v1beta1.PatchTypeJSONPatch
-
-		response.Patch = []byte(fmt.Sprintf("[%s]", patchesStr))
+		response.Patch = patchBytes
 		response.PatchType = &patchType
 	}
 

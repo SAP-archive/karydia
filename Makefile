@@ -1,4 +1,6 @@
-# Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+# Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+# This file is licensed under the Apache Software License, v. 2 except as
+# noted otherwise in the LICENSE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IMAGE_REPO=karydia
-IMAGE_NAME=karydia
 DEV_POSTFIX=-dev
+PROD_IMAGE=eu.gcr.io/gardener-project/karydia/karydia
+DEV_IMAGE=$(PROD_IMAGE)$(DEV_POSTFIX)
 
 KUBERNETES_SERVER ?= ""
 KUBECONFIG_PATH ?= "$(HOME)/.kube/config"
@@ -39,11 +41,11 @@ build-debug:
 
 .PHONY: container
 container:
-	docker build -t $(IMAGE_REPO)/$(IMAGE_NAME) .
+	docker build --target prod-image -t $(PROD_IMAGE) .
 
 .PHONY: container-dev
 container-dev:
-	docker build --target dev-image -t $(IMAGE_REPO)/$(IMAGE_NAME)$(DEV_POSTFIX) .
+	docker build --target dev-image -t $(DEV_IMAGE) .
 
 .PHONY: deploy-dev
 deploy-dev:
@@ -57,9 +59,24 @@ debug-dev:
 codegen:
 	hack/update-codegen.sh
 
-.PHONY: test
-test:
+.PHONY: test-only
+test-only:
 	go test $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
+
+.PHONY: fmt
+fmt:
+	@if [ -n "$(shell gofmt -l pkg cli tests)" ]; then \
+    		echo "Go code is not formatted!";\
+    		exit 1;\
+	fi
+
+.PHONY: test
+test: fmt test-only
+
+.PHONY: test-coverage
+test-coverage:
+	go test -coverprofile=cov.out $(shell go list ./... | grep -v /vendor/ | grep -v /tests/)
+	go tool cover -html=cov.out
 
 .PHONY: e2e-test
 e2e-test:

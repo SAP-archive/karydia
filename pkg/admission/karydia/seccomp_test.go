@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,48 +22,101 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-//kubectl annotate ns default karydia.gardener.cloud/seccompProfile=runtime/default
-func TestValidatePodWithExistingSeccompDefaultAnnotation(t *testing.T) {
+/* Mutating and Validating Webhook
+ * Removes token mounts of the default service account when automountServiceToken is undefined.
+ * kubectl annotate ns default karydia.gardener.cloud/seccompProfile=runtime/default
+ */
+func TestPodSeccompDefaultProfileWithAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
-	var patches []string
+	var patches Patches
 	var validationErrors []string
 
 	pod.Annotations = make(map[string]string)
 	pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = "runtime/default"
 
-	patches, validationErrors = admitSeccompProfile(pod, "runtime/default", false, patches, validationErrors)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
+	setting := Setting{value: "runtime/default", src: "namespace"}
+
+	patches = mutatePodSeccompProfile(pod, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
 	}
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+	// Zero validation errors expected for mutated pod
+	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+	validationErrors = []string{}
+	// Zero validation error expected for initial pod
+	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }
 
-func TestMutatePodWithSeccompDefaultAnnotation(t *testing.T) {
+func TestPodSeccompDefaultProfileNoAnnotation(t *testing.T) {
 	pod := corev1.Pod{}
-	var patches []string
+	var patches Patches
 	var validationErrors []string
 
-	patches, validationErrors = admitSeccompProfile(pod, "runtime/default", true, patches, validationErrors)
-	if len(patches) != 1 {
-		t.Errorf("expected 1 patches but got: %+v", patches)
+	setting := Setting{value: "runtime/default", src: "namespace"}
+
+	patches = mutatePodSeccompProfile(pod, setting, patches)
+	if len(patches.operations) != 2 {
+		t.Errorf("expected 2 patches but got: %+v", patches.operations)
 	}
+
+	t.Log(patches)
+
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+
+	t.Log(mutatedPod)
+	// Zero validation errors expected for mutated pod
+	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
 	if len(validationErrors) != 0 {
 		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
-}
-
-func TestValidatePodWithSeccompDefaultAnnotation(t *testing.T) {
-	pod := corev1.Pod{}
-	var patches []string
-	var validationErrors []string
-
-	patches, validationErrors = admitSeccompProfile(pod, "runtime/default", false, patches, validationErrors)
-	if len(patches) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches)
-	}
+	validationErrors = []string{}
+	// One validation error expected for initial pod
+	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
 	if len(validationErrors) != 1 {
 		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
+	}
+}
+
+func TestPodSeccompDefaultProfileOtherAnnotation(t *testing.T) {
+	pod := corev1.Pod{}
+	var patches Patches
+	var validationErrors []string
+
+	setting := Setting{value: "runtime/default", src: "namespace"}
+
+	pod.Annotations = make(map[string]string)
+	pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = "runtime/other"
+
+	patches = mutatePodSeccompProfile(pod, setting, patches)
+	if len(patches.operations) != 0 {
+		t.Errorf("expected 0 patches but got: %+v", patches.operations)
+	}
+	mutatedPod, err := patchPod(pod, patches)
+	if err != nil {
+		t.Errorf("failed to apply patches: %+v", err)
+	}
+	// No validation error expected for mutated pod
+	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+	}
+	validationErrors = []string{}
+	// No validation error expected for initial pod
+	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
+	if len(validationErrors) != 0 {
+		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
 	}
 }

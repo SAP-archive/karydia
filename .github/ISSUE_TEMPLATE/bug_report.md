@@ -28,7 +28,7 @@ assignees: ''
 <!-- Please complete the following information -->
 - Kubernetes version (use `kubectl version`): 
 - Cloud provider or hardware configuration: 
-- Gardener cluster: [ ]
-- OS (e.g. `cat /etc/os-release`): 
+- [ ] Gardener cluster
+- OS (e.g. `cat /etc/os-release` OR `sw_vers`): 
 - Kernel (e.g. `uname -a`): 
 - Others: 

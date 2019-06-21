@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,36 +24,35 @@ import (
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type KarydiaSecurityPolicy struct {
+type KarydiaConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KarydiaSecurityPolicySpec   `json:"spec"`
-	Status KarydiaSecurityPolicyStatus `json:"status"`
+	Spec   KarydiaConfigSpec   `json:"spec"`
+	Status KarydiaConfigStatus `json:"status"`
 }
 
-type KarydiaSecurityPolicySpec struct {
-	Pod Pod `json:"pod"`
-}
-
-type Pod struct {
+type KarydiaConfigSpec struct {
 	// AutomountServiceAccountToken can be used to restrict auto-mounting
-	// of service account tokens. Can be 'forbidden' or 'non-default'.
+	// of service account tokens by default
 	AutomountServiceAccountToken string `json:"automountServiceAccountToken"`
 
-	// SeccompProfile can be used to enforce a seccomp profile annotation
+	// SeccompProfile can be used to set a default seccomp profile
 	SeccompProfile string `json:"seccompProfile"`
+
+	// NetworkPolicy can be used to set a default network policy
+	NetworkPolicy string `json:"networkPolicy"`
 }
 
-type KarydiaSecurityPolicyStatus struct {
+type KarydiaConfigStatus struct {
 	ServiceToken string `json:"serviceToken"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type KarydiaSecurityPolicyList struct {
+type KarydiaConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
 
-	Items []KarydiaSecurityPolicy `json:"items"`
+	Items []KarydiaConfig `json:"items"`
 }

@@ -17,11 +17,11 @@ can be used on any Kubernetes cluster.
 
 ## Installing karydia
 
-See [installing karydia](docs/install.md).
+See [installing karydia](install/README.md).
 
 ## Demo
 
-Please see [demo](docs/demo.md) for a demo of some karydia features.
+Please see [demo](docs/demos/seccomp.md) for a demo of the seccomp feature of karydia.
 
 ## Features and configuration options
 
