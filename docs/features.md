@@ -61,7 +61,6 @@ Karydia annotates the mutated resources with the at the time and context valid s
 | Pod |karydia.gardener.cloud/seccompProfile.internal | (`config` \| `namespace`) /(\<`profile-name`\>) |
 | Pod |karydia.gardener.cloud/podSecurityContext.internal | (`config` \| `namespace`) /(`nobody`) |
 | ServiceAccount | karydia.gardener.cloud/automountServiceAccountToken.internal | (`config` \| `namespace`) /(`change-default` \| `change-all`)|
-karydia.gardener.cloud/podSecurityContext
 
 ### karydia.gardener.cloud/automountServiceAccountToken
 

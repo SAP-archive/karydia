@@ -107,18 +107,21 @@ func mutatePodSeccompProfile(pod corev1.Pod, setting Setting, patches Patches) P
 }
 
 func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) Patches {
-	var uid int64 = 65534
-	var gid int64 = 65534
-	if pod.Spec.SecurityContext == nil {
-		patches.operations = append(patches.operations, patchOperation{
-			Op:   "add",
-			Path: "/spec/securitycontext",
-			Value: corev1.SecurityContext{
-				RunAsUser:  &uid,
-				RunAsGroup: &gid,
-			},
-		})
-		annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+	if setting.value == "nobody" {
+		var uid int64 = 65534
+		var gid int64 = 65534
+		secCtx := pod.Spec.SecurityContext
+		if secCtx == nil || (secCtx.RunAsUser == nil && secCtx.RunAsGroup == nil) {
+			patches.operations = append(patches.operations, patchOperation{
+				Op:   "add",
+				Path: "/spec/securityContext",
+				Value: corev1.SecurityContext{
+					RunAsUser:  &uid,
+					RunAsGroup: &gid,
+				},
+			})
+			annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+		}
 	}
 
 	return patches
