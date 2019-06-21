@@ -1,16 +1,16 @@
 # karydia Concepts
 ## Secure by Default
-The mission of karydia is to configure kubernetes in a more secure way. Many kubernetes default settings are unsecure. When karydia is installed these defaults are revised and supervised. Most karydia features can be switched on centrally and configured on namespace level.  
+The mission of karydia is to configure kubernetes in a more secure way. Many kubernetes default settings are unsecure. When karydia is installed these defaults are revised and supervised. Most karydia features can be switched on centrally and configured on namespace or pod level.  
 
 ## Configuration
-karydia provides the possibility to select the security features which should be used and supervised in a kubernetes cluster (deployment.yml). More specific settings can be made in a [KarydiaSecurityPolicy](/manifests/../../example-karydia-security-policy.yml). If these settings shall be adapted for a selected namespace it is possible to overwrite it with an annotation.
+karydia provides the possibility to select and configure the security features which should be used and supervised in a kubernetes cluster. If these settings shall be adapted for a selected namespace or pod it is possible to overwrite it with an annotation.
 
-![Configuration of karydia](../images/Configuration.png)
+![Configuration of karydia](https://github.com/karydia/karydia/blob/master/install/charts/values.yaml)
 
-The network policy configuration deviates from this blueprint. It combines its configuration in separate files. There are several options of default network policies with different security levels. The default can be specified in a karydia ConfigMap which must be deployed before installation [Deploy Karydia](https://github.com/karydia/karydia/blob/master/docs/install.md).
+The network policy configuration deviates from this blueprint. There are several options of default network policies with different security levels. The default can be specified in a karydia configuration. It is also possible to add a custom specific implementation.
 
 ## Installation
-When karydia is installed it will spin up a karydia webhook and a karydia policy controller. The karydia policy controller will determine the difference between the current state and the configuration. If there are discrepancies karydia will level out it. That means for example if the network policy feature is enabled karydia will create a network policy for each relevant namespace. 
+When karydia is installed it will spin up a karydia admission webhook and a karydia policy controller. The karydia policy controller will determine the difference between the current state and the configuration. If there are discrepancies karydia will level out it. That means for example if the network policy feature is enabled karydia will create a network policy for each relevant namespace. 
 
 ![Installing karydia](../images/InstallKarydia.png)
 
@@ -24,7 +24,7 @@ After installation karydia will not:
 
 ## Operations
 ### Webhook
-karydia implements a webhook to influence security settings. This means if a pod is created or modified without a "seccomp", "service account token", ... annotation the webhook will add a corresponding annotation with the defaults from the active KarydiaSecurityPolicy. 
+karydia implements an admission webhook to influence security settings. This means if a pod is created or modified without a "seccomp", "service account token", ... annotation the webhook will add a corresponding annotation with the defaults. 
 
 ![Installing karydia](../images/CreatePod.png)
 
