@@ -26,7 +26,8 @@ import (
 
 func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 	annotation := map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "runtime/default",
+		"karydia.gardener.cloud/seccompProfile":     "runtime/default",
+		"karydia.gardener.cloud/podSecurityContext": "root",
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -67,7 +68,8 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 
 func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 	annotation := map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "docker/specific",
+		"karydia.gardener.cloud/seccompProfile":     "docker/specific",
+		"karydia.gardener.cloud/podSecurityContext": "root",
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -110,7 +112,9 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 }
 
 func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) {
-	annotation := map[string]string{}
+	annotation := map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "root",
+	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)
@@ -150,7 +154,8 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.
 
 func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) {
 	annotation := map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "unconfined",
+		"karydia.gardener.cloud/seccompProfile":     "unconfined",
+		"karydia.gardener.cloud/podSecurityContext": "root",
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -190,7 +195,9 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 }
 
 func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
-	annotation := map[string]string{}
+	annotation := map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "root",
+	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)

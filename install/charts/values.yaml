@@ -22,6 +22,7 @@ config:
   automountServiceAccountToken: "change-default"
   seccompProfile: "runtime/default"
   networkPolicy: "kube-system:karydia-default-network-policy"
+  podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
 dev:
   active: false
