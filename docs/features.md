@@ -44,14 +44,15 @@ The features currently supported are:
 2. Secure-by-default Seccomp profiles
     - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
 3. Secure-by-default User and Group context for pods
-    - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`. 
+    - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
+    - `none` represents the fallback option and disables the feature.
 
 It is configured with the following namespace annotations:
 
 | Name | Type | Possible values |
 |---|---|---|
 |karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all`|
-|karydia.gardener.cloud/podSecurityContext|string|`nobody`|
+|karydia.gardener.cloud/podSecurityContext|string|`nobody` \| `none`|
 |karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
 
 Karydia annotates the mutated resources with the at the time and context valid security settings:
@@ -59,7 +60,7 @@ Karydia annotates the mutated resources with the at the time and context valid s
 | Resource | Annotation | Possible values |
 |---|---|---|
 | Pod |karydia.gardener.cloud/seccompProfile.internal | (`config` \| `namespace`) /(\<`profile-name`\>) |
-| Pod |karydia.gardener.cloud/podSecurityContext.internal | (`config` \| `namespace`) /(`nobody`) |
+| Pod |karydia.gardener.cloud/podSecurityContext.internal | (`config` \| `namespace`) /(`nobody` \| `none`) |
 | ServiceAccount | karydia.gardener.cloud/automountServiceAccountToken.internal | (`config` \| `namespace`) /(`change-default` \| `change-all`)|
 
 ### karydia.gardener.cloud/automountServiceAccountToken
