@@ -38,7 +38,7 @@ func TestPodPlain(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "docker/default",
+		"karydia.gardener.cloud/seccompProfile": "runtime/default",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -117,7 +117,7 @@ func TestPodCorrectSeccomp(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "special"
 	namespace.Annotations = map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "docker/default",
+		"karydia.gardener.cloud/seccompProfile": "runtime/default",
 	}
 	kubeobjects = append(kubeobjects, namespace)
 
@@ -136,7 +136,7 @@ func TestPodCorrectSeccomp(t *testing.T) {
 			Name:      "karydia-e2e-test-pod",
 			Namespace: "special",
 			Annotations: map[string]string{
-				"seccomp.security.alpha.kubernetes.io/pod": "docker/default",
+				"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
 			},
 		},
 		Spec: corev1.PodSpec{
