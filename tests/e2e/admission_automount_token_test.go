@@ -42,64 +42,12 @@ type AutomountTokenTestCase struct {
 func TestAutomountServiceAccountToken(t *testing.T) {
 	testCases := []AutomountTokenTestCase{
 		{"default", nil, nil, nil, false},
-		{"default", nil, nil, &vTrue, true},
-		{"default", nil, nil, &vFalse, false},
-		{"default", nil, &vTrue, nil, true},
-		{"default", nil, &vTrue, &vTrue, true},
-		{"default", nil, &vTrue, &vFalse, false},
-		{"default", nil, &vFalse, nil, false},
-		{"default", nil, &vFalse, &vTrue, true},
-		{"default", nil, &vFalse, &vFalse, false},
-
 		{"default", &changeDefault, nil, nil, false},
-		{"default", &changeDefault, nil, &vTrue, true},
-		{"default", &changeDefault, nil, &vFalse, false},
-		{"default", &changeDefault, &vTrue, nil, true},
-		{"default", &changeDefault, &vTrue, &vTrue, true},
-		{"default", &changeDefault, &vTrue, &vFalse, false},
-		{"default", &changeDefault, &vFalse, nil, false},
-		{"default", &changeDefault, &vFalse, &vTrue, true},
-		{"default", &changeDefault, &vFalse, &vFalse, false},
-
 		{"default", &changeAll, nil, nil, false},
-		{"default", &changeAll, nil, &vTrue, true},
-		{"default", &changeAll, nil, &vFalse, false},
-		{"default", &changeAll, &vTrue, nil, true},
-		{"default", &changeAll, &vTrue, &vTrue, true},
-		{"default", &changeAll, &vTrue, &vFalse, false},
-		{"default", &changeAll, &vFalse, nil, false},
-		{"default", &changeAll, &vFalse, &vTrue, true},
-		{"default", &changeAll, &vFalse, &vFalse, false},
 
 		{"dedicated", nil, nil, nil, true},
-		{"dedicated", nil, nil, &vTrue, true},
-		{"dedicated", nil, nil, &vFalse, false},
-		{"dedicated", nil, &vTrue, nil, true},
-		{"dedicated", nil, &vTrue, &vTrue, true},
-		{"dedicated", nil, &vTrue, &vFalse, false},
-		{"dedicated", nil, &vFalse, nil, false},
-		{"dedicated", nil, &vFalse, &vTrue, true},
-		{"dedicated", nil, &vFalse, &vFalse, false},
-
 		{"dedicated", &changeDefault, nil, nil, true},
-		{"dedicated", &changeDefault, nil, &vTrue, true},
-		{"dedicated", &changeDefault, nil, &vFalse, false},
-		{"dedicated", &changeDefault, &vTrue, nil, true},
-		{"dedicated", &changeDefault, &vTrue, &vTrue, true},
-		{"dedicated", &changeDefault, &vTrue, &vFalse, false},
-		{"dedicated", &changeDefault, &vFalse, nil, false},
-		{"dedicated", &changeDefault, &vFalse, &vTrue, true},
-		{"dedicated", &changeDefault, &vFalse, &vFalse, false},
-
 		{"dedicated", &changeAll, nil, nil, false},
-		{"dedicated", &changeAll, nil, &vTrue, true},
-		{"dedicated", &changeAll, nil, &vFalse, false},
-		{"dedicated", &changeAll, &vTrue, nil, true},
-		{"dedicated", &changeAll, &vTrue, &vTrue, true},
-		{"dedicated", &changeAll, &vTrue, &vFalse, false},
-		{"dedicated", &changeAll, &vFalse, nil, false},
-		{"dedicated", &changeAll, &vFalse, &vTrue, true},
-		{"dedicated", &changeAll, &vFalse, &vFalse, false},
 	}
 
 	for _, tc := range testCases {
@@ -118,6 +66,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 				   automatically created default service account */
 				annotation := map[string]string{
 					"karydia.gardener.cloud/automountServiceAccountToken": *tc.nsAnnotation,
+					"karydia.gardener.cloud/podSecurityContext":           "root",
 				}
 				namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 				if err != nil {
@@ -165,8 +114,8 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "nginx",
-							Image: "nginx",
+							Name:  "redis",
+							Image: "redis",
 						},
 					},
 				},
@@ -215,8 +164,8 @@ func TestAutomountServiceAccountTokenInDefaultNamespace(t *testing.T) {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "nginx",
-					Image: "nginx",
+					Name:  "redis",
+					Image: "redis",
 				},
 			},
 		},
@@ -248,6 +197,7 @@ func TestAutomountServiceAccountTokenEditServiceAccount(t *testing.T) {
 
 	annotation := map[string]string{
 		"karydia.gardener.cloud/automountServiceAccountToken": "change-all",
+		"karydia.gardener.cloud/podSecurityContext":           "root",
 	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -284,7 +234,9 @@ func TestAutomountServiceAccountTokenDefaultServiceAccountFromConfig(t *testing.
 	var namespace *corev1.Namespace
 	var err error
 
-	annotation := map[string]string{}
+	annotation := map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "root",
+	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)
@@ -343,7 +295,9 @@ func TestAutomountServiceAccountTokenDedicatedServiceAccountFromConfig(t *testin
 	var namespace *corev1.Namespace
 	var err error
 
-	annotation := map[string]string{}
+	annotation := map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "root",
+	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)
