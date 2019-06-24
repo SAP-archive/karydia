@@ -20,7 +20,7 @@ features:
 config:
   name: "karydia-config"
   automountServiceAccountToken: "change-default"
-  seccompProfile: "docker/default"
+  seccompProfile: "runtime/default"
   networkPolicy: "kube-system:karydia-default-network-policy"
   defaultNetworkPolicyExcludes: ""
 dev:
