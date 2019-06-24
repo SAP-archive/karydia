@@ -90,9 +90,14 @@ func validatePodSeccompProfile(pod corev1.Pod, setting Setting, validationErrors
 }
 
 func validatePodSecurityContext(pod corev1.Pod, setting Setting, validationErrors []string) []string {
-	if pod.Spec.SecurityContext == nil {
-		validationErrorMsg := fmt.Sprintf("security context must be defined")
-		validationErrors = append(validationErrors, validationErrorMsg)
+	if setting.value == "nobody" {
+		if pod.Spec.SecurityContext == nil {
+			validationErrorMsg := fmt.Sprintf("security context must be defined")
+			validationErrors = append(validationErrors, validationErrorMsg)
+		} else if pod.Spec.SecurityContext.RunAsUser == nil && pod.Spec.SecurityContext.RunAsGroup == nil {
+			validationErrorMsg := fmt.Sprintf("User or group in security context must be defined")
+			validationErrors = append(validationErrors, validationErrorMsg)
+		}
 	}
 	return validationErrors
 }
