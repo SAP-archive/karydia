@@ -35,8 +35,7 @@ The network policy is expected to be found under `.data.policy` in the configmap
 
 The current network policy called `karydia-default-network-policy` has three security measures:
 1. block access to Host Network (only AWS)
-2. block access to Meta Data Services (AWS, GCP, Ali Cloud)
-3. block access to kube-system namespace but allow necessary DNS traffic (port 53, 8053 with TCP and UDP)
+2. block access to Meta Data Services (AWS, GCP, Azure, Ali Cloud)
 
 Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress) which is necessary for the protection of malware. The `karydia-network-policy-level2` follows soon: It uses a whitelisting approach and blocks Egress.
 

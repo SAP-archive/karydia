@@ -109,10 +109,6 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	createdPod2, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	pod2IP := createdPod2.Status.PodIP
 
-	pod.Namespace = "kube-system"
-	createdPod3, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
-	pod3IP := createdPod3.Status.PodIP
-
 	hostNetwork := createdPod.Status.HostIP
 
 	// ----------------------------------------------------------------------------------- //
@@ -132,6 +128,4 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	cmd5 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- ping -c 5 " + pod2IP
 	execCommandAssertExitCode(t, cmd5, Success)
 
-	cmd6 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- ping -c 5 " + pod3IP
-	execCommandAssertExitCode(t, cmd6, NoResponse)
 }
