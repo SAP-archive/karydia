@@ -26,7 +26,7 @@ import (
 
 func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 	annotation := map[string]string{
-		"karydia.gardener.cloud/seccompProfile": "docker/default",
+		"karydia.gardener.cloud/seccompProfile": "runtime/default",
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
@@ -55,8 +55,8 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 		t.Fatalf("failed to create pod: %v", err)
 	}
 
-	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "docker/default" {
-		t.Fatalf("expected seccomp profile to be %v but is %v", "docker/default", profile)
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "runtime/default", profile)
 	}
 
 	timeout := 2 * time.Minute
@@ -81,7 +81,7 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 			Name:      "karydia-e2e-test-pod",
 			Namespace: ns,
 			Annotations: map[string]string{
-				"seccomp.security.alpha.kubernetes.io/pod": "docker/default",
+				"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -99,8 +99,8 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 		t.Fatalf("failed to create pod: %v", err)
 	}
 
-	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "docker/default" {
-		t.Fatalf("expected seccomp profile to be %v but is %v", "docker/default", profile)
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "runtime/default", profile)
 	}
 
 	timeout := 2 * time.Minute
@@ -138,8 +138,8 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.
 		t.Fatalf("failed to create pod: %v", err)
 	}
 
-	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "docker/default" {
-		t.Fatalf("expected seccomp profile to be %v but is %v", "docker/default", profile)
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "runtime/default", profile)
 	}
 
 	timeout := 2 * time.Minute
@@ -203,7 +203,7 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 			Name:      "karydia-e2e-test-pod",
 			Namespace: ns,
 			Annotations: map[string]string{
-				"seccomp.security.alpha.kubernetes.io/pod": "docker/default",
+				"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
 			},
 		},
 		Spec: corev1.PodSpec{
@@ -221,8 +221,8 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 		t.Fatalf("failed to create pod: %v", err)
 	}
 
-	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "docker/default" {
-		t.Fatalf("expected seccomp profile to be %v but is %v", "docker/default", profile)
+	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
+		t.Fatalf("expected seccomp profile to be %v but is %v", "runtime/default", profile)
 	}
 
 	timeout := 2 * time.Minute

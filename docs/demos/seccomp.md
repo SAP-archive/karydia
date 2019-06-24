@@ -58,6 +58,3 @@ unshare --user whoami
 
 => Operation not permitted
 ```
-
-# Overview of "docker/default" seccomp
-An overview of the not permitted sycalls can be found on the docker [website](https://docs.docker.com/engine/security/seccomp/).

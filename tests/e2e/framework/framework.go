@@ -212,7 +212,7 @@ spec:
 		},
 		Spec: v1alpha1.KarydiaConfigSpec{
 			AutomountServiceAccountToken: "change-default",
-			SeccompProfile:               "docker/default",
+			SeccompProfile:               "runtime/default",
 			NetworkPolicy:                "kube-system:karydia-default-network-policy",
 		},
 	}
