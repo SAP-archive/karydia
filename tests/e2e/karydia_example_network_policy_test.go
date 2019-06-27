@@ -42,10 +42,19 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 		if exitError, ok := err.(*exec.ExitError); ok {
 
 			// The program has exited with an exit code != 0
-			exitCode = (exitError.Sys().(syscall.WaitStatus)).ExitStatus()
+			ws := exitError.Sys().(syscall.WaitStatus)
+			exitCode = ws.ExitStatus()
 			if exitCode != expectedExitCode {
 				t.Fatalf("Exit status with unexpected code: %d", exitCode)
 			}
+
+			/*
+				if exitCode != expectedExitCode {
+					t.Fatalf("Exit status with unexpected code: %d", exitCode)
+				} else {
+					log.Println("Log should be: " + )
+				}
+			*/
 		}
 	} else {
 
@@ -53,6 +62,8 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 		exitCode = (cmd.ProcessState.Sys().(syscall.WaitStatus)).ExitStatus()
 		if exitCode != expectedExitCode {
 			t.Fatalf("Unallowed command is allowed but it should not be: %d", exitCode)
+		} else {
+
 		}
 	}
 }
@@ -64,7 +75,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	namespace, err = f.CreateTestNamespace()
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatalf("(TS) failed to create test namespace: %v", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -101,12 +112,21 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	}
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("(TS) Failed to create: " + err.Error())
+	}
 	podName := createdPod.ObjectMeta.Name
 
 	createdService, err := f.KubeClientset.CoreV1().Services(ns).Create(svc)
+	if err != nil {
+		t.Fatalf("(TS) Failed to create: " + err.Error())
+	}
 	serviceName := createdService.ObjectMeta.Name
 
 	createdPod2, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
+	if err != nil {
+		t.Fatalf("(TS) Failed to create: " + err.Error())
+	}
 	pod2IP := createdPod2.Status.PodIP
 
 	hostNetwork := createdPod.Status.HostIP
