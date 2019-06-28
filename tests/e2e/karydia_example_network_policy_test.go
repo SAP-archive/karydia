@@ -47,14 +47,6 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 			if exitCode != expectedExitCode {
 				t.Fatalf("Exit status with unexpected code: %d", exitCode)
 			}
-
-			/*
-				if exitCode != expectedExitCode {
-					t.Fatalf("Exit status with unexpected code: %d", exitCode)
-				} else {
-					log.Println("Log should be: " + )
-				}
-			*/
 		}
 	} else {
 
@@ -62,8 +54,6 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 		exitCode = (cmd.ProcessState.Sys().(syscall.WaitStatus)).ExitStatus()
 		if exitCode != expectedExitCode {
 			t.Fatalf("Unallowed command is allowed but it should not be: %d", exitCode)
-		} else {
-
 		}
 	}
 }
