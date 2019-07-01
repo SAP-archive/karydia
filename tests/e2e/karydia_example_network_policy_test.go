@@ -23,7 +23,6 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -65,7 +64,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	namespace, err = f.CreateTestNamespace()
 	if err != nil {
-		t.Fatalf("(TS) failed to create test namespace: %v", err)
+		t.Fatalf("failed to create test namespace: %v", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -85,37 +84,42 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 		},
 	}
 
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nginx-service",
-			Namespace: "kube-system",
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Protocol:   corev1.ProtocolTCP,
-					Port:       80,
-					TargetPort: intstr.FromInt(8080),
+	/*
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nginx-service",
+				Namespace: "kube-system",
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{
+					{
+						Protocol:   corev1.ProtocolTCP,
+						Port:       80,
+						TargetPort: intstr.FromInt(8080),
+					},
 				},
 			},
-		},
-	}
+		}
+	*/
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("(TS) Failed to create: " + err.Error())
+		t.Fatalf("Failed to create: " + err.Error())
 	}
 	podName := createdPod.ObjectMeta.Name
 
-	createdService, err := f.KubeClientset.CoreV1().Services(ns).Create(svc)
-	if err != nil {
-		t.Fatalf("(TS) Failed to create: " + err.Error())
-	}
-	serviceName := createdService.ObjectMeta.Name
+	/*
+		createdService, err := f.KubeClientset.CoreV1().Services(ns).Create(svc)
+		if err != nil {
+			t.Fatalf("Failed to create: " + err.Error())
+		}
+		serviceName := createdService.ObjectMeta.Name
+	*/
 
+	pod.ObjectMeta.Name = "karydia-e2e-test-pod-2"
 	createdPod2, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("(TS) Failed to create: " + err.Error())
+		t.Fatalf("Failed to create: " + err.Error())
 	}
 	pod2IP := createdPod2.Status.PodIP
 
@@ -132,10 +136,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	cmd3 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- ping -c 5 google.de"
 	execCommandAssertExitCode(t, cmd3, Success)
 
-	cmd4 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- nslookup " + serviceName + ".kube-system.svc.cluster.local"
+	cmd4 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- ping -c 5 " + pod2IP
 	execCommandAssertExitCode(t, cmd4, Success)
-
-	cmd5 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- ping -c 5 " + pod2IP
-	execCommandAssertExitCode(t, cmd5, Success)
 
 }
