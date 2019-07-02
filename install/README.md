@@ -3,6 +3,20 @@ karydia can be installed as a webhook into any Kubernetes cluster.
 
 The installation processes uses [Helm](https://github.com/helm/helm) to get karydia up and running and is split up into two parts.
 
+## Clone Respository
+
+Clone the repository and install the dependencies:
+
+```
+go install github.com/karydia/karydia
+cd ../go/src/github.com/karydia/karydia
+go install ./...
+```
+
+Afterwards, change the authentication method of Git to SSH:
+
+In `.git/config` change the `url` setting in the `[remote "origin"]` section.
+
 ## Prepare Helm and Tiller
 First, create a Helm service account and initiate Tiller on the cluster. Thus, run:
 ```
