@@ -29,16 +29,23 @@ See [features](docs/features.md).
 
 ## Testing
 
-### Integration tests
+### Integration Tests
+
+##### Install Karydia Dev
+```
+kubectl apply -f ./install/helm-service-account.yaml
+helm init --service-account tiller
+helm install ./install/charts --name karydia --set dev.active=true
+```
+
+##### Build, Swap and Test
 
 ```
-minikube start --kubernetes-version v1.12.3
-eval $(minikube docker-env)
-make container
+make build deploy-dev
 make e2e-test
 ```
 
-### Unit tests
+### Unit Tests
 
 ```
 make test
