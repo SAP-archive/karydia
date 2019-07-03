@@ -3,7 +3,7 @@
 | Feature | CLI flags | install/charts/values.yaml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
 | Karydia Config | `--config` | `config.name` | cluster-wide `KarydiaConfig` custom resource | Implemented |
-| Default Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `features.defaultNetworkPolicy` <br/> `config.networkPolicy` <br/> `config.defaultNetworkPolicyExcludes` | ConfigMap in `kube-system` namespace | Implemented but no reconciliation loop |
+| Karydia Network Policy | `--enable-default-network-policy` <br/> `--default-network-policy-excludes` | `features.defaultNetworkPolicy` <br/> `config.networkPolicy` <br/> `config.defaultNetworkPolicyExcludes` | cluster-wide `KarydiaNetworkPolicy` custom resource | Implemented |
 | Karydia Admission <br/> - seccomp ([demo](demos/seccomp.md)) <br/> - service account token automount | `--enable-karydia-admission` | `features.karydiaAdmission` <br/> `config.seccompProfile` <br/> `config.automountServiceAccountToken` | Annotations on namespaces | Implemented |
 
 ## Karydia Config
@@ -18,20 +18,26 @@ If you want to adjust the default karydia behavior you can just modify the speci
 helm upgrade karydia ./install/charts
 ```
 
-## Default NetworkPolicy
+## Karydia Network Policy
 
-When `--enable-default-network-policy` is set, karydia takes the network policy
-found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` and installs it into all namespaces.
+When `--enable-default-network-policy` is set, karydia takes the custom karydia network policy resource
+found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed it into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
 For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to true`/`false`.
 
+You can configure the default network policy for a specific namespace with the following namespace annotation:
+
+
+| Name | Type | Possible values |
+|---|---|---|
+|"karydia.gardener.cloud/networkPolicy"|string|Name of a deployed karydia network policy, e.g. `karydia-default-network-policy-l2`|
+
 Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
 previously deployed network policies. New namespaces created while karydia was
 not running will not be updated when karydia starts.
 
-The network policy is expected to be found under `.data.policy` in the configmap.
 
 The current network policy called `karydia-default-network-policy` has two security measures:
 1. block access to host network (AWS only)
