@@ -31,3 +31,25 @@ spec:
     kind: KarydiaNetworkPolicy
     shortNames:
       - knp
+  preserveUnknownFields: false
+  validation:
+    openAPIV3Schema:
+      type: object
+      properties:
+        spec:
+          type: object
+          properties:
+            egress:
+              items:
+                type: object
+              type: array
+            ingress:
+              items:
+                type: object
+              type: array
+            podSelector:
+              type: object
+            policyTypes:
+              type: array
+              items:
+                type: string
