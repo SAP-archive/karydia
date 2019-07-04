@@ -3,7 +3,7 @@
 The mission of karydia is to configure kubernetes in a more secure way. Many kubernetes default settings are unsecure. When karydia is installed these defaults are revised and supervised. Most karydia features can be switched on centrally and configured on namespace or pod level.  
 
 ## Configuration
-karydia provides the possibility to select and [configure](../../blob/master/install/charts/values.yaml) the security features which should be used and supervised in a kubernetes cluster. If these settings shall be adapted for a selected namespace or pod it is possible to overwrite it with an annotation. The following figure describes this decision process. If a feature is enabled and there is no pod / namespace annotation then the general default is taken. Otherwise, the specific value from the annotation is used.
+karydia provides the possibility to select and [configure](/karydia/karydia/blob/master/install/charts/values.yaml) the security features which should be used and supervised in a kubernetes cluster. If these settings shall be adapted for a selected namespace or pod it is possible to overwrite it with an annotation. The following figure describes this decision process. If a feature is enabled and there is no pod / namespace annotation then the general default is taken. Otherwise, the specific value from the annotation is used.
   
 
 ![Configuration of karydia](../images/Configuration.png)
