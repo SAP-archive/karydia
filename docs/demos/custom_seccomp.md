@@ -5,24 +5,24 @@ Seccomp profiles are json files that define which system calls are allowed or pr
 An example of a custom seccomp profile that allows all system calls (stated by `"defaultAction": "SCMP_ACT_ALLOW"`) and only prohibits the `chmod` system call.
 ```
 {
-	"defaultAction": "SCMP_ACT_ALLOW",
-	"architectures": [
-		"SCMP_ARCH_X86_64",
-		"SCMP_ARCH_X86",
-		"SCMP_ARCH_X32"
-	],
-	"syscalls": [
-		{
-			"names": [
-				"chmod"
-			],
-			"action": "SCMP_ACT_ERRNO",
-			"args": [],
-			"comment": "",
-			"includes": {},
-			"excludes": {}
-		}
-	]
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "architectures": [
+    "SCMP_ARCH_X86_64",
+    "SCMP_ARCH_X86",
+    "SCMP_ARCH_X32"
+  ],
+  "syscalls": [
+    {
+      "names": [
+        "chmod"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "args": [],
+      "comment": "",
+      "includes": {},
+      "excludes": {}
+    }
+  ]
 }
 ```
 For a more technical insight, have a look at the [linux programmer's handbook](http://man7.org/linux/man-pages/man2/seccomp.2.html) and more examples can be found at the [docker repository](https://github.com/docker/labs/tree/master/security/seccomp/seccomp-profiles).
@@ -41,22 +41,23 @@ data:
       "defaultAction": "SCMP_ACT_ALLOW",
       "architectures": [
         "SCMP_ARCH_X86_64",
-	"SCMP_ARCH_X86",
-	"SCMP_ARCH_X32"
+        "SCMP_ARCH_X86",
+        "SCMP_ARCH_X32"
       ],
       "syscalls": [
-	{
-	  "names": [
-	  "chmod"
-	],
-	  "action": "SCMP_ACT_ERRNO",
-	  "args": [],
-	  "comment": "",
-	  "includes": {},
-	  "excludes": {}
-	}
+        {
+          "names": [
+            "chmod"
+          ],
+          "action": "SCMP_ACT_ERRNO",
+          "args": [],
+          "comment": "",
+          "includes": {},
+          "excludes": {}
+        }
       ]
-  }
+    }
+
 
 ---
 
@@ -65,8 +66,16 @@ kind: DaemonSet
 metadata:
   name: seccomp-deamon
   namespace: kube-system
+  labels:
+    security: seccomp
 spec:
+  selector:
+    matchLabels:
+      security: seccomp
   template:
+    metadata:
+      labels:
+        security: seccomp
     spec:
       initContainers:
       - name: installer
@@ -109,14 +118,14 @@ In our case, a pod with the created custom profile would look like this:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: testPod
+  name: testpod
   annotations:
-    seccomp.security.alpha.kubernetes.io/pod: localhost/custom-seccomp
-    container.seccomp.security.alpha.kubernetes.io/testContainer: localhost/custom-seccomp
+    seccomp.security.alpha.kubernetes.io/pod: "localhost/custom-seccomp.json"
+    container.seccomp.security.alpha.kubernetes.io/pause: "localhost/custom-seccomp.json"
 spec:
   containers:
-  - name: testContainer
-    image: k8s.gcr.io/pause:3.1                         
+  - name: pause
+    image: k8s.gcr.io/pause:3.1                      
 ```
 
 For more inforamtion have a look at the [kubernetes documentation](https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp).
