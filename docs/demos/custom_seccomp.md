@@ -93,10 +93,8 @@ spec:
 
 ## Activate the custom seccomp profile
 To bind a specific seccomp profile to a pod/container, you can use the following alpha annotations:
-- Specify a Seccomp profile for all containers of the Pod:
-```seccomp.security.alpha.kubernetes.io/pod```
-- Specify a Seccomp profile for an individual container:
-```container.seccomp.security.alpha.kubernetes.io/${container_name}```
+- Specify a Seccomp profile for all containers of the Pod: ```seccomp.security.alpha.kubernetes.io/pod```
+- Specify a Seccomp profile for an individual container: ```container.seccomp.security.alpha.kubernetes.io/${container_name}```
 
 For the value of the annotation you can use on of the following contents:
 
