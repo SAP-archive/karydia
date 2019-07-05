@@ -118,8 +118,7 @@ metadata:
 spec:
   containers:
   - name: testContainer
-    image: k8s.gcr.io/pause:3.1
-~                              
+    image: k8s.gcr.io/pause:3.1                         
 ```
 
 For more inforamtion have a look at the [kubernetes documentation](https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp).
