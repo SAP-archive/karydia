@@ -7,3 +7,6 @@
 
 cov.out
 karydia*.pem
+manifests/
+
+install/charts/custom-seccomp-profiles/*.json

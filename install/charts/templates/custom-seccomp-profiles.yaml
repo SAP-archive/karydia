@@ -1,0 +1,14 @@
+{{- $customSeccompProfiles := .Files.Glob "custom-seccomp-profiles/*.json" }}
+{{ if $customSeccompProfiles }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: custom-seccomp-profiles
+  namespace: {{ .Values.metadata.namespace }}
+data:
+{{ $root := . }}
+{{ range $path, $bytes := $customSeccompProfiles }}
+{{ regexFind "[^/]+$" $path | indent 2}}: |
+{{ $root.Files.Get $path | indent 4}}
+{{ end }}
+{{ end }}
