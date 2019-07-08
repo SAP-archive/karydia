@@ -20,8 +20,8 @@ spec:
         security: seccomp
         app: {{ .Values.metadata.labelApp }}
     spec:
-      initContainers:
-      - name: installer
+      containers:
+      - name: {{ .Values.metadata.name }}-seccomp-installer
         image: alpine:3.10.0
         command: ["/bin/sh", "-c", "cp -r -L /seccomp/*.json /host/seccomp/"]
         volumeMounts:
@@ -30,10 +30,6 @@ spec:
         - name: hostseccomp
           mountPath: /host/seccomp
           readOnly: false
-      containers:
-      - name: pause
-        image: k8s.gcr.io/pause:3.1
-      terminationGracePeriodSeconds: 5
       volumes:
       - name: hostseccomp
         hostPath:
