@@ -72,16 +72,6 @@ type KarydiaNetworkPolicy struct {
 	Spec networkingv1.NetworkPolicySpec `json:"spec"`
 }
 
-// type KarydiaNetworkPolicySpec struct {
-// 	PolicyTypes []string `json:"policyTypes"`
-
-// 	Ingress []networkingv1.NetworkPolicyIngressRule `json:"ingress"`
-
-// 	Egress []networkingv1.NetworkPolicyEgressRule `json:"egress"`
-
-// 	PodSelector metav1.LabelSelector `json:"podSelector"`
-// }
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type KarydiaNetworkPolicyList struct {
