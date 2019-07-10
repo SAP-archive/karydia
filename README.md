@@ -53,9 +53,9 @@ make test
 
 ### Debug Karydia
 
-To be able to debug (e.g. Visual Code), change the following line in the Debug configuration (for Linux):
+To be able to debug (e.g. Visual Studio Code), change the following line in the Debug configuration (for Mac):
 
 ```
-"args": ["--kubeconfig","/home/vagrant/.kube/config"]
+"args": ["--kubeconfig","/Users/<user>/.kube/config"]
 ```
 

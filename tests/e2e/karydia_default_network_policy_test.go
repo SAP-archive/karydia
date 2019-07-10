@@ -65,9 +65,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	var namespace *corev1.Namespace
 	var err error
 
-	namespace, err = f.CreateTestNamespaceWithAnnotation(map[string]string{
-		"karydia.gardener.cloud/podSecurityContext": "none",
-	})
+	namespace, err = f.CreateTestNamespace()
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)
 	}
@@ -89,11 +87,6 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 						"-c",
 						"sleep 60m",
 					},
-					Ports: []corev1.ContainerPort{
-						{
-							ContainerPort: 8080,
-						},
-					},
 				},
 			},
 		},
@@ -110,13 +103,49 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 		t.Fatalf("pod never reached state running")
 	}
 
+	// Test Host network
 	cmd1 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.0.0"
 	execCommandAssertExitCode(t, cmd1, TimeOut)
 
-	cmd2 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.169.254"
+	cmd2 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.1.1"
 	execCommandAssertExitCode(t, cmd2, TimeOut)
 
-	cmd3 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
-	execCommandAssertExitCode(t, cmd3, Success)
+	cmd3 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.50.200"
+	execCommandAssertExitCode(t, cmd3, TimeOut)
+
+	// Meta Data Servicess
+	cmd4 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.169.254"
+	execCommandAssertExitCode(t, cmd4, TimeOut)
+
+	cmd5 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.0.0"
+	execCommandAssertExitCode(t, cmd5, TimeOut)
+
+	cmd6 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.2.2"
+	execCommandAssertExitCode(t, cmd6, TimeOut)
+
+	// Alibaba Clouds
+	cmd7 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.0.0"
+	execCommandAssertExitCode(t, cmd7, TimeOut)
+
+	cmd8 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.1.3"
+	execCommandAssertExitCode(t, cmd8, TimeOut)
+
+	cmd9 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.60.155"
+	execCommandAssertExitCode(t, cmd9, TimeOut)
+
+	// External traffic
+	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
+	execCommandAssertExitCode(t, cmd10, Success)
+
+	cmd11 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.spiegel.de"
+	execCommandAssertExitCode(t, cmd11, Success)
+
+	cmd12 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.sap.com"
+	execCommandAssertExitCode(t, cmd12, Success)
+
+	err = f.KubeClientset.CoreV1().Pods(ns).Delete(createdPod.ObjectMeta.Name, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Fatalf("pod could not be deleted")
+	}
 
 }

@@ -8,14 +8,11 @@ The installation processes uses [Helm](https://github.com/helm/helm) to get kary
 Clone the repository and install the dependencies:
 
 ```
+cd ~
 go install github.com/karydia/karydia
-cd ../go/src/github.com/karydia/karydia
+cd ~/go/src/github.com/karydia/karydia
 go install ./...
 ```
-
-Afterwards, change the authentication method of Git to SSH:
-
-In `.git/config` change the `url` setting in the `[remote "origin"]` section.
 
 ## Prepare Helm and Tiller
 First, create a Helm service account and initiate Tiller on the cluster. Thus, run:
