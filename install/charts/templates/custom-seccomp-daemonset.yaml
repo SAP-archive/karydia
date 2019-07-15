@@ -9,9 +9,6 @@ metadata:
     security: seccomp
     app: {{ .Values.metadata.labelApp }}
   namespace: {{ .Values.metadata.namespace }}
-  annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
 spec:
   selector:
     matchLabels:
@@ -32,6 +29,7 @@ spec:
         - name: hostseccomp
           mountPath: /host/seccomp
           readOnly: false
+      restartPolicy: Always
       volumes:
       - name: hostseccomp
         hostPath:
