@@ -25,7 +25,7 @@ found at deployed custom resource yaml `install/charts/templates/config.yaml` wi
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
-For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature, by setting `defaultNetworkPolicy` to true`/`false`.
+For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to true`/`false`.
 
 Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
 previously deployed network policies. New namespaces created while karydia was
@@ -35,7 +35,7 @@ The network policy is expected to be found under `.data.policy` in the configmap
 
 ## Karydia Admission
 
-Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature, by setting `karydiaAdmission` to `true`/`false`.
+Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature by setting `karydiaAdmission` to `true`/`false`.
 
 The features currently supported are:
 1. Secure-by-default mounting of service account tokens
