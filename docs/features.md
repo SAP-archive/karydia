@@ -25,7 +25,7 @@ found at deployed custom resource yaml `install/charts/templates/config.yaml` wi
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
-For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`.
+For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature, by setting `defaultNetworkPolicy` to true`/`false`.
 
 Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
 previously deployed network policies. New namespaces created while karydia was
@@ -35,14 +35,16 @@ The network policy is expected to be found under `.data.policy` in the configmap
 
 ## Karydia Admission
 
-Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable and configure this feature in the `install/charts/values.yaml` file.
+Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature, by setting `karydiaAdmission` to `true`/`false`.
 
 The features currently supported are:
 1. Secure-by-default mounting of service account tokens
     - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
     - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
+    - `no-change`represents the fallback option and uses the default Kubernetes setting (e.g. sets `automountServiceAccountToken` of ServiceAccounts to `true`)
 2. Secure-by-default Seccomp profiles
     - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
+    - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod
 3. Secure-by-default User and Group context for pods
     - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
     - `none` represents the fallback option and disables the feature.
@@ -51,9 +53,9 @@ It is configured with the following namespace annotations:
 
 | Name | Type | Possible values |
 |---|---|---|
-|karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all`|
+|karydia.gardener.cloud/automountServiceAccountToken|string|`change-default` \| `change-all` \| `no-change`|
 |karydia.gardener.cloud/podSecurityContext|string|`nobody` \| `none`|
-|karydia.gardener.cloud/seccompProfile|string|Name of a valid profile, e.g. `runtime/default` or `localhost/my-profile`|
+|karydia.gardener.cloud/seccompProfile|string| `runtime/default` \| `localhost/my-profile` \| `unconfined`|
 
 Karydia annotates the mutated resources with the at the time and context valid security settings:
 
