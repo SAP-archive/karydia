@@ -133,15 +133,20 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	cmd9 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.60.155"
 	execCommandAssertExitCode(t, cmd9, TimeOut)
 
-	// External traffic
-	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
+	// External traffic with static IPs
+	// Google website
+	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 172.217.21.227"
 	execCommandAssertExitCode(t, cmd10, Success)
 
-	cmd11 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.spiegel.de"
-	execCommandAssertExitCode(t, cmd11, Success)
+	// External traffic with domain names
+	cmd13 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
+	execCommandAssertExitCode(t, cmd13, Success)
 
-	cmd12 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.sap.com"
-	execCommandAssertExitCode(t, cmd12, Success)
+	cmd14 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.spiegel.de"
+	execCommandAssertExitCode(t, cmd14, Success)
+
+	cmd15 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.sap.com"
+	execCommandAssertExitCode(t, cmd15, Success)
 
 	err = f.KubeClientset.CoreV1().Pods(ns).Delete(createdPod.ObjectMeta.Name, &metav1.DeleteOptions{})
 	if err != nil {

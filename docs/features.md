@@ -37,7 +37,7 @@ The current network policy called `karydia-default-network-policy` has two secur
 1. block access to host network (AWS only)
 2. block access to Meta Data Services (AWS, GCP, Azure, Alibaba Cloud)
 
-Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress) which is necessary for the protection of malware. The `karydia-network-policy-level2` follows soon: It uses a whitelisting approach and blocks Egress.
+Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress) which is necessary for the protection of malware.
 
 ## Karydia Admission
 
