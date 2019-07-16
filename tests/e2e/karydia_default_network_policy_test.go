@@ -85,7 +85,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 					Args: []string{
 						"/bin/sh",
 						"-c",
-						"sleep 60m",
+						"tail -f /dev/null",
 					},
 				},
 			},
@@ -135,7 +135,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	// External traffic with static IPs
 	// Google website
-	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 172.217.21.227"
+	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 172.217.18.3"
 	execCommandAssertExitCode(t, cmd10, Success)
 
 	// External traffic with domain names
