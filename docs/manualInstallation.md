@@ -4,7 +4,6 @@ It is possible to install karydia manually without the need of Helm and Tiller. 
 The manual process consists of the following steps:
 - Prepare the manual installation
 - Deploy the manifests
-- Configure the webhook
 
 ## Prepare Manual Installation
 First, generate the manifests from the helm templates:
@@ -35,7 +34,6 @@ kubectl apply -f manifests/karydia/templates/deployment.yaml
 kubectl apply -f manifests/karydia/templates/service.yaml
 ```
 
-## Configure Webhook
 Finally, configure karydia as both a validating and mutating admission controller with the API server:
 ```
 kubectl apply -f manifests/karydia/templates/post-install-webhook.yaml
