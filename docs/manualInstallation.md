@@ -31,7 +31,7 @@ kubectl apply -f manifests/karydia/templates/crd-config.yaml
 kubectl apply -f manifests/karydia/templates/config.yaml
 ```
 
-Create a configmap that holds the scripts for TLS/secrete creation and creates the default network policy (and for the webhook configuration):
+Create a configmap that holds the scripts for TLS/secrete creation and creates the default network policy:
 ```
 kubectl apply -f manifests/karydia/templates/configmap.yaml
 ````
