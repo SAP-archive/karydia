@@ -14,10 +14,17 @@ helm template ./install/charts/ --output-dir manifests
 
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
+**TODO: CRD are annotaed with crd-install hook... (deleting it manually is cumbersome and error-prone)**
+
+As the Helm installation uses post-install hooks, you have to delete the following lines from the `manifests/karydia/templates/crd-config.yaml`:
+```
+  annotations:
+    "helm.sh/hook": crd-install
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+```
+
 ## Deploy Manifests
 First, register the karydia config custom resource definition (CRD) followed by the creation of a karydia config custom resource that holds the karydia default config which should be used.
-
-**TODO: CRD are annotaed with crd-install hook...**
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
@@ -38,7 +45,7 @@ kubectl apply -f manifests/karydia/templates/service.yaml
 ```
 
 ## Configure Webhook
-**TODO: Is actually a post-install hook...**
+**TODO: Is actually a post-install hook... (having a second file in the project should work for now)**
 
 Finally, configure karydia as both a validating and mutating admission controller with the API server:
 ```
