@@ -8,39 +8,38 @@ The manual process consists of the following steps:
 - Configure the webhook
 
 ## Prepare Manual Installation
-
-## Create a TLS Certificate and Secret
-To create a certificate signing request run:
+First, generate the manifests from the helm templates:
 ```
-scripts/create-karydia-certificate
+helm template ./install/charts/ --output-dir manifests
 ```
 
-As the certificate should be available to karydia, create a secret by running:
-```
-scripts/create-karydia-tls-secret
-```
+The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
 ## Deploy Manifests
 First, register the karydia config custom resource definition (CRD) followed by the creation of a karydia config custom resource that holds the karydia default config which should be used.
+
+TODO: CRD are annotaed with crd-install hook... 
+
 ```
-kubectl apply -f manifests/crd-config.yml
-kubectl apply -f manifests/config.yml
+kubectl apply -f manifests/karydia/templates/crd-config.yaml
+kubectl apply -f manifests/karydia/templates/config.yaml
 ```
 
-After that, create a configmap that holds the default network policy that karydia should use. Note that this is only necessary if karydia is deployed with `--enable-default-network-policy`.
+Create a configmap that holds the scripts for TLS/secrete creation and creates the default network policy (and for the webhook configuration):
 ```
-kubectl create configmap -n kube-system karydia-default-network-policy --from-literal policy="$(<manifests/example-default-network-policy.yml)"
-```
+kubectl apply -f manifests/karydia/templates/configmap.yaml
+````
 
 Last, create a service account for karydia and deploy the following manifests:
 ```
-kubectl apply -f manifests/namespace.yml
-kubectl apply -f manifests/rbac.yml
-kubectl apply -f manifests/deployment.yml
-kubectl apply -f manifests/service.yml
+kubectl apply -f manifests/karydia/templates/namespace.yaml
+kubectl apply -f manifests/karydia/templates/rbac.yaml
+kubectl apply -f manifests/karydia/templates/deployment.yaml
+kubectl apply -f manifests/karydia/templates/service.yaml
 ```
 
 ## Configure Webhook
+TODO: Is actually a post-install hook...
 Finally, configure karydia as both a validating and mutating admission controller with the API server:
 ```
 scripts/configure-karydia-webhook
