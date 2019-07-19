@@ -8,6 +8,7 @@ The manual process consists of the following steps:
 ## Prepare Manual Installation
 First, generate the manifests from the helm templates:
 ```
+mkdir manifests
 helm template ./install/charts/ --output-dir manifests
 ```
 
