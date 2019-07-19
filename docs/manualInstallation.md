@@ -3,7 +3,6 @@ It is possible to install karydia manually without the need of Helm and Tiller. 
 
 The manual process consists of the following steps:
 - Prepare the manual installation
-- Create a TLS certificate and secret
 - Deploy the manifests
 - Configure the webhook
 
