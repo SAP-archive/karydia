@@ -18,7 +18,7 @@ The files for the manual installation will be stored in folder `/manifests/karyd
 ## Deploy Manifests
 First, register the karydia config custom resource definition (CRD) followed by the creation of a karydia config custom resource that holds the karydia default config which should be used.
 
-TODO: CRD are annotaed with crd-install hook... 
+**TODO: CRD are annotaed with crd-install hook...**
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
@@ -39,7 +39,8 @@ kubectl apply -f manifests/karydia/templates/service.yaml
 ```
 
 ## Configure Webhook
-TODO: Is actually a post-install hook...
+**TODO: Is actually a post-install hook...**
+
 Finally, configure karydia as both a validating and mutating admission controller with the API server:
 ```
 scripts/configure-karydia-webhook
