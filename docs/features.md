@@ -20,8 +20,8 @@ helm upgrade karydia ./install/charts
 
 ## Karydia Network Policy
 
-When `--enable-default-network-policy` is set, karydia takes the custom karydia network policy resource
-found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed it into all namespaces.
+When `--enable-network-policy` is set, karydia takes the custom karydia network policy resource
+found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 

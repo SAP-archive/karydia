@@ -148,27 +148,6 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
 
-		// 	defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
-		// 	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
-		// 	if len(group) < 2 {
-		// 		fmt.Fprintf(os.Stderr, "NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
-		// 		os.Exit(1)
-		// 	}
-		// 	namespace := group[0]
-		// 	name := group[1]
-		// 	networkPolicyConfigmap, err := kubeClientset.CoreV1().ConfigMaps(namespace).Get(name, metav1.GetOptions{})
-		// 	if err != nil {
-		// 		fmt.Fprintf(os.Stderr, "Failed to load KarydiaDefaultNetworkPolicy : %v\n", err)
-		// 		os.Exit(1)
-		// 	}
-		// 	var policy networkingv1.NetworkPolicy
-		// 	if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
-		// 		fmt.Fprintf(os.Stderr, "Failed to unmarshal default network policy configmap ('%s:%s') into network policy object: %v\n", namespace, name, err)
-
-		// 		os.Exit(1)
-		// 	}
-		// 	defaultNetworkPolicies[name] = &policy
-		// }
 		karydiaDefaultNetworkPolicyName := karydiaConfig.Spec.NetworkPolicy
 		karydiaDefaulNetworkPolicy, err := karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(karydiaDefaultNetworkPolicyName, metav1.GetOptions{})
 		if err != nil {
