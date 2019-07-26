@@ -18,6 +18,7 @@ package e2e
 
 import (
 	"os/exec"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -34,7 +35,8 @@ const (
 func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode int) {
 	exitCode := Success
 
-	cmd := exec.Command("/bin/sh", "-c", command)
+	args := strings.Fields(command)
+	cmd := exec.Command(args[0], args[1:]...)
 	err := cmd.Run()
 
 	if err != nil {
@@ -80,13 +82,9 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "alpine",
-					Image: "alpine",
-					Args: []string{
-						"/bin/sh",
-						"-c",
-						"tail -f /dev/null",
-					},
+					Name:    "karydia-e2e-test-container",
+					Image:   "alpine",
+					Command: []string{"tail", "-f", "/dev/null"},
 				},
 			},
 		},
@@ -103,50 +101,51 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 		t.Fatalf("pod never reached state running")
 	}
 
-	// Test Host network
-	cmd1 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.0.0"
+	// host network (AWS only)
+	cmd1 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.0.0"
 	execCommandAssertExitCode(t, cmd1, TimeOut)
 
-	cmd2 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.1.1"
+	cmd2 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.1.1"
 	execCommandAssertExitCode(t, cmd2, TimeOut)
 
-	cmd3 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.50.200"
+	cmd3 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 10.250.50.200"
 	execCommandAssertExitCode(t, cmd3, TimeOut)
 
-	// Meta Data Servicess
-	cmd4 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.169.254"
+	// meta data services (AWS, GCP, Azure)
+	cmd4 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.169.254"
 	execCommandAssertExitCode(t, cmd4, TimeOut)
 
-	cmd5 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.0.0"
+	cmd5 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.0.0"
 	execCommandAssertExitCode(t, cmd5, TimeOut)
 
-	cmd6 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.2.2"
+	cmd6 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 169.254.2.2"
 	execCommandAssertExitCode(t, cmd6, TimeOut)
 
-	// Alibaba Clouds
-	cmd7 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.0.0"
+	// meta data services (Alibaba Cloud)
+	cmd7 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.0.0"
 	execCommandAssertExitCode(t, cmd7, TimeOut)
 
-	cmd8 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.1.3"
+	cmd8 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.1.3"
 	execCommandAssertExitCode(t, cmd8, TimeOut)
 
-	cmd9 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.60.155"
+	cmd9 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 100.100.60.155"
 	execCommandAssertExitCode(t, cmd9, TimeOut)
 
-	// External traffic with static IPs
-	// Google website
-	cmd10 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 172.217.18.3"
+	// external traffic with static IPs
+	// Google DNS
+	cmd10 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 https://8.8.8.8"
 	execCommandAssertExitCode(t, cmd10, Success)
 
-	// External traffic with domain names
-	cmd13 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
+	// Cloudflare DNS
+	cmd11 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 1.1.1.1"
+	execCommandAssertExitCode(t, cmd11, Success)
+
+	// external traffic with domain names
+	cmd12 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.google.de"
+	execCommandAssertExitCode(t, cmd12, Success)
+
+	cmd13 := "kubectl exec --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.sap.com"
 	execCommandAssertExitCode(t, cmd13, Success)
-
-	cmd14 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.spiegel.de"
-	execCommandAssertExitCode(t, cmd14, Success)
-
-	cmd15 := "kubectl exec -it --namespace=" + ns + " " + podName + " -- wget --spider --timeout 3 www.sap.com"
-	execCommandAssertExitCode(t, cmd15, Success)
 
 	err = f.KubeClientset.CoreV1().Pods(ns).Delete(createdPod.ObjectMeta.Name, &metav1.DeleteOptions{})
 	if err != nil {
