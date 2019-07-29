@@ -33,6 +33,12 @@ not running will not be updated when karydia starts.
 
 The network policy is expected to be found under `.data.policy` in the configmap.
 
+The current network policy called `karydia-default-network-policy` has two security measures:
+1. block access to host network (AWS only)
+2. block access to Meta Data Services (AWS, GCP, Azure, Alibaba Cloud)
+
+Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
+
 ## Karydia Admission
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable and configure this feature in the `install/charts/values.yaml` file.
