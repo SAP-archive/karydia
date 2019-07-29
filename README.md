@@ -50,3 +50,12 @@ make e2e-test
 ```
 make test
 ```
+
+### Debug Karydia
+
+To be able to debug (e.g. Visual Studio Code), change the following line in the Debug configuration:
+
+```
+"args": ["--kubeconfig","<PATH>/.kube/config"]
+```
+

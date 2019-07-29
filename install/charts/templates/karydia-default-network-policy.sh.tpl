@@ -1,4 +1,4 @@
-{{ define "example-default-network-policy.sh.tpl" }}
+{{ define "karydia-default-network-policy.sh.tpl" }}
 #!/bin/bash
 
 # Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
@@ -31,6 +31,14 @@ spec:
   podSelector: {}
   policyTypes:
   - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.250.0.0/16      # host network (AWS only)
+        - 169.254.169.254/16 # meta data services (AWS, GCP, Azure)
+        - 100.100.0.0/16     # meta data services (Alibaba Cloud)
 EOF
 )
 
