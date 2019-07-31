@@ -28,8 +28,6 @@ import (
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	KarydiaV1alpha1() karydiav1alpha1.KarydiaV1alpha1Interface
-	// Deprecated: please explicitly pick a version if possible.
-	Karydia() karydiav1alpha1.KarydiaV1alpha1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
@@ -41,12 +39,6 @@ type Clientset struct {
 
 // KarydiaV1alpha1 retrieves the KarydiaV1alpha1Client
 func (c *Clientset) KarydiaV1alpha1() karydiav1alpha1.KarydiaV1alpha1Interface {
-	return c.karydiaV1alpha1
-}
-
-// Deprecated: Karydia retrieves the default version of KarydiaClient.
-// Please explicitly pick a version.
-func (c *Clientset) Karydia() karydiav1alpha1.KarydiaV1alpha1Interface {
 	return c.karydiaV1alpha1
 }
 

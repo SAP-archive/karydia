@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG golangImageTag=1.12.3
+ARG golangImageTag=1.12.7
+ARG alpineImageTag=3.10.1
 
 # build
 FROM golang:${golangImageTag} as build-stage
@@ -30,7 +31,7 @@ COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/loca
 COPY ./scripts/hotswap-dev /usr/local/bin/hotswap-dev
 
 # prod-image (production usage)
-FROM alpine:3.9 as prod-image
+FROM alpine:${alpineImageTag} as prod-image
 COPY --from=build-stage /go/src/github.com/karydia/karydia/bin/karydia /usr/local/bin/karydia
 USER 65534:65534
 
