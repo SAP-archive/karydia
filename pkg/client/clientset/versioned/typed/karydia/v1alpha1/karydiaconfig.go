@@ -19,6 +19,8 @@
 package v1alpha1
 
 import (
+	"time"
+
 	v1alpha1 "github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 	scheme "github.com/karydia/karydia/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,10 +75,15 @@ func (c *karydiaConfigs) Get(name string, options v1.GetOptions) (result *v1alph
 
 // List takes label and field selectors, and returns the list of KarydiaConfigs that match those selectors.
 func (c *karydiaConfigs) List(opts v1.ListOptions) (result *v1alpha1.KarydiaConfigList, err error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	result = &v1alpha1.KarydiaConfigList{}
 	err = c.client.Get().
 		Resource("karydiaconfigs").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Do().
 		Into(result)
 	return
@@ -84,10 +91,15 @@ func (c *karydiaConfigs) List(opts v1.ListOptions) (result *v1alpha1.KarydiaConf
 
 // Watch returns a watch.Interface that watches the requested karydiaConfigs.
 func (c *karydiaConfigs) Watch(opts v1.ListOptions) (watch.Interface, error) {
+	var timeout time.Duration
+	if opts.TimeoutSeconds != nil {
+		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
+	}
 	opts.Watch = true
 	return c.client.Get().
 		Resource("karydiaconfigs").
 		VersionedParams(&opts, scheme.ParameterCodec).
+		Timeout(timeout).
 		Watch()
 }
 
@@ -141,9 +153,14 @@ func (c *karydiaConfigs) Delete(name string, options *v1.DeleteOptions) error {
 
 // DeleteCollection deletes a collection of objects.
 func (c *karydiaConfigs) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+	var timeout time.Duration
+	if listOptions.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	}
 	return c.client.Delete().
 		Resource("karydiaconfigs").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
+		Timeout(timeout).
 		Body(options).
 		Do().
 		Error()
