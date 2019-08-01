@@ -42,7 +42,7 @@ func TestCreateKarydiaNetworkPolicyForNewNamespace(t *testing.T) {
 	}
 
 	timeout := 3000 * time.Millisecond
-	if err := f.WaitNetworkPolicyCreatedCreated(namespace.GetName(), defaultNetworkPolicyName, timeout); err != nil {
+	if err := f.WaitNetworkPolicyCreated(namespace.GetName(), defaultNetworkPolicyName, timeout); err != nil {
 		t.Fatalf("failed to create default network policy for new namespace: %v", err)
 	}
 
@@ -60,7 +60,7 @@ func TestCreateKarydiaNetworkPolicyForNewNamespace(t *testing.T) {
 		t.Fatalf("failed to delete default network policy for new namespace: %v", err)
 	}
 
-	if err := f.WaitNetworkPolicyCreatedCreated(namespace.GetName(), defaultNetworkPolicyName, timeout); err != nil {
+	if err := f.WaitNetworkPolicyCreated(namespace.GetName(), defaultNetworkPolicyName, timeout); err != nil {
 		t.Fatalf("failed to create default network policy for new namespace: %v", err)
 	}
 
@@ -121,7 +121,7 @@ func TestCreateKarydiaNetworkPolicyForAnnotatedNamespace(t *testing.T) {
 	}
 
 	timeout := 3000 * time.Millisecond
-	if err := f.WaitNetworkPolicyCreatedCreated(namespace.GetName(), defaultNetworkPolicyL2Name, timeout); err != nil {
+	if err := f.WaitNetworkPolicyCreated(namespace.GetName(), defaultNetworkPolicyL2Name, timeout); err != nil {
 		t.Fatalf("failed to create default network policy for new namespace: %v", err)
 	}
 
@@ -137,6 +137,10 @@ func TestCreateKarydiaNetworkPolicyForAnnotatedNamespace(t *testing.T) {
 
 	if !networkPoliciesAreEqual(namespaceNetworkPolicy, defaultNetworkPolicy) {
 		t.Fatalf("Network policy for created namespace is not equal to the default network policy: %v", err)
+	}
+
+	if err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Delete(defaultNetworkPolicyL2Name, &meta_v1.DeleteOptions{}); err != nil {
+		t.Fatalf("Failed to delete karydia default network policy l2: %v", err)
 	}
 }
 func TestGetKarydiaNetworkPolicyForExcludedNamespace(t *testing.T) {
