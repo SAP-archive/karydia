@@ -12,27 +12,30 @@ Karydia inverts the following insecure defaults:
 * Run with minimal privileges by adding a none root user
 * Restrict network communication by adding a network policy to each namespace 
 
-Karydia is implemented as[webhook admission
+Karydia is implemented as [webhook admission
 controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 and configurable through a custom Kubernetes resources.
 
 ![](docs/images/karydia-architecture.png)
 
-
-
-
 ## Installing Karydia
-Karydia can be installed via a helm chart. [installing Karydia](install/README.md).
+Karydia can be [installed](install/README.md) via a helm chart.
 
 ## Demo
-The following screen shots will show you the pod desription without the usage of Karydia. You can see that a service accout token is mounted, a user is not specified (so root will be taken) and no seccomp profile is assigned. 
+The following screen shot shows the pod specification without the usage of Karydia:
+* service accout token is mounted
+* a user is not specified (so root will be taken) and 
+* no seccomp profile is assigned
 ```
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
 ![](docs/images/pod-without-karydia.png)
 
-After you have installed Karydia you will get the following pod description, even so it was the same call. Now the pod has a user specified, the service account token is not mounted and the seccomp profile runtime/default is assigned.
+If a pod was created after the installation of Karydia the pod description will be different, even so it was the same call:
+* no service account token is mounted 
+* a user is specified (root user will not be used)and the seccomp
+* seccomp profile runtime/default is assigned
 
 ```
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
@@ -41,8 +44,13 @@ kubectl edit  pod/alpine -n demo
 ![](docs/images/pod-with-karydia.png)
 
 ## Features and configuration options
+Each feature can be configured to application specific needs:
+* custom seccomp profile
+* custom default network policy
+* specific network policy per namespace
+* usage of root user if necessary
 
-See [features](docs/features.md).
+See all [features and options](docs/features.md).
 
 ## Testing
 
