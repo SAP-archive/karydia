@@ -22,9 +22,10 @@ and configurable through a custom Kubernetes resources.
 Karydia can be [installed](install/README.md) via a helm chart.
 
 ## Demo
+### Invert pod defaults
 The following screen shot shows the pod specification without the usage of Karydia:
 * service accout token is mounted
-* a user is not specified (so root will be taken) and 
+* a user is not specified (so root will be taken)
 * no seccomp profile is assigned
 ```
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
@@ -34,7 +35,7 @@ kubectl edit  pod/alpine -n demo
 
 If a pod was created after the installation of Karydia the pod description will be different, even so it was the same call:
 * no service account token is mounted 
-* a user is specified (root user will not be used)and the seccomp
+* a user is specified (root user will not be used)
 * seccomp profile runtime/default is assigned
 
 ```
@@ -42,6 +43,13 @@ kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
 ![](docs/images/pod-with-karydia.png)
+
+### Add network policy
+Karydia adds a default networkpolicy to each namespace and reconciles it. 
+```
+kubectl get networkpolicy -n demo
+```
+![](docs/images/networkpolicy.png)
 
 ## Features and configuration options
 Each feature can be configured to application specific needs:
