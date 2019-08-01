@@ -1,29 +1,28 @@
-# karydia - Kubernetes security walnut
+# Karydia - Kubernetes security walnut
 
-![karydia Logo](logo/Karydia@0.5x.png)
+![Karydia Logo](logo/Karydia@0.5x.png)
 
 Status: beta
 
-karydia is a security add-on to Kubernetes to help with good security practices by inverting insecure Kubernetes defaults. 
-Karydia is an open-source product that helps you to get a secure-by-default application running on Kubernetes with minimal additional effort. 
-
-karydia is implemented as[webhook admission
-controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-and configurable through a custom Kubernetes resources.
-
-![](docs/images/karydia-architecture.png)
-
-Kubernetes defaults are not focused on security but on running out of the box without complicated upfront configuration. It is really easy to get a pod up and running. In the simplest case it is just one command. But of course with such a simple setup you cannot expect a highly secure application. Defaults are not enough! 
+Karydia is a security add-on to Kubernetes to help with good security practices by inverting insecure Kubernetes defaults. Kubernetes defaults are not focused on security but on running out of the box without complicated upfront configuration. It is really easy to get a pod up and running. In the simplest case it is just one command. But of course with such a simple setup you cannot expect a highly secure application. Defaults are not enough! 
 
 Karydia inverts the following insecure defaults:
 * Unmount service account token
 * Restrict system calls by adding a seccomp profile
 * Run with minimal privileges by adding a none root user
-* Restrict network communication by adding a network policy to each namespace
+* Restrict network communication by adding a network policy to each namespace 
+
+Karydia is implemented as[webhook admission
+controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
+and configurable through a custom Kubernetes resources.
+
+![](docs/images/karydia-architecture.png)
 
 
-## Installing karydia
-Karydia can be installed via a helm chart. [installing karydia](install/README.md).
+
+
+## Installing Karydia
+Karydia can be installed via a helm chart. [installing Karydia](install/README.md).
 
 ## Demo
 The following screen shots will show you the pod desription without the usage of Karydia. You can see that a service accout token is mounted, a user is not specified (so root will be taken) and no seccomp profile is assigned. 
