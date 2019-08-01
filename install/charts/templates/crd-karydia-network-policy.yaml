@@ -31,15 +31,3 @@ spec:
     kind: KarydiaNetworkPolicy
     shortNames:
       - knp
-  validation:
-    openAPIV3Schema:
-      type: object
-      properties:
-        spec:
-          type: object
-          properties:
-            policyTypes:
-              type: array
-              items:
-                type: string
-                pattern: ^(Ingress|Egress)?$
