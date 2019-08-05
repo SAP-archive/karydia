@@ -91,4 +91,3 @@ To be able to debug (e.g. Visual Studio Code), change the following line in the 
 ```
 "args": ["--kubeconfig","<PATH>/.kube/config"]
 ```
-
