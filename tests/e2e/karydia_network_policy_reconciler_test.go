@@ -33,9 +33,11 @@ var (
 func TestCreateKarydiaNetworkPolicyForNewNamespace(t *testing.T) {
 	defaultNetworkPolicy := &networkingv1.NetworkPolicy{}
 	defaultNetworkPolicy.Name = defaultNetworkPolicyName
-	defaultNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
-		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
+	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyName, meta_v1.GetOptions{})
+	if err != nil {
+		t.Fatalf("failed to get karydia default network policy: %v", err)
 	}
+	defaultNetworkPolicy.Spec = *karydiaNetworkpolicy.Spec.DeepCopy()
 	namespace, err := f.CreateTestNamespace()
 	if err != nil {
 		t.Fatalf("failed to create test namespace: %v", err)
