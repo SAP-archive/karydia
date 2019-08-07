@@ -20,12 +20,11 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/client/clientset/versioned"
 
-	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	v1 "k8s.io/api/networking/v1"
@@ -51,6 +50,7 @@ type NetworkpolicyReconciler struct {
 	defaultNetworkPolicyExcludes []string
 
 	kubeclientset          kubernetes.Interface
+	karydiaClientset       versioned.Interface
 	networkPolicyLister    kubelistersNetworkingv1.NetworkPolicyLister
 	networkPoliciesSynced  cache.InformerSynced
 	namespacesLister       kubelistersv1.NamespaceLister
@@ -60,33 +60,20 @@ type NetworkpolicyReconciler struct {
 }
 
 func (reconciler *NetworkpolicyReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
-	defaultNetworkPolicyIdentifier := karydiaConfig.Spec.NetworkPolicy
-	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
-	if len(group) < 2 {
-		return fmt.Errorf("NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
-	} else {
-		name := group[1]
-		reconciler.defaultNetworkPolicyName = name
-	}
+	reconciler.defaultNetworkPolicyName = karydiaConfig.Spec.NetworkPolicy
 	return nil
 }
 
 func NewNetworkpolicyReconciler(
 	kubeclientset kubernetes.Interface,
+	karydiaClientset versioned.Interface,
 	networkpolicyInformer networkpolicyInformer.NetworkPolicyInformer, namespaceInformer namespaceInformer.NamespaceInformer,
-	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyIdentifier string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
-
-	defaultNetworkPolicyName := ""
-	group := strings.SplitN(defaultNetworkPolicyIdentifier, ":", 2)
-	if len(group) < 2 {
-		fmt.Errorf("NetworkPolicy must be provided in format <namespace>:<name>, got %q\n", defaultNetworkPolicyIdentifier)
-	} else {
-		defaultNetworkPolicyName = group[1]
-	}
+	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
 
 	reconciler := &NetworkpolicyReconciler{
 		defaultNetworkPolicyName:     defaultNetworkPolicyName,
 		kubeclientset:                kubeclientset,
+		karydiaClientset:             karydiaClientset,
 		networkPolicyLister:          networkpolicyInformer.Lister(),
 		networkPoliciesSynced:        networkpolicyInformer.Informer().HasSynced,
 		namespacesLister:             namespaceInformer.Lister(),
@@ -247,8 +234,11 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	}
 
 	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		klog.Warningf("No default network policy set %s", key)
-		return nil
+		if err := reconciler.updateBuffer(npName); err != nil {
+
+			klog.Warningf("Failed to get default network policy %s", npName)
+			return nil
+		}
 	}
 
 	if name == reconciler.defaultNetworkPolicies[npName].GetName() {
@@ -265,7 +255,7 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 			return err
 		} else {
 			klog.Infof("Found networkpolicy %s", key)
-			if flag, err := reconciler.reconcileIsNeeded(networkPolicy, name); flag == true && err == nil {
+			if reconciler.reconcileIsNeeded(networkPolicy, name) {
 				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
 					klog.Errorf("failed to update default network policy: %v", err)
 					return fmt.Errorf("error syncing %q: %v", key, err)
@@ -301,6 +291,14 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 		return nil
 	}
 
+	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
+		if err := reconciler.updateBuffer(npName); err != nil {
+
+			klog.Warningf("Failed to get default network policy %s", npName)
+			return nil
+		}
+	}
+
 	networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(key).Get(npName)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -314,7 +312,7 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 		return err
 	} else {
 		klog.Infof("Found networkpolicy %s/%s", key, npName)
-		if flag, err := reconciler.reconcileIsNeeded(networkPolicy, npName); flag == true && err == nil {
+		if reconciler.reconcileIsNeeded(networkPolicy, npName) {
 			if err := reconciler.updateDefaultNetworkPolicy(key, npName); err != nil {
 				klog.Errorf("failed to update default network policy: %v", err)
 				return fmt.Errorf("error syncing %q: %v", key, err)
@@ -329,7 +327,6 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 func (reconciler *NetworkpolicyReconciler) getDefaultNetworkpolicyName(namespace *corev1.Namespace) (name string, err error) {
 
 	npName := reconciler.defaultNetworkPolicyName
-
 	if defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy"]; ok {
 		klog.Infof("Found annotation, use network policy %q", defaultNetworkPolicyAnnotation)
 		npName = defaultNetworkPolicyAnnotation
@@ -356,19 +353,15 @@ func (reconciler *NetworkpolicyReconciler) enqueueNamespace(obj interface{}) {
 	reconciler.namespaceWorkqueue.Add(key)
 }
 
-func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy, networkpolicyName string) (bool, error) {
-	if err := reconciler.updateBuffer(networkpolicyName); err != nil {
-		klog.Errorf("Network policy could not be found in buffer")
-		return false, err
-	}
+func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy, networkpolicyName string) bool {
 
 	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	actualSpec, _ := actualPolicy.Spec.Marshal()
 	desiredSpec, _ := desiredPolicy.Spec.Marshal()
 	if bytes.Equal(actualSpec, desiredSpec) {
-		return false, nil
+		return false
 	}
-	return true, nil
+	return true
 }
 
 func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace string, networkpolicyName string) error {
@@ -381,30 +374,23 @@ func (reconciler *NetworkpolicyReconciler) updateDefaultNetworkPolicy(namespace 
 }
 
 func (reconciler *NetworkpolicyReconciler) updateBuffer(networkpolicyName string) error {
-	if _, ok := reconciler.defaultNetworkPolicies[networkpolicyName]; !ok {
-		klog.Infof("Network policy not in buffer. Load %s", networkpolicyName)
 
-		networkPolicyConfigmap, err := reconciler.kubeclientset.CoreV1().ConfigMaps("kube-system").Get(networkpolicyName, meta_v1.GetOptions{})
-		if err != nil {
-			klog.Errorf("Failed to get network policy %s", networkpolicyName)
-			return fmt.Errorf("Failed to get network policy %s", networkpolicyName)
-		}
-
-		var policy networkingv1.NetworkPolicy
-		if err := yaml.Unmarshal([]byte(networkPolicyConfigmap.Data["policy"]), &policy); err != nil {
-			klog.Errorf("Failed to unmarshal default network policy configmap ('%s') into network policy object: %v\n", networkpolicyName, err)
-			return fmt.Errorf("Failed to unmarshal default network policy configmap ('%s') into network policy object: %v\n", networkpolicyName, err)
-		}
-		reconciler.defaultNetworkPolicies[networkpolicyName] = &policy
-		klog.Infof("Network policy %s loaded into buffer. New Buffer length: %v", policy.GetName(), len(reconciler.defaultNetworkPolicies))
+	karydiaNetworkPolicy, err := reconciler.karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(networkpolicyName, meta_v1.GetOptions{})
+	if err != nil {
+		klog.Errorf("Failed to get karydia network policy %s", networkpolicyName)
+		return fmt.Errorf("Failed to get karydia network policy %s", networkpolicyName)
 	}
+
+	var policy networkingv1.NetworkPolicy
+	policy.Name = networkpolicyName
+	policy.Spec = *karydiaNetworkPolicy.Spec.DeepCopy()
+	reconciler.defaultNetworkPolicies[networkpolicyName] = &policy
+	klog.Infof("Network policy %s loaded into buffer. New Buffer length: %v", policy.GetName(), len(reconciler.defaultNetworkPolicies))
+
 	return nil
 }
 
 func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace string, networkpolicyName string) error {
-	if err := reconciler.updateBuffer(networkpolicyName); err != nil {
-		return err
-	}
 
 	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	desiredPolicy.ObjectMeta.Namespace = namespace

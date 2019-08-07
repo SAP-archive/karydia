@@ -14,25 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-features:
-  defaultNetworkPolicy: true
-  karydiaAdmission: true
-config:
-  name: "karydia-config"
-  automountServiceAccountToken: "change-default"
-  seccompProfile: "runtime/default"
-  networkPolicy: "karydia-default-network-policy"
-  podSecurityContext: "nobody"
-  defaultNetworkPolicyExcludes: ""
-dev:
-  active: false
-  timeoutIncreaseValue: 0
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
 metadata:
-  name: "karydia"
-  apiGroup: "karydia.gardener.cloud"
-  namespace: "kube-system"
-  labelApp: "karydia"
-rbac:
-  apiGroup: "rbac.authorization.k8s.io"
-  apiVersion: "/v1"
-  serviceAccount: "karydia"
+  name: karydianetworkpolicies.{{ .Values.metadata.apiGroup }}
+  annotations:
+    "helm.sh/hook": crd-install
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+spec:
+  group: {{ .Values.metadata.apiGroup }}
+  version: v1alpha1
+  scope: Cluster
+  names:
+    plural: karydianetworkpolicies
+    singular: karydianetworkpolicy
+    kind: KarydiaNetworkPolicy
+    shortNames:
+      - knp
