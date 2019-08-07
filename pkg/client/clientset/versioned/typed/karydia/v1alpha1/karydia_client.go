@@ -27,6 +27,7 @@ import (
 type KarydiaV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	KarydiaConfigsGetter
+	KarydiaNetworkPoliciesGetter
 }
 
 // KarydiaV1alpha1Client is used to interact with features provided by the karydia.gardener.cloud group.
@@ -36,6 +37,10 @@ type KarydiaV1alpha1Client struct {
 
 func (c *KarydiaV1alpha1Client) KarydiaConfigs() KarydiaConfigInterface {
 	return newKarydiaConfigs(c)
+}
+
+func (c *KarydiaV1alpha1Client) KarydiaNetworkPolicies() KarydiaNetworkPolicyInterface {
+	return newKarydiaNetworkPolicies(c)
 }
 
 // NewForConfig creates a new KarydiaV1alpha1Client for the given config.
