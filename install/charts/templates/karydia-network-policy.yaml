@@ -19,7 +19,7 @@ kind: KarydiaNetworkPolicy
 metadata:
   labels:
     app: {{ .Values.metadata.labelApp }}
-  name: {{ .Values.metadata.name }}
+  name: {{ .Values.config.networkPolicy }}
 spec:
   podSelector: {}
   policyTypes:
