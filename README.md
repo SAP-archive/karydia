@@ -4,7 +4,7 @@
 
 Status: beta
 
-Karydia is a security add-on to Kubernetes to help with good security practices by inverting insecure Kubernetes defaults. Kubernetes defaults are not focused on security but on running out of the box without complicated upfront configuration. It is really easy to get a pod up and running. In the simplest case it is just one command. But of course with such a simple setup you cannot expect a highly secure application. Defaults are not enough! 
+Karydia is a security add-on to Kubernetes to help with good security practices by inverting insecure Kubernetes defaults. Kubernetes defaults are not focused on security but on running out of the box without complicated upfront configuration. It is easy to get a pod up and running. In the simplest case it is just one command. But of course, with such a simple setup you cannot expect a highly secure application. Defaults are not enough! 
 
 Karydia inverts the following insecure defaults:
 * Unmount service account token
@@ -14,7 +14,7 @@ Karydia inverts the following insecure defaults:
 
 Karydia is implemented as [webhook admission
 controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-and configurable through a custom Kubernetes resources.
+and configurable through a custom Kubernetes resource.
 
 ![](docs/images/karydia-architecture.png)
 
