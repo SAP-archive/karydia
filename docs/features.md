@@ -45,6 +45,12 @@ The current network policy called `karydia-default-network-policy` has two secur
 
 Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
 
+Karydia annotates the created network policy resources with the at the time and context valid security settings:
+
+| Resource | Annotation | Possible values |
+|---|---|---|
+| NetworkPolicy |karydia.gardener.cloud/networkPolicy.internal | (`config` \| `namespace`) /(\<`network-policy-name`\>) |
+
 ## Karydia Admission
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature by setting `karydiaAdmission` to `true`/`false`.
