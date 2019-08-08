@@ -104,6 +104,14 @@ func NewNetworkpolicyReconciler(
 
 	namespaceInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: reconciler.enqueueNamespace,
+		UpdateFunc: func(old, new interface{}) {
+			newNamespace := new.(*corev1.Namespace)
+			oldNamespace := old.(*corev1.Namespace)
+			if newNamespace.ResourceVersion == oldNamespace.ResourceVersion {
+				return
+			}
+			reconciler.enqueueNamespace(new)
+		},
 	})
 
 	return reconciler
@@ -402,5 +410,24 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 		reconciler.log.Errorf("Network policy creation failed. Name specified: '%s'; Actual name: '%s'", networkpolicyName, desiredPolicy.GetName())
 		return err
 	}
+	if err := reconciler.deleteMultipleDefaultNetworkPolicies(namespace, networkpolicyName); err != nil {
+		klog.Errorf("Failed to delete network policy  %s", networkpolicyName)
+		return err
+	}
+	return nil
+}
+
+func (reconciler *NetworkpolicyReconciler) deleteMultipleDefaultNetworkPolicies(namespace string, networkpolicyName string) error {
+	for npName := range reconciler.defaultNetworkPolicies {
+		if npName != networkpolicyName {
+			if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Get(npName, meta_v1.GetOptions{}); err == nil {
+				err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Delete(npName, &meta_v1.DeleteOptions{})
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
