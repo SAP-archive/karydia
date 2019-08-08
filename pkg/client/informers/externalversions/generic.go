@@ -55,6 +55,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 	// Group=karydia.gardener.cloud, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("karydiaconfigs"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Karydia().V1alpha1().KarydiaConfigs().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("karydianetworkpolicies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Karydia().V1alpha1().KarydiaNetworkPolicies().Informer()}, nil
 
 	}
 

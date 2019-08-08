@@ -28,5 +28,4 @@ data:
     {{- include "create-karydia-certificate.sh.tpl" . | indent 4}}
   create-karydia-tls-secret.sh: |-
     {{- include "create-karydia-tls-secret.sh.tpl" . | indent 4}}
-  karydia-default-network-policy.sh: |-
-    {{- include "karydia-default-network-policy.sh.tpl" . | indent 4}}
+  

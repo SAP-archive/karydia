@@ -19,3 +19,5 @@
 package v1alpha1
 
 type KarydiaConfigExpansion interface{}
+
+type KarydiaNetworkPolicyExpansion interface{}

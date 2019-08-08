@@ -26,14 +26,6 @@
   version = "v1.4.7"
 
 [[projects]]
-  digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
-  name = "github.com/ghodss/yaml"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:a1b2a5e38f79688ee8250942d5fa960525fceb1024c855c7bc76fa77b0f3cca2"
   name = "github.com/gogo/protobuf"
   packages = [
@@ -844,7 +836,6 @@
   analyzer-version = 1
   input-imports = [
     "github.com/evanphx/json-patch",
-    "github.com/ghodss/yaml",
     "github.com/mitchellh/go-homedir",
     "github.com/sirupsen/logrus",
     "github.com/spf13/cobra",

@@ -17,6 +17,7 @@
 package v1alpha1
 
 import (
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -58,4 +59,24 @@ type KarydiaConfigList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []KarydiaConfig `json:"items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type KarydiaNetworkPolicy struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec networkingv1.NetworkPolicySpec `json:"spec"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type KarydiaNetworkPolicyList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []KarydiaNetworkPolicy `json:"items"`
 }
