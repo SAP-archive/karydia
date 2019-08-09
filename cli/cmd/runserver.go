@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -87,8 +86,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	tlsConfig, err := tls.CreateTLSConfig(viper.GetString("tls-cert"), viper.GetString("tls-key"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create TLS config: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to create TLS config: %v\n", err)
 	}
 
 	ctx, cancelCtx := context.WithCancel(context.Background())
@@ -96,8 +94,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	webHook, err := webhook.New(&webhook.Config{})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load webhook: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to load webhook: %v\n", err)
 	}
 
 	kubeConfig := viper.GetString("kubeconfig")
@@ -105,31 +102,28 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	kubeClientset, err := k8sutil.Clientset(kubeServer, kubeConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to create clientset: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to create clientset: %v\n", err)
 	}
 
 	cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build kubeconfig: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to build kubeconfig: %v\n", err)
 	}
 	karydiaClientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build karydia clientset: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to build karydia clientset: %v\n", err)
 	}
 
 	karydiaConfig, err := karydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get(viper.GetString("config"), metav1.GetOptions{})
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia config: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to load karydia config: %v\n", err)
 	}
-	fmt.Fprintf(os.Stdout, "KarydiaConfig Name: %s\n", karydiaConfig.Name)
-	fmt.Fprintf(os.Stdout, "KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
-	fmt.Fprintf(os.Stdout, "KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
-	fmt.Fprintf(os.Stdout, "KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+	log.Infof("KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	log.Infof("KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	log.Infof("KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	log.Infof("KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+	log.Infof("KarydiaConfig PodSecurityContext: %s\n", karydiaConfig.Spec.PodSecurityContext)
 
 	if enableKarydiaAdmission {
 		karydiaAdmission, err := karydiaadmission.New(&karydiaadmission.Config{
@@ -137,8 +131,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			KarydiaConfig: karydiaConfig,
 		})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-			os.Exit(1)
+			log.Fatalf("Failed to load karydia admission: %v\n", err)
 		}
 
 		webHook.RegisterAdmissionPlugin(karydiaAdmission)
@@ -151,8 +144,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		karydiaDefaultNetworkPolicyName := karydiaConfig.Spec.NetworkPolicy
 		karydiaDefaulNetworkPolicy, err := karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(karydiaDefaultNetworkPolicyName, metav1.GetOptions{})
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to load KarydiaDefaultNetworkPolicy : %v\n", err)
-			os.Exit(1)
+			log.Fatalf("Failed to load KarydiaDefaultNetworkPolicy : %v\n", err)
 		}
 		var policy networkingv1.NetworkPolicy
 		policy.Spec = *karydiaDefaulNetworkPolicy.Spec.DeepCopy()
@@ -164,13 +156,11 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	if enableController {
 		cfg, err := clientcmd.BuildConfigFromFlags(kubeServer, kubeConfig)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error building kubeconfig: %v", err)
-			os.Exit(1)
+			log.Fatalf("error building kubeconfig: %v", err)
 		}
 		kubeClientset, err := kubernetes.NewForConfig(cfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error building kubernetes clientset: %v", err)
-			os.Exit(1)
+			log.Fatalf("error building kubernetes clientset: %v", err)
 		}
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
@@ -186,8 +176,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	s, err := server.New(serverConfig, webHook)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load server: %v\n", err)
-		os.Exit(1)
+		log.Fatalf("Failed to load server: %v\n", err)
 	}
 
 	karydiaInformerFactory = karydiainformers.NewSharedInformerFactory(karydiaClientset, resyncInterval)
@@ -199,7 +188,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	go func() {
 		defer wg.Done()
 		if err := s.ListenAndServe(); err != http.ErrServerClosed {
-			fmt.Fprintf(os.Stderr, "HTTP ListenAndServe error: %v\n", err)
+			log.Errorf("HTTP ListenAndServe error: %v\n", err)
 		}
 	}()
 
@@ -213,7 +202,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		defer cancelShutdownCtx()
 
 		if err := s.Shutdown(shutdownCtx); err != nil {
-			fmt.Fprintf(os.Stderr, "HTTP Shutdown error: %v\n", err)
+			log.Errorf("HTTP Shutdown error: %v\n", err)
 		}
 	}()
 
@@ -222,7 +211,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		defer wg.Done()
 		karydiaInformerFactory.Start(ctx.Done())
 		if err := karydiaConfigReconciler.Run(2, ctx.Done()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error running config reconciler: %v\n", err)
+			log.Errorf("Error running config reconciler: %v\n", err)
 		}
 	}()
 
@@ -232,7 +221,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 			defer wg.Done()
 			kubeInformerFactory.Start(ctx.Done())
 			if err := reconciler.Run(2, ctx.Done()); err != nil {
-				fmt.Fprintf(os.Stderr, "Error running controller: %v\n", err)
+				log.Errorf("Error running controller: %v\n", err)
 			}
 		}()
 	}
@@ -243,13 +232,13 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 		<-sigChan
 
-		fmt.Println("Received signal, shutting down gracefully ...")
+		log.Infoln("Received signal, shutting down gracefully ...")
 
 		cancelCtx()
 
 		<-sigChan
 
-		fmt.Println("Received second signal - aborting")
+		log.Infoln("Received second signal - aborting")
 		os.Exit(1)
 	}()
 

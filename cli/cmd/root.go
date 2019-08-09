@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,13 +18,13 @@ package cmd
 
 import (
 	"flag"
-	"fmt"
-	"os"
-
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/karydia/karydia/pkg/logger"
+	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var log = logger.NewComponentLogger("cmd")
 
 var cfgFile string
 
@@ -33,8 +35,7 @@ var rootCmd = &cobra.Command{
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalln(err)
 	}
 }
 
@@ -56,8 +57,7 @@ func initConfig() {
 	} else {
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			log.Fatalln(err)
 		}
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
@@ -66,6 +66,6 @@ func initConfig() {
 	viper.SetEnvPrefix("KARYDIA")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		log.Debugln("Using config file:", viper.ConfigFileUsed())
 	}
 }
