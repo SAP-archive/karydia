@@ -18,8 +18,6 @@ package karydia
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 	"testing"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -49,8 +47,7 @@ func TestPodPlainSeccomp(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	pod := &corev1.Pod{
@@ -128,8 +125,7 @@ func TestPodPlainSecContext(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	pod := &corev1.Pod{
@@ -207,8 +203,7 @@ func TestPodDefinedSecContext(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	var uid int64 = 1000
@@ -291,8 +286,7 @@ func TestPodCorrectSeccomp(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	pod := &corev1.Pod{
@@ -358,8 +352,7 @@ func TestServiceAccountPlain(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	servieAccount := &corev1.ServiceAccount{
@@ -429,8 +422,7 @@ func TestServiceAccountAutomountDefined(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	var vTrue = true
@@ -503,8 +495,7 @@ func TestServiceAccountDefault(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	servieAccount := &corev1.ServiceAccount{
@@ -565,8 +556,7 @@ func TestInvalidAdmissionReview(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	/* DELETE operation -> is currently ignored */
@@ -680,8 +670,7 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatalf("Failed to load karydia admission: %v\n", err)
 	}
 
 	invalidRawServiceAccount := make([]byte, 4)
