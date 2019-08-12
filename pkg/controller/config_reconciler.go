@@ -22,19 +22,19 @@ import (
 	"github.com/karydia/karydia/pkg/client/clientset/versioned"
 	v1alpha12 "github.com/karydia/karydia/pkg/client/informers/externalversions/karydia/v1alpha1"
 	v1alpha13 "github.com/karydia/karydia/pkg/client/listers/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/logger"
 	"reflect"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"k8s.io/klog"
 )
 
 // reconciler (controller) struct
 type ConfigReconciler struct {
+	log         *logger.Logger
 	config      v1alpha1.KarydiaConfig
 	controllers []ControllerInterface
 
@@ -58,6 +58,7 @@ func NewConfigReconciler(
 	karydiaConfigInformer v1alpha12.KarydiaConfigInformer,
 ) *ConfigReconciler {
 	reconciler := &ConfigReconciler{
+		log:         logger.NewComponentLogger("config_reconciler"),
 		config:      karydiaConfig,
 		controllers: karydiaControllers,
 		clientset:   karydiaClientset,
@@ -66,7 +67,7 @@ func NewConfigReconciler(
 		workqueue:   workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "Config"),
 	}
 
-	klog.Info("Setting up event handler")
+	reconciler.log.Infoln("Setting up event handler")
 	// set up an event handler for when resources change
 	karydiaConfigInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		UpdateFunc: func(old, new interface{}) {
@@ -91,26 +92,26 @@ func NewConfigReconciler(
 // the workqueue and wait for workers to finish processing their current work
 // items.
 func (reconciler *ConfigReconciler) Run(threadiness int, stopCh <-chan struct{}) error {
-	defer utilruntime.HandleCrash()
+	defer reconciler.log.HandleCrash()
 	defer reconciler.workqueue.ShutDown()
 
-	klog.Info("Starting karydia config reconciler")
+	reconciler.log.Infoln("Starting karydia config reconciler")
 
 	// wait for caches to be synced before starting workers
-	klog.Info("Waiting for informer cache to sync")
+	reconciler.log.Infoln("Waiting for informer cache to sync")
 	if ok := cache.WaitForCacheSync(stopCh, reconciler.synced); !ok {
 		return fmt.Errorf("failed to wait for cache to sync")
 	}
 
 	// launch workers to process resources
-	klog.Info("Starting worker")
+	reconciler.log.Infoln("Starting worker")
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(reconciler.runConfigWorker, time.Second, stopCh)
 	}
 
-	klog.Info("Started worker")
+	reconciler.log.Infoln("Started worker")
 	<-stopCh
-	klog.Info("Shutting down workers")
+	reconciler.log.Infoln("Shutting down workers")
 
 	return nil
 }
@@ -152,7 +153,7 @@ func (reconciler *ConfigReconciler) processNextConfigWorkItem() bool {
 			// Forget here else we'd go into a loop of attempting to
 			// process a work item that is invalid
 			reconciler.workqueue.Forget(obj)
-			utilruntime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
+			reconciler.log.Errorf("expected string in workqueue but got %#v", obj)
 			return nil
 		}
 
@@ -166,12 +167,12 @@ func (reconciler *ConfigReconciler) processNextConfigWorkItem() bool {
 		// if no error occurs we Forget this item so it does not get
 		// queued again until another change happens
 		reconciler.workqueue.Forget(obj)
-		klog.Infof("Successfully synced '%s'", key)
+		reconciler.log.Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
 	if err != nil {
-		utilruntime.HandleError(err)
+		reconciler.log.Errorln(err)
 		return true
 	}
 
@@ -184,13 +185,13 @@ func (reconciler *ConfigReconciler) syncConfigHandler(key string) error {
 	// convert namespace/name string into distinct (namespace and) name
 	_, configName, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		utilruntime.HandleError(fmt.Errorf("invalid resource key: %s", key))
+		reconciler.log.Errorf("invalid resource key: %s", key)
 		return nil
 	}
 
 	// if no global config is set Forget this item
 	if reconciler.config.Name == "" {
-		utilruntime.HandleError(fmt.Errorf("No config set"))
+		reconciler.log.Errorf("No config set")
 		return nil
 	}
 
@@ -202,21 +203,21 @@ func (reconciler *ConfigReconciler) syncConfigHandler(key string) error {
 		if err != nil {
 			// (re)create resource from memory if it no longer exists
 			if errors.IsNotFound(err) {
-				utilruntime.HandleError(fmt.Errorf("karydia config '%s' no longer exists", key))
+				reconciler.log.Errorf("karydia config '%s' no longer exists", key)
 				if err := reconciler.createConfig(); err != nil {
-					klog.Errorf("failed to recreate karydia config: %v", err)
+					reconciler.log.Errorf("failed to recreate karydia config: %v", err)
 					return err
 				}
 				return nil
 			}
 			return err
 		} else {
-			klog.Infof("Found karydia config %s", config.Name)
+			reconciler.log.Infof("Found karydia config %s", config.Name)
 			// compare new config with the one in memory
 			if reconciler.reconcileIsNeeded(*config) {
 				// update config in memory with new one
 				if err := reconciler.UpdateConfig(*config); err != nil {
-					klog.Errorf("failed to update karydia config: %v", err)
+					reconciler.log.Errorf("failed to update karydia config: %v", err)
 					return err
 				}
 			}
@@ -231,7 +232,7 @@ func (reconciler *ConfigReconciler) enqueueConfig(obj interface{}) {
 	var key string
 	var err error
 	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
-		utilruntime.HandleError(err)
+		reconciler.log.Errorln(err)
 		return
 	}
 	reconciler.workqueue.Add(key)
@@ -251,14 +252,15 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 	reconciler.config = karydiaConfig
 	for _, controller := range reconciler.controllers {
 		if err := controller.UpdateConfig(karydiaConfig); err != nil {
-			utilruntime.HandleError(err)
+			reconciler.log.Errorln(err)
 			return err
 		}
 	}
-	klog.Infof("KarydiaConfig Name: %s\n", karydiaConfig.Name)
-	klog.Infof("KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
-	klog.Infof("KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
-	klog.Infof("KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+	reconciler.log.Infof("KarydiaConfig Name: %s\n", karydiaConfig.Name)
+	reconciler.log.Infof("KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
+	reconciler.log.Infof("KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
+	reconciler.log.Infof("KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
+	reconciler.log.Infof("KarydiaConfig PodSecurityContext: %s\n", karydiaConfig.Spec.PodSecurityContext)
 	return nil
 }
 
@@ -266,7 +268,7 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 func (reconciler *ConfigReconciler) createConfig() error {
 	desiredConfig := reconciler.config.DeepCopy()
 	if _, err := reconciler.clientset.KarydiaV1alpha1().KarydiaConfigs().Create(desiredConfig); err != nil {
-		utilruntime.HandleError(err)
+		reconciler.log.Errorln(err)
 		return err
 	}
 	return nil
