@@ -110,7 +110,7 @@ NOHUP_ARGUMENTS=''														# add content only if existent
 [ $(echo "${@:2}" | wc -w) -ge 1 ] && NOHUP_ARGUMENTS+=$(echo "${@:2}") || true							# e.g. 'runserver --tls-cert ...'
 
 ## run main binary in separate process with passed parameters if main binary exists otherwise exit
-[ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || \
+[ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS 1>&2 | tee "$LOG_MAIN" &) || \
   { printf "$ERROR_LOG_FORMAT" 'binary not found' "Is '$MAIN_BIN_PATH' an absolute path to an existing binary?" >&2 && exit 1; }
 
 ## log activity to STDOUT and file
@@ -154,7 +154,7 @@ do
     mv -f "$WATCH_BIN_PATH" "$MAIN_BIN_PATH"
 
     ## run main binary in separate process with passed parameters if main binary exists otherwise exit
-    [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS > "$LOG_MAIN" &) || \
+    [ -e "$MAIN_BIN_PATH" ] && (nohup $NOHUP_UTILITY $NOHUP_ARGUMENTS 1>&2 | tee "$LOG_MAIN" &) || \
       { printf "$ERROR_LOG_FORMAT" 'binary not found' "Is '$MAIN_BIN_PATH' an absolute path to an existing binary?" >&2 && exit 1; }
 
     msg+=' & restarted'
