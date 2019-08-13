@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,10 +19,10 @@ package webhook
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/karydia/karydia/pkg/logger"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 
 	"github.com/karydia/karydia/pkg/admission"
@@ -29,13 +31,13 @@ import (
 )
 
 type Webhook struct {
-	logger *logrus.Logger
+	logger *logger.Logger
 
 	admissionPlugins []admission.AdmissionPlugin
 }
 
 type Config struct {
-	Logger *logrus.Logger
+	Logger *logger.Logger
 }
 
 func New(config *Config) (*Webhook, error) {
@@ -44,8 +46,7 @@ func New(config *Config) (*Webhook, error) {
 	}
 
 	if config.Logger == nil {
-		webhook.logger = logrus.New()
-		webhook.logger.Level = logrus.InfoLevel
+		webhook.logger = logger.NewComponentLogger("webhook")
 	} else {
 		// convenience
 		webhook.logger = config.Logger
@@ -107,7 +108,7 @@ func (wh *Webhook) Serve(w http.ResponseWriter, r *http.Request, mutationAllowed
 	}
 
 	if len(body) == 0 {
-		wh.logger.Error("received request with empty body")
+		wh.logger.Errorln("received request with empty body")
 		http.Error(w, "empty body", http.StatusBadRequest)
 		return
 	}
