@@ -2,8 +2,7 @@
 
 .idea/
 bin/
-
-karydia*.pem
-cov.out
-
 manifests/
+
+cov.out
+karydia*.pem

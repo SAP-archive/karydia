@@ -1,10 +1,11 @@
 .idea/
 .ci/
+.github/
 bin/
 contrib/
 docs/
 logo/
-manifests-dev/
 manifests/
 
+cov.out
 karydia*.pem
