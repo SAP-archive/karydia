@@ -43,14 +43,14 @@ func main(m *testing.M) int {
 
 	f, err = framework.Setup(*server, *kubeconfig, *namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to setup framework: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Failed to setup framework:", err)
 		return 1
 	}
 
 	defer func() {
 		if err := f.DeleteAll(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete karydia and all test resources: %v\n", err)
-			fmt.Fprintf(os.Stderr, "You have to cleanup yourself, sorry\n")
+			fmt.Fprintln(os.Stderr, "Failed to delete karydia and all test resources:", err)
+			fmt.Fprintln(os.Stderr, "You have to cleanup yourself, sorry")
 		}
 	}()
 

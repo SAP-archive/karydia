@@ -31,7 +31,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -53,7 +53,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
@@ -62,7 +62,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfile(t *testing.T) {
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -73,7 +73,7 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -98,7 +98,7 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
@@ -107,7 +107,7 @@ func TestSeccompWithNamespaceAnnotationDefinedProfile(t *testing.T) {
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -117,7 +117,7 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -139,7 +139,7 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
@@ -148,7 +148,7 @@ func TestSeccompWithoutNamespaceAnnotationUndefinedProfileFromConfig(t *testing.
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -159,7 +159,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -181,7 +181,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "unconfined" {
@@ -190,7 +190,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -200,7 +200,7 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -225,7 +225,7 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if profile := createdPod.ObjectMeta.Annotations["seccomp.security.alpha.kubernetes.io/pod"]; profile != "runtime/default" {
@@ -234,6 +234,6 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }

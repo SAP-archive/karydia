@@ -65,7 +65,7 @@ type Patches struct {
 }
 
 func New(config *Config) (*KarydiaAdmission, error) {
-	logger := logger.NewComponentLogger("admission")
+	logger := logger.NewComponentLogger(logger.GetCallersFilename())
 
 	return &KarydiaAdmission{
 		logger:        logger,
@@ -84,13 +84,13 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 	case kindPod:
 		pod, err := decodePod(req.Object.Raw)
 		if err != nil {
-			k.logger.Errorf("failed to decode object: %v", err)
+			k.logger.Errorln("failed to decode object:", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
 		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
-			k.logger.Errorf("%v", err)
+			k.logger.Errorln(err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
@@ -101,13 +101,13 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 	case kindServiceAccount:
 		sAcc, err := decodeServiceAccount(req.Object.Raw)
 		if err != nil {
-			k.logger.Errorf("failed to decode object: %v", err)
+			k.logger.Errorln("failed to decode object:", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
 		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
-			k.logger.Errorf("%v", err)
+			k.logger.Errorln(err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 

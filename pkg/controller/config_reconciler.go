@@ -58,7 +58,7 @@ func NewConfigReconciler(
 	karydiaConfigInformer v1alpha12.KarydiaConfigInformer,
 ) *ConfigReconciler {
 	reconciler := &ConfigReconciler{
-		log:         logger.NewComponentLogger("config_reconciler"),
+		log:         logger.NewComponentLogger(logger.GetCallersFilename()),
 		config:      karydiaConfig,
 		controllers: karydiaControllers,
 		clientset:   karydiaClientset,
@@ -185,13 +185,13 @@ func (reconciler *ConfigReconciler) syncConfigHandler(key string) error {
 	// convert namespace/name string into distinct (namespace and) name
 	_, configName, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
-		reconciler.log.Errorf("invalid resource key: %s", key)
+		reconciler.log.Errorln("invalid resource key:", key)
 		return nil
 	}
 
 	// if no global config is set Forget this item
 	if reconciler.config.Name == "" {
-		reconciler.log.Errorf("No config set")
+		reconciler.log.Errorln("No config set")
 		return nil
 	}
 
@@ -205,19 +205,19 @@ func (reconciler *ConfigReconciler) syncConfigHandler(key string) error {
 			if errors.IsNotFound(err) {
 				reconciler.log.Errorf("karydia config '%s' no longer exists", key)
 				if err := reconciler.createConfig(); err != nil {
-					reconciler.log.Errorf("failed to recreate karydia config: %v", err)
+					reconciler.log.Errorln("failed to recreate karydia config:", err)
 					return err
 				}
 				return nil
 			}
 			return err
 		} else {
-			reconciler.log.Infof("Found karydia config %s", config.Name)
+			reconciler.log.Infoln("Found karydia config", config.Name)
 			// compare new config with the one in memory
 			if reconciler.reconcileIsNeeded(*config) {
 				// update config in memory with new one
 				if err := reconciler.UpdateConfig(*config); err != nil {
-					reconciler.log.Errorf("failed to update karydia config: %v", err)
+					reconciler.log.Errorln("failed to update karydia config:", err)
 					return err
 				}
 			}
@@ -256,11 +256,11 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 			return err
 		}
 	}
-	reconciler.log.Infof("KarydiaConfig Name: %s\n", karydiaConfig.Name)
-	reconciler.log.Infof("KarydiaConfig AutomountServiceAccountToken: %s\n", karydiaConfig.Spec.AutomountServiceAccountToken)
-	reconciler.log.Infof("KarydiaConfig SeccompProfile: %s\n", karydiaConfig.Spec.SeccompProfile)
-	reconciler.log.Infof("KarydiaConfig NetworkPolicy: %s\n", karydiaConfig.Spec.NetworkPolicy)
-	reconciler.log.Infof("KarydiaConfig PodSecurityContext: %s\n", karydiaConfig.Spec.PodSecurityContext)
+	reconciler.log.Infoln("KarydiaConfig Name:", karydiaConfig.Name)
+	reconciler.log.Infoln("KarydiaConfig AutomountServiceAccountToken:", karydiaConfig.Spec.AutomountServiceAccountToken)
+	reconciler.log.Infoln("KarydiaConfig SeccompProfile:", karydiaConfig.Spec.SeccompProfile)
+	reconciler.log.Infoln("KarydiaConfig NetworkPolicy:", karydiaConfig.Spec.NetworkPolicy)
+	reconciler.log.Infoln("KarydiaConfig PodSecurityContext:", karydiaConfig.Spec.PodSecurityContext)
 	return nil
 }
 

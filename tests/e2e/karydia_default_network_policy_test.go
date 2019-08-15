@@ -46,10 +46,10 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 			exitCode = ws.ExitStatus()
 
 			if exitCode != expectedExitCode {
-				t.Fatalf("Exit status with unexpected code: %d %s", exitCode, command)
+				t.Fatal("Exit status with unexpected code:", exitCode, command)
 			}
 		} else {
-			t.Fatalf("Could not get exit code.")
+			t.Fatal("Could not get exit code.")
 		}
 	} else {
 		// success, exitCode should be 0 if go is ok
@@ -57,7 +57,7 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 		exitCode = ws.ExitStatus()
 
 		if exitCode != expectedExitCode {
-			t.Fatalf("Exit status with unexpected code: %d %s", exitCode, command)
+			t.Fatal("Exit status with unexpected code:", exitCode, command)
 		}
 	}
 }
@@ -69,7 +69,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	namespace, err = f.CreateTestNamespace()
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -92,13 +92,13 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("Failed to create: " + err.Error())
+		t.Fatal("Failed to create:", err.Error())
 	}
 	podName := createdPod.ObjectMeta.Name
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(ns, podName, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 
 	// host network (AWS only)
@@ -149,7 +149,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 
 	err = f.KubeClientset.CoreV1().Pods(ns).Delete(createdPod.ObjectMeta.Name, &metav1.DeleteOptions{})
 	if err != nil {
-		t.Fatalf("pod could not be deleted")
+		t.Fatal("pod could not be deleted")
 	}
 
 }

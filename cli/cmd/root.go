@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var log = logger.NewComponentLogger("cmd")
+var log = logger.NewComponentLogger(logger.GetCallersPackagename())
 
 var cfgFile string
 

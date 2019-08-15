@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+
 # Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 # This file is licensed under the Apache Software License, v. 2 except as
 # noted otherwise in the LICENSE file.
@@ -15,6 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 set -euo pipefail
 
 ca_bundle="$(kubectl get configmap -n kube-system extension-apiserver-authentication -o=jsonpath='{.data.client-ca-file}' | base64 | tr -d '\r\n')"
