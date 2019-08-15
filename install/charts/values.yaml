@@ -23,6 +23,8 @@ config:
   automountServiceAccountToken: "change-default"
   seccompProfile: "runtime/default"
   networkPolicy: "karydia-default-network-policy"
+  networkPolicyL2: "network-policy-l2"
+  networkPolicyL3: "network-policy-l3"
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
 exclusionNamespaceLabels:

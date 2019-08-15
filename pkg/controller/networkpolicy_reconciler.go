@@ -19,8 +19,9 @@ package controller
 import (
 	"bytes"
 	"fmt"
-	"github.com/karydia/karydia/pkg/logger"
 	"time"
+
+	"github.com/karydia/karydia/pkg/logger"
 
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
 	"github.com/karydia/karydia/pkg/client/clientset/versioned"
@@ -366,6 +367,11 @@ func (reconciler *NetworkpolicyReconciler) enqueueNamespace(obj interface{}) {
 func (reconciler *NetworkpolicyReconciler) reconcileIsNeeded(actualPolicy *v1.NetworkPolicy, networkpolicyName string) bool {
 
 	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
+	desiredPolicy.ObjectMeta.Namespace = actualPolicy.GetNamespace()
+	desiredPolicy.Namespace = actualPolicy.GetNamespace()
+	if len(desiredPolicy.Spec.Egress) > 0 && len(desiredPolicy.Spec.Egress[0].To) > 0 {
+		desiredPolicy.Spec.Egress[0].To[0].NamespaceSelector.MatchLabels["project"] = actualPolicy.GetNamespace()
+	}
 	actualSpec, _ := actualPolicy.Spec.Marshal()
 	desiredSpec, _ := desiredPolicy.Spec.Marshal()
 	if bytes.Equal(actualSpec, desiredSpec) {
@@ -404,6 +410,10 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 	networkpolicyName := setting.value
 	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
 	desiredPolicy.ObjectMeta.Namespace = namespace
+	desiredPolicy.Namespace = namespace
+	if len(desiredPolicy.Spec.Egress) > 0 && len(desiredPolicy.Spec.Egress[0].To) > 0 {
+		desiredPolicy.Spec.Egress[0].To[0].NamespaceSelector.MatchLabels["project"] = namespace
+	}
 
 	annotations := make(map[string]string)
 	annotations["karydia.gardener.cloud/networkPolicy.internal"] = setting.src + "/" + setting.value

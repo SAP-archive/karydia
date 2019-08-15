@@ -45,6 +45,10 @@ The current network policy called `karydia-default-network-policy` has two secur
 
 Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
 
+The `network-policy-l2` blocks the Egress ensuring that no pod can reach the Internet.
+
+The `network-policy-l3` blocks the Egress as well as allows communication only within a namespace.
+
 Karydia annotates the created network policy resources with the at the time and context valid security settings:
 
 | Resource | Annotation | Possible values |
