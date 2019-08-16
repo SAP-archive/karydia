@@ -5,6 +5,7 @@ bin/
 contrib/
 docs/
 logo/
+hack/gen-pkg/
 manifests/
 
 cov.out

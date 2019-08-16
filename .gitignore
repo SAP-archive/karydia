@@ -2,6 +2,7 @@
 
 .idea/
 bin/
+hack/gen-pkg/
 manifests/
 
 cov.out
