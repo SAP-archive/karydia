@@ -24,6 +24,8 @@ import (
 	"strings"
 )
 
+var LogLevel = "info"
+
 type Logger struct {
 	baseLogger *logrus.Logger
 	component  string
@@ -48,12 +50,31 @@ func getCallersFile() string {
 	return file
 }
 
+type Level int
+
+const (
+	debugLevel Level = 2 + iota
+	infoLevel
+	warnLevel
+	errorLevel
+	fatalLevel
+	panicLevel
+)
+
 func NewLogger() *Logger {
 	var baseLogger = logrus.New()
 	var logger = &Logger{baseLogger: baseLogger}
 	logger.baseLogger.Formatter = &logrus.JSONFormatter{}
 	logger.baseLogger.Out = os.Stdout
-	logger.baseLogger.Level = logrus.TraceLevel
+	var baseLoggerLevels = map[Level]logrus.Level{
+		debugLevel: logrus.DebugLevel,
+		infoLevel:  logrus.InfoLevel,
+		warnLevel:  logrus.WarnLevel,
+		errorLevel: logrus.ErrorLevel,
+		fatalLevel: logrus.FatalLevel,
+		panicLevel: logrus.PanicLevel,
+	}
+	logger.baseLogger.Level = baseLoggerLevels[getLogLevel()]
 	logger.entry = *logger.log()
 	return logger
 }
@@ -61,6 +82,24 @@ func NewComponentLogger(componentName string) *Logger {
 	var logger = NewLogger()
 	logger.SetComponent(componentName)
 	return logger
+}
+func getLogLevel() Level {
+	var level = infoLevel
+	switch LogLevel {
+	case "debug":
+		level = debugLevel
+	case "info":
+		level = infoLevel
+	case "warn":
+		level = warnLevel
+	case "error":
+		level = errorLevel
+	case "fatal":
+		level = fatalLevel
+	case "panic":
+		level = panicLevel
+	}
+	return level
 }
 
 func (l *Logger) SetComponent(name string) {
@@ -96,17 +135,6 @@ func (e *entry) prependStrToArgs(prefix string, main ...interface{}) []interface
 	}
 	return args
 }
-
-type Level int
-
-const (
-	debugLevel Level = 2 + iota
-	infoLevel
-	warnLevel
-	errorLevel
-	fatalLevel
-	panicLevel
-)
 
 var levelFormats = map[Level]string{
 	debugLevel: "[DEBUG_INFO]",

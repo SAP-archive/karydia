@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var log = logger.NewComponentLogger(logger.GetCallersPackagename())
+var log *logger.Logger
 
 var cfgFile string
 
@@ -33,13 +33,10 @@ var rootCmd = &cobra.Command{
 	Short: "karydia - Kubernetes security walnut",
 }
 
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatalln(err)
-	}
-}
-
 func init() {
+	rootCmd.PersistentFlags().StringVar(&logger.LogLevel, "log-level", logger.LogLevel, "log level to set a specific level for logging: debug | info | warn | error | fatal | panic")
+	log = logger.NewComponentLogger(logger.GetCallersPackagename())
+
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.karydia.yaml)")
 
@@ -67,5 +64,11 @@ func initConfig() {
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
 		log.Debugln("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func Execute() {
+	if err := rootCmd.Execute(); err != nil {
+		log.Fatalln(err)
 	}
 }
