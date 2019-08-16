@@ -53,6 +53,8 @@ spec:
           - karydia
           {{- end }}
           - runserver
+          - --log-level
+          - {{ .Values.log.level }}
           - --tls-cert
           - /etc/karydia/tls/cert.pem
           - --tls-key

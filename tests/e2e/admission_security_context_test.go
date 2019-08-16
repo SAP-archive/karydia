@@ -30,7 +30,7 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -52,12 +52,12 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	secCtx := createdPod.Spec.SecurityContext
 	if secCtx == nil {
-		t.Fatalf("expected security context to be defined by admssion but is nil")
+		t.Fatal("expected security context to be defined by admssion but is nil")
 	} else if *secCtx.RunAsUser != 65534 {
 		t.Fatalf("expected security context user id to be %v but is %v", 65534, *secCtx.RunAsUser)
 	} else if *secCtx.RunAsGroup != 65534 {
@@ -66,7 +66,7 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -76,7 +76,7 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 	}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -103,12 +103,12 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	secCtx := createdPod.Spec.SecurityContext
 	if secCtx == nil {
-		t.Fatalf("expected security context to be defined by pod definition but is nil")
+		t.Fatal("expected security context to be defined by pod definition but is nil")
 	} else if *secCtx.RunAsUser != 1000 {
 		t.Fatalf("expected security context user id to be %v but is %v", 1000, *secCtx.RunAsUser)
 	} else if secCtx.RunAsGroup != nil {
@@ -117,7 +117,7 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -125,7 +125,7 @@ func TestSecurityContextWithoutNamespaceAnnotationUndefinedContextFromConfig(t *
 	annotation := map[string]string{}
 	namespace, err := f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
@@ -147,12 +147,12 @@ func TestSecurityContextWithoutNamespaceAnnotationUndefinedContextFromConfig(t *
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	secCtx := createdPod.Spec.SecurityContext
 	if secCtx == nil {
-		t.Fatalf("expected security context to be defined by admssion but is nil")
+		t.Fatal("expected security context to be defined by admssion but is nil")
 	} else if *secCtx.RunAsUser != 65534 {
 		t.Fatalf("expected security context user id to be %v but is %v", 65534, *secCtx.RunAsUser)
 	} else if *secCtx.RunAsGroup != 65534 {
@@ -161,6 +161,6 @@ func TestSecurityContextWithoutNamespaceAnnotationUndefinedContextFromConfig(t *
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }

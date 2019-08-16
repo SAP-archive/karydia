@@ -51,17 +51,17 @@ func Setup(server, kubeconfig, namespace string) (*Framework, error) {
 	}
 	cfg, err := clientcmd.BuildConfigFromFlags(server, kubeconfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build kubeconfig: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Failed to build kubeconfig:", err)
 		os.Exit(1)
 	}
 	ApiExtClientset, err := apiextension.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build api extension clientset: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Failed to build api extension clientset:", err)
 		os.Exit(1)
 	}
 	KarydiaClientset, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to build karydia clientset: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Failed to build karydia clientset:", err)
 		os.Exit(1)
 	}
 
@@ -102,7 +102,7 @@ func (f *Framework) CreateNamespace() error {
 		ObjectMeta: objectMeta,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+		return fmt.Errorf("failed to create namespace '%s': %v", f.Namespace, err)
 	}
 	f.Namespace = ns.ObjectMeta.Name
 	return nil
@@ -118,7 +118,7 @@ func (f *Framework) CreateTestNamespace() (*corev1.Namespace, error) {
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+		return nil, fmt.Errorf("failed to create namespace '%s': %v", f.Namespace, err)
 	}
 	return ns, nil
 }
@@ -134,7 +134,7 @@ func (f *Framework) CreateTestNamespaceWithAnnotation(annotations map[string]str
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create namespace %q: %v", f.Namespace, err)
+		return nil, fmt.Errorf("failed to create namespace '%s': %v", f.Namespace, err)
 	}
 	return ns, nil
 }
@@ -155,7 +155,7 @@ func (f *Framework) DeleteAll() error {
 		if err := f.KubeClientset.CoreV1().Namespaces().Delete(name, &metav1.DeleteOptions{
 			GracePeriodSeconds: &zero,
 		}); err != nil {
-			return fmt.Errorf("failed to delete namespace %q: %v", name, err)
+			return fmt.Errorf("failed to delete namespace '%s': %v", name, err)
 		}
 	}
 	/* Delete single pod in default namespace */

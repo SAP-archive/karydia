@@ -38,22 +38,22 @@ func TestPodSeccompDefaultProfileWithAnnotation(t *testing.T) {
 
 	patches = mutatePodSeccompProfile(pod, setting, patches)
 	if len(patches.operations) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches.operations)
+		t.Error("expected 0 patches but got:", patches.operations)
 	}
 	mutatedPod, err := patchPod(pod, patches)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 	// Zero validation errors expected for mutated pod
 	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
 	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 0 validationErrors but got:", validationErrors)
 	}
 	validationErrors = []string{}
 	// Zero validation error expected for initial pod
 	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
 	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 0 validationErrors but got:", validationErrors)
 	}
 }
 
@@ -66,27 +66,27 @@ func TestPodSeccompDefaultProfileNoAnnotation(t *testing.T) {
 
 	patches = mutatePodSeccompProfile(pod, setting, patches)
 	if len(patches.operations) != 2 {
-		t.Errorf("expected 2 patches but got: %+v", patches.operations)
+		t.Error("expected 2 patches but got:", patches.operations)
 	}
 
 	t.Log(patches)
 
 	mutatedPod, err := patchPod(pod, patches)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	t.Log(mutatedPod)
 	// Zero validation errors expected for mutated pod
 	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
 	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 0 validationErrors but got:", validationErrors)
 	}
 	validationErrors = []string{}
 	// One validation error expected for initial pod
 	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
 	if len(validationErrors) != 1 {
-		t.Errorf("expected 1 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 1 validationErrors but got:", validationErrors)
 	}
 }
 
@@ -102,21 +102,21 @@ func TestPodSeccompDefaultProfileOtherAnnotation(t *testing.T) {
 
 	patches = mutatePodSeccompProfile(pod, setting, patches)
 	if len(patches.operations) != 0 {
-		t.Errorf("expected 0 patches but got: %+v", patches.operations)
+		t.Error("expected 0 patches but got:", patches.operations)
 	}
 	mutatedPod, err := patchPod(pod, patches)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 	// No validation error expected for mutated pod
 	validationErrors = validatePodSeccompProfile(mutatedPod, setting, validationErrors)
 	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 0 validationErrors but got:", validationErrors)
 	}
 	validationErrors = []string{}
 	// No validation error expected for initial pod
 	validationErrors = validatePodSeccompProfile(pod, setting, validationErrors)
 	if len(validationErrors) != 0 {
-		t.Errorf("expected 0 validationErrors but got: %+v", validationErrors)
+		t.Error("expected 0 validationErrors but got:", validationErrors)
 	}
 }

@@ -59,7 +59,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			if tc.nsAnnotation == nil {
 				namespace, err = f.CreateTestNamespace()
 				if err != nil {
-					t.Fatalf("failed to create test namespace: %v", err)
+					t.Fatal("failed to create test namespace:", err)
 				}
 			} else {
 				/* Directly annotate namespace to prevent race-conditions with the
@@ -70,7 +70,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 				}
 				namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 				if err != nil {
-					t.Fatalf("failed to create test namespace: %v", err)
+					t.Fatal("failed to create test namespace:", err)
 				}
 			}
 
@@ -79,21 +79,21 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			if tc.serviceAccount != "" && tc.serviceAccount != "default" {
 				sAcc, err := f.CreateServiceAccount(tc.serviceAccount, ns)
 				if err != nil {
-					t.Fatalf("failed to create service account: %v", err)
+					t.Fatal("failed to create service account:", err)
 				}
 				if tc.nsAnnotation != nil && *tc.nsAnnotation == "change-default" {
 					if sAcc.AutomountServiceAccountToken != nil {
-						t.Fatalf("expected service account automount to be undefined")
+						t.Fatal("expected service account automount to be undefined")
 					}
 				} else if tc.nsAnnotation != nil && *tc.nsAnnotation == "change-all" {
 					if sAcc.AutomountServiceAccountToken != nil && *sAcc.AutomountServiceAccountToken != false {
-						t.Fatalf("expected service account automount to be false")
+						t.Fatal("expected service account automount to be false")
 					}
 				}
 			} else {
 				timeout := 3000 * time.Millisecond
 				if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
-					t.Fatalf("default service account not created: %v", err)
+					t.Fatal("default service account not created:", err)
 				}
 			}
 
@@ -102,7 +102,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 			if err != nil {
 				err = updateServiceAccount(tc, ns)
 				if err != nil {
-					t.Fatalf("could not update service account: %v", err)
+					t.Fatal("could not update service account:", err)
 				}
 			}
 
@@ -128,7 +128,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 
 			createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 			if err != nil {
-				t.Fatalf("failed to create pod: %v", err)
+				t.Fatal("failed to create pod:", err)
 			}
 
 			if createdPod.Spec.AutomountServiceAccountToken != nil && *createdPod.Spec.AutomountServiceAccountToken != tc.mounted {
@@ -141,7 +141,7 @@ func TestAutomountServiceAccountToken(t *testing.T) {
 
 			timeout := 2 * time.Minute
 			if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-				t.Fatalf("pod never reached state running")
+				t.Fatal("pod never reached state running")
 			}
 		})
 	}
@@ -173,21 +173,21 @@ func TestAutomountServiceAccountTokenInDefaultNamespace(t *testing.T) {
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if createdPod.Spec.AutomountServiceAccountToken != nil {
-		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+		t.Fatal("expected automountServiceAccountToken to be nil but is", createdPod.Spec.AutomountServiceAccountToken)
 	}
 
 	if !(len(createdPod.Spec.Volumes) == 0) {
 		/* Change to t.Fatalf when karydia setup is finished */
-		t.Logf("expected is mounted to be false but is true")
+		t.Log("expected is mounted to be false but is true")
 	}
 
 	timeout := 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -201,32 +201,32 @@ func TestAutomountServiceAccountTokenEditServiceAccount(t *testing.T) {
 	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
 
 	sAcc, err := f.CreateServiceAccount("dedicated", ns)
 	if err != nil {
-		t.Fatalf("failed to create service account: %v", err)
+		t.Fatal("failed to create service account:", err)
 	}
 
 	automount := true
 	sAcc.AutomountServiceAccountToken = &automount
 	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
 	if err != nil {
-		t.Fatalf("failed to update service account: %v", err)
+		t.Fatal("failed to update service account:", err)
 	}
 
 	/* Test update resource ServiceAccount */
 	sAcc.AutomountServiceAccountToken = nil
 	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Update(sAcc)
 	if err != nil {
-		t.Fatalf("failed to update service account: %v", err)
+		t.Fatal("failed to update service account:", err)
 	}
 
 	if sAcc.AutomountServiceAccountToken == nil {
-		t.Fatalf("expected updated service account to have automoutnServiceAccountToken set to false but is nil")
+		t.Fatal("expected updated service account to have automoutnServiceAccountToken set to false but is nil")
 	}
 }
 
@@ -239,21 +239,21 @@ func TestAutomountServiceAccountTokenDefaultServiceAccountFromConfig(t *testing.
 	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
 	timeout := 3000 * time.Millisecond
 	if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
-		t.Fatalf("default service account not created: %v", err)
+		t.Fatal("default service account not created:", err)
 	}
 	sAcc, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
 	if err != nil {
-		t.Fatalf("failed to get service account: %v", err)
+		t.Fatal("failed to get service account:", err)
 	}
 
 	if *sAcc.AutomountServiceAccountToken != false {
-		t.Fatalf("expected service account to have automountServiceAccountToken set to false but is %v",
+		t.Fatal("expected service account to have automountServiceAccountToken set to false but is",
 			sAcc.AutomountServiceAccountToken)
 	}
 
@@ -274,20 +274,20 @@ func TestAutomountServiceAccountTokenDefaultServiceAccountFromConfig(t *testing.
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if createdPod.Spec.AutomountServiceAccountToken != nil {
-		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+		t.Fatal("expected automountServiceAccountToken to be nil but is", createdPod.Spec.AutomountServiceAccountToken)
 	}
 
 	if !(len(createdPod.Spec.Volumes) == 0) {
-		t.Fatalf("expected is mounted to be false but is true")
+		t.Fatal("expected is mounted to be false but is true")
 	}
 
 	timeout = 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 
@@ -300,22 +300,22 @@ func TestAutomountServiceAccountTokenDedicatedServiceAccountFromConfig(t *testin
 	}
 	namespace, err = f.CreateTestNamespaceWithAnnotation(annotation)
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	ns := namespace.ObjectMeta.Name
 	timeout := 3000 * time.Millisecond
 	sAcc, err := f.CreateServiceAccount("dedicated", ns)
 	if err != nil {
-		t.Fatalf("failed to create service account: %v", err)
+		t.Fatal("failed to create service account:", err)
 	}
 	sAcc, err = f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("dedicated", metav1.GetOptions{})
 	if err != nil {
-		t.Fatalf("failed to get service account: %v", err)
+		t.Fatal("failed to get service account:", err)
 	}
 
 	if sAcc.AutomountServiceAccountToken != nil {
-		t.Fatalf("expected service account to have automountServiceAccountToken set to nil but is %v",
+		t.Fatal("expected service account to have automountServiceAccountToken set to nil but is",
 			sAcc.AutomountServiceAccountToken)
 	}
 
@@ -337,20 +337,20 @@ func TestAutomountServiceAccountTokenDedicatedServiceAccountFromConfig(t *testin
 
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
-		t.Fatalf("failed to create pod: %v", err)
+		t.Fatal("failed to create pod:", err)
 	}
 
 	if createdPod.Spec.AutomountServiceAccountToken != nil {
-		t.Fatalf("expected automountServiceAccountToken to be nil but is %v", createdPod.Spec.AutomountServiceAccountToken)
+		t.Fatal("expected automountServiceAccountToken to be nil but is", createdPod.Spec.AutomountServiceAccountToken)
 	}
 
 	if !(len(createdPod.Spec.Volumes) == 1) {
-		t.Fatalf("expected is mounted to be true but is false")
+		t.Fatal("expected is mounted to be true but is false")
 	}
 
 	timeout = 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
-		t.Fatalf("pod never reached state running")
+		t.Fatal("pod never reached state running")
 	}
 }
 

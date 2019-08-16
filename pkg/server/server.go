@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,18 +19,16 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"net/http"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/karydia/karydia"
+	"github.com/karydia/karydia/pkg/logger"
 	"github.com/karydia/karydia/pkg/webhook"
+	"net/http"
 )
 
 type Server struct {
 	config *Config
 
-	logger *logrus.Logger
+	logger *logger.Logger
 
 	httpServer *http.Server
 }
@@ -36,7 +36,7 @@ type Server struct {
 type Config struct {
 	Addr string
 
-	Logger *logrus.Logger
+	Logger *logger.Logger
 
 	TLSConfig *tls.Config
 }
@@ -47,8 +47,7 @@ func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 	}
 
 	if config.Logger == nil {
-		server.logger = logrus.New()
-		server.logger.Level = logrus.InfoLevel
+		server.logger = logger.NewComponentLogger(logger.GetCallersPackagename())
 	} else {
 		// convenience
 		server.logger = config.Logger
@@ -78,13 +77,13 @@ func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 }
 
 func (s *Server) ListenAndServe() error {
-	s.logger.Infof("karydia server version: %s", karydia.Version)
-	s.logger.Infof("Listening on %s", s.config.Addr)
+	s.logger.Infoln("karydia server version:", karydia.Version)
+	s.logger.Infoln("Listening on", s.config.Addr)
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.logger.Infof("Shutting down ...")
+	s.logger.Infoln("Shutting down")
 	return s.httpServer.Shutdown(ctx)
 }
 
@@ -106,10 +105,6 @@ func (s *Server) middlewareLogger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		rw := &responseWriter{w, http.StatusOK}
 		next.ServeHTTP(rw, r)
-		s.logger.WithFields(logrus.Fields{
-			"remote_addr": r.RemoteAddr,
-			"method":      r.Method,
-			"status":      rw.status,
-		}).Infof("%s", r.URL)
+		s.logger.Debugf("remote_addr: %s; method: %s; status: %d; url: %s", r.RemoteAddr, r.Method, rw.status, r.URL.String())
 	})
 }

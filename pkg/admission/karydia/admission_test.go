@@ -18,8 +18,6 @@ package karydia
 
 import (
 	"encoding/json"
-	"fmt"
-	"os"
 	"testing"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -49,8 +47,7 @@ func TestPodPlainSeccomp(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	pod := &corev1.Pod{
@@ -82,32 +79,32 @@ func TestPodPlainSeccomp(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 4 {
-		t.Errorf("expected number of patches to be 4 but is %v", len(patches))
+		t.Error("expected number of patches to be 4 but is", len(patches))
 	}
 
 	t.Log(patches)
 
 	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be false but is", validationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be true but is", validationResponse.Allowed)
 	}
 
 }
@@ -128,8 +125,7 @@ func TestPodPlainSecContext(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	pod := &corev1.Pod{
@@ -161,32 +157,32 @@ func TestPodPlainSecContext(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 2 {
-		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
+		t.Error("expected number of patches to be 2 but is", len(patches))
 	}
 
 	t.Log(patches)
 
 	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be false but is", validationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be true but is", validationResponse.Allowed)
 	}
 
 }
@@ -207,8 +203,7 @@ func TestPodDefinedSecContext(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	var uid int64 = 1000
@@ -245,32 +240,32 @@ func TestPodDefinedSecContext(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 0 {
-		t.Errorf("expected number of patches to be 0 but is %v", len(patches))
+		t.Error("expected number of patches to be 0 but is", len(patches))
 	}
 
 	t.Log(patches)
 
 	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be true but is", validationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", validationResponse.Allowed)
+		t.Error("expected validation response to be true but is", validationResponse.Allowed)
 	}
 
 }
@@ -291,8 +286,7 @@ func TestPodCorrectSeccomp(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	pod := &corev1.Pod{
@@ -327,18 +321,18 @@ func TestPodCorrectSeccomp(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 0 {
-		t.Errorf("expected number of patches to be 0 but is %v", len(patches))
+		t.Error("expected number of patches to be 0 but is", len(patches))
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 }
 
@@ -358,8 +352,7 @@ func TestServiceAccountPlain(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	servieAccount := &corev1.ServiceAccount{
@@ -385,30 +378,30 @@ func TestServiceAccountPlain(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 2 {
-		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
+		t.Error("expected number of patches to be 2 but is", len(patches))
 	}
 
 	mutatedServiceAccount, err := patchServiceAccountRaw(*servieAccount, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be false but is", mutationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedServiceAccount)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 }
@@ -429,8 +422,7 @@ func TestServiceAccountAutomountDefined(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	var vTrue = true
@@ -459,30 +451,30 @@ func TestServiceAccountAutomountDefined(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 0 {
-		t.Errorf("expected number of patches to be 0 but is %v", len(patches))
+		t.Error("expected number of patches to be 0 but is", len(patches))
 	}
 
 	mutatedServiceAccount, err := patchServiceAccountRaw(*servieAccount, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedServiceAccount)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 }
@@ -503,8 +495,7 @@ func TestServiceAccountDefault(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	servieAccount := &corev1.ServiceAccount{
@@ -530,30 +521,30 @@ func TestServiceAccountDefault(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
 	if len(patches) != 2 {
-		t.Errorf("expected number of patches to be 2 but is %v", len(patches))
+		t.Error("expected number of patches to be 2 but is", len(patches))
 	}
 
 	mutatedServiceAccount, err := patchServiceAccountRaw(*servieAccount, mutationResponse.Patch)
 	if err != nil {
-		t.Errorf("failed to apply patches: %+v", err)
+		t.Error("failed to apply patches:", err)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be false but is", mutationResponse.Allowed)
 	}
 
 	ar.Request.Object.Raw, _ = json.Marshal(mutatedServiceAccount)
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 }
@@ -565,8 +556,7 @@ func TestInvalidAdmissionReview(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	/* DELETE operation -> is currently ignored */
@@ -580,12 +570,12 @@ func TestInvalidAdmissionReview(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	validationResponse := karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 	/* Ignored resource type */
@@ -599,12 +589,12 @@ func TestInvalidAdmissionReview(t *testing.T) {
 
 	mutationResponse = karydiaAdmission.Admit(ar, true)
 	if !mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
 	}
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if !validationResponse.Allowed {
-		t.Errorf("expected validation response to be true but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be true but is", mutationResponse.Allowed)
 	}
 
 	/* Unknown namepsace ServiceAccount */
@@ -618,12 +608,12 @@ func TestInvalidAdmissionReview(t *testing.T) {
 
 	mutationResponse = karydiaAdmission.Admit(ar, true)
 	if mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be false but is", mutationResponse.Allowed)
 	}
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be false but is", mutationResponse.Allowed)
 	}
 
 	/* Unknown namepsace Pod */
@@ -637,12 +627,12 @@ func TestInvalidAdmissionReview(t *testing.T) {
 
 	mutationResponse = karydiaAdmission.Admit(ar, true)
 	if mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be false but is", mutationResponse.Allowed)
 	}
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be false but is", mutationResponse.Allowed)
 	}
 
 	/* Missing namepsace */
@@ -655,12 +645,12 @@ func TestInvalidAdmissionReview(t *testing.T) {
 
 	mutationResponse = karydiaAdmission.Admit(ar, true)
 	if mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be false but is", mutationResponse.Allowed)
 	}
 
 	validationResponse = karydiaAdmission.Admit(ar, false)
 	if validationResponse.Allowed {
-		t.Errorf("expected validation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected validation response to be false but is", mutationResponse.Allowed)
 	}
 }
 
@@ -680,8 +670,7 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 		KubeClientset: kubeclient,
 	})
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to load karydia admission: %v\n", err)
-		os.Exit(1)
+		t.Fatal("Failed to load karydia admission:", err)
 	}
 
 	invalidRawServiceAccount := make([]byte, 4)
@@ -699,7 +688,7 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 
 	mutationResponse := karydiaAdmission.Admit(ar, true)
 	if mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be false but is", mutationResponse.Allowed)
 	}
 
 	ar = v1beta1.AdmissionReview{
@@ -715,7 +704,7 @@ func TestInvalidDecodeOfResources(t *testing.T) {
 
 	mutationResponse = karydiaAdmission.Admit(ar, true)
 	if mutationResponse.Allowed {
-		t.Errorf("expected mutation response to be false but is %v", mutationResponse.Allowed)
+		t.Error("expected mutation response to be false but is", mutationResponse.Allowed)
 	}
 }
 
