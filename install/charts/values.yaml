@@ -24,6 +24,8 @@ config:
   networkPolicy: "karydia-default-network-policy"
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
+log:
+  level: "info"
 dev:
   active: false
   timeoutIncreaseValue: 0

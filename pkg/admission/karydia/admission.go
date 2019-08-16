@@ -19,11 +19,10 @@ package karydia
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
+	"github.com/karydia/karydia/pkg/logger"
 
 	"github.com/karydia/karydia/pkg/k8sutil"
-	"github.com/sirupsen/logrus"
 	"k8s.io/api/admission/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,7 +33,7 @@ var kindPod = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"}
 var kindServiceAccount = metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "ServiceAccount"}
 
 type KarydiaAdmission struct {
-	logger        *logrus.Logger
+	logger        *logger.Logger
 	kubeClientset kubernetes.Interface
 	karydiaConfig *v1alpha1.KarydiaConfig
 }
@@ -66,8 +65,7 @@ type Patches struct {
 }
 
 func New(config *Config) (*KarydiaAdmission, error) {
-	logger := logrus.New()
-	logger.Level = logrus.InfoLevel
+	logger := logger.NewComponentLogger(logger.GetCallersFilename())
 
 	return &KarydiaAdmission{
 		logger:        logger,
@@ -86,13 +84,13 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 	case kindPod:
 		pod, err := decodePod(req.Object.Raw)
 		if err != nil {
-			k.logger.Errorf("failed to decode object: %v", err)
+			k.logger.Errorln("failed to decode object:", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
 		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
-			k.logger.Errorf("%v", err)
+			k.logger.Errorln(err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
@@ -103,13 +101,13 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 	case kindServiceAccount:
 		sAcc, err := decodeServiceAccount(req.Object.Raw)
 		if err != nil {
-			k.logger.Errorf("failed to decode object: %v", err)
+			k.logger.Errorln("failed to decode object:", err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
 		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
-			k.logger.Errorf("%v", err)
+			k.logger.Errorln(err)
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 

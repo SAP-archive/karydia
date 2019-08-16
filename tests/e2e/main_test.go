@@ -1,4 +1,6 @@
-// Copyright 2019 Copyright (c) 2019 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file.
+// Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
+// This file is licensed under the Apache Software License, v. 2 except as
+// noted otherwise in the LICENSE file.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,14 +43,14 @@ func main(m *testing.M) int {
 
 	f, err = framework.Setup(*server, *kubeconfig, *namespace)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to setup framework: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Failed to setup framework:", err)
 		return 1
 	}
 
 	defer func() {
 		if err := f.DeleteAll(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to delete karydia and all test resources: %v\n", err)
-			fmt.Fprintf(os.Stderr, "You have to cleanup yourself, sorry\n")
+			fmt.Fprintln(os.Stderr, "Failed to delete karydia and all test resources:", err)
+			fmt.Fprintln(os.Stderr, "You have to cleanup yourself, sorry")
 		}
 	}()
 
