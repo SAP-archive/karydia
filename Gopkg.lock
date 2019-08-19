@@ -377,6 +377,39 @@
   version = "gopls/v0.1.3"
 
 [[projects]]
+  branch = "master"
+  digest = "1:c1c2625370a2c5922fcc662e35565d442c4fa18daa36c3926e76d0ac3014eeba"
+  name = "gonum.org/v1/gonum"
+  packages = [
+    "blas",
+    "blas/blas64",
+    "blas/cblas128",
+    "blas/gonum",
+    "floats",
+    "graph",
+    "graph/internal/linear",
+    "graph/internal/ordered",
+    "graph/internal/set",
+    "graph/internal/uid",
+    "graph/iterator",
+    "graph/simple",
+    "graph/topo",
+    "graph/traverse",
+    "internal/asm/c128",
+    "internal/asm/c64",
+    "internal/asm/f32",
+    "internal/asm/f64",
+    "internal/cmplx64",
+    "internal/math32",
+    "lapack",
+    "lapack/gonum",
+    "lapack/lapack64",
+    "mat",
+  ]
+  pruneopts = "NUT"
+  revision = "b0ff1e7714e800a995eeab9cc5f70dbd82de5104"
+
+[[projects]]
   digest = "1:372cd8eba449f9b6db06677d0e73fa193ec5b19aaee148f355503ab6127045ca"
   name = "google.golang.org/appengine"
   packages = [
@@ -735,6 +768,7 @@
   digest = "1:f41480fd8c5f54b13326ee0f2ee398d5734789b790dbc4db57f9b08a0d63139a"
   name = "k8s.io/code-generator"
   packages = [
+    ".",
     "cmd/client-gen",
     "cmd/client-gen/args",
     "cmd/client-gen/generators",
@@ -750,14 +784,22 @@
     "cmd/deepcopy-gen/args",
     "cmd/defaulter-gen",
     "cmd/defaulter-gen/args",
+    "cmd/go-to-protobuf",
+    "cmd/go-to-protobuf/protobuf",
+    "cmd/import-boss",
     "cmd/informer-gen",
     "cmd/informer-gen/args",
     "cmd/informer-gen/generators",
     "cmd/lister-gen",
     "cmd/lister-gen/args",
     "cmd/lister-gen/generators",
+    "cmd/register-gen",
+    "cmd/register-gen/args",
+    "cmd/register-gen/generators",
+    "cmd/set-gen",
     "pkg/namer",
     "pkg/util",
+    "third_party/forked/golang/reflect",
   ]
   pruneopts = "T"
   revision = "18da4a14b22b17d2fa761e50037fabfbacec225b"
@@ -765,12 +807,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b3e2f0e1c912c26e82156e4170f9a90f414bd39258c2d7b96a1457df3dd1eb88"
+  digest = "1:bb872226b885afb9bcb6cabcfbee8948723155d174754a64f088bb365d8708d5"
   name = "k8s.io/gengo"
   packages = [
     "args",
     "examples/deepcopy-gen/generators",
     "examples/defaulter-gen/generators",
+    "examples/import-boss/generators",
+    "examples/set-gen/generators",
     "examples/set-gen/sets",
     "generator",
     "namer",
@@ -872,6 +916,7 @@
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/util/flowcontrol",
     "k8s.io/client-go/util/workqueue",
+    "k8s.io/code-generator",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
     "k8s.io/code-generator/cmd/deepcopy-gen",
