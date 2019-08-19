@@ -1,12 +1,16 @@
-.idea/
+**/.*.sw[po]
+**/.idea/
+
+.dockerignore
+Dockerfile
+
 .ci/
 .github/
 bin/
-contrib/
 docs/
 logo/
 hack/gen-pkg/
 manifests/
 
-cov.out
-karydia*.pem
+**/cov.out
+**/karydia*.pem
