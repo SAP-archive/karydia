@@ -1,9 +1,9 @@
 .*.sw[po]
-
 .idea/
-bin/
-hack/gen-pkg/
-manifests/
+
+/bin/
+/hack/gen-pkg/
+/manifests/
 
 cov.out
 karydia*.pem
