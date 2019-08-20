@@ -411,7 +411,7 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 		return err
 	}
 	if err := reconciler.deleteMultipleDefaultNetworkPolicies(namespace, networkpolicyName); err != nil {
-		klog.Errorf("Failed to delete network policy  %s", networkpolicyName)
+		reconciler.log.Errorln("Failed to delete network policy", networkpolicyName)
 		return err
 	}
 	return nil

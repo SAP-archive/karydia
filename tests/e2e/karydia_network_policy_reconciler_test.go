@@ -168,22 +168,22 @@ func TestCreateNamespaceAndUpdateWithAnnotation(t *testing.T) {
 
 	_, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Create(defaultKarydiaNetworkPolicyL2)
 	if err != nil {
-		t.Fatalf("failed to create: %v", defaultKarydiaNetworkPolicyL2)
+		t.Fatal("failed to create:", defaultKarydiaNetworkPolicyL2)
 	}
 
 	namespace, err := f.CreateTestNamespace()
 	if err != nil {
-		t.Fatalf("failed to create test namespace: %v", err)
+		t.Fatal("failed to create test namespace:", err)
 	}
 
 	timeout := 3000 * time.Millisecond
 	if err := f.WaitNetworkPolicyCreated(namespace.GetName(), defaultNetworkPolicyName, timeout); err != nil {
-		t.Fatalf("failed to create default network policy for new namespace: %v", err)
+		t.Fatal("failed to create default network policy for new namespace:", err)
 	}
 
 	namespaceNetworkPolicy, err := f.KubeClientset.NetworkingV1().NetworkPolicies(namespace.GetName()).Get(defaultNetworkPolicyName, meta_v1.GetOptions{})
 	if err != nil {
-		t.Fatalf("failed to create default network policy for new namespace: %v", err)
+		t.Fatal("failed to create default network policy for new namespace:", err)
 	}
 
 	annotations := make(map[string]string)
@@ -191,29 +191,29 @@ func TestCreateNamespaceAndUpdateWithAnnotation(t *testing.T) {
 	namespace.SetAnnotations(annotations)
 	namespace, err = f.KubeClientset.CoreV1().Namespaces().Update(namespace)
 	if err != nil {
-		t.Fatalf("failed to update test namespace: %v", err)
+		t.Fatal("failed to update test namespace:", err)
 	}
 
 	if err := f.WaitNetworkPolicyCreated(namespace.GetName(), defaultNetworkPolicyL2Name, timeout); err != nil {
-		t.Fatalf("failed to create default network policy for new namespace: %v", err)
+		t.Fatal("failed to create default network policy for new namespace:", err)
 	}
 
 	_, err = f.KubeClientset.NetworkingV1().NetworkPolicies(namespace.GetName()).Get(defaultNetworkPolicyName, meta_v1.GetOptions{})
 	if err == nil {
-		t.Fatalf("Default level 1 network policy should not be found")
+		t.Fatal("Default level 1 network policy should not be found")
 	}
 
 	namespaceNetworkPolicy, err = f.KubeClientset.NetworkingV1().NetworkPolicies(namespace.GetName()).Get(defaultNetworkPolicyL2Name, meta_v1.GetOptions{})
 	if err != nil {
-		t.Fatalf("failed to create default network policy for new namespace: %v", err)
+		t.Fatal("failed to create default network policy for new namespace:", err)
 	}
 
 	if !networkPoliciesAreEqual(namespaceNetworkPolicy, defaultNetworkPolicy) {
-		t.Fatalf("Network policy for created namespace is not equal to the default network policy: %v", err)
+		t.Fatal("Network policy for created namespace is not equal to the default network policy:", err)
 	}
 
 	if err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Delete(defaultNetworkPolicyL2Name, &meta_v1.DeleteOptions{}); err != nil {
-		t.Fatalf("Failed to delete karydia default network policy l2: %v", err)
+		t.Fatal("Failed to delete karydia default network policy l2:", err)
 	}
 }
 func TestGetKarydiaNetworkPolicyForExcludedNamespace(t *testing.T) {
