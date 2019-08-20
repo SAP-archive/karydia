@@ -134,6 +134,10 @@ func (f *fixture) runNamespaceAdd(namespace string) {
 		f.t.Error("error syncing foo:", err)
 	}
 }
+func (f *fixture) runNamespaceUpdate(namespace string) {
+
+	f.runNamespaceAdd(namespace)
+}
 
 func getKey(networkpolicy *networkingv1.NetworkPolicy, t *testing.T) string {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(networkpolicy)
@@ -314,4 +318,38 @@ func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
 	}
 	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
 	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "namespace")
+}
+
+func TestReconcileNetworkPolicyUpdatedNamespace(t *testing.T) {
+	f := newFixture(t)
+	newNamespace := &coreV1.Namespace{}
+	newNamespace.Name = "unittest"
+
+	f.namespace = append(f.namespace, newNamespace)
+	f.kubeobjects = append(f.kubeobjects, newNamespace)
+
+	f.runNamespaceAdd(newNamespace.Name)
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = "karydia-default-network-policy-l2"
+	newNamespace.ObjectMeta.SetAnnotations(annotations)
+	f.runNamespaceUpdate(newNamespace.Name)
+
+	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	if reconciledPolicy != nil {
+		t.Error("Default network policy should not be found")
+	}
+
+	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy-l2"].Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy-l2"], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
 }
