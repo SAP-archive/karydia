@@ -202,12 +202,14 @@ func TestReconcileNetworkPolicyUpate(t *testing.T) {
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
+
 }
 
 func TestReconcileNetworkPolicyDelete(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
 	f := newFixture(t)
+	assert := assert.New(t)
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
 	newNetworkPolicy.Name = "karydia-default-network-policy"
 	newNetworkPolicy.Namespace = "default"
@@ -222,6 +224,8 @@ func TestReconcileNetworkPolicyDelete(t *testing.T) {
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
+	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
 }
 
 func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
@@ -249,6 +253,7 @@ func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
 
 func TestReconcileNetworkPolicyCreateNamespace(t *testing.T) {
 	f := newFixture(t)
+	assert := assert.New(t)
 	newNamespace := &coreV1.Namespace{}
 	newNamespace.Name = "unittest"
 
@@ -262,6 +267,8 @@ func TestReconcileNetworkPolicyCreateNamespace(t *testing.T) {
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
+	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
 }
 
 func TestReconcileNetworkPolicyCreateExcludedNamespace(t *testing.T) {
@@ -281,6 +288,7 @@ func TestReconcileNetworkPolicyCreateExcludedNamespace(t *testing.T) {
 
 func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
 	f := newFixture(t)
+	assert := assert.New(t)
 	newNamespace := &coreV1.Namespace{}
 	newNamespace.Name = "unittest"
 
@@ -304,4 +312,6 @@ func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy-l2"], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
+	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "namespace")
 }
