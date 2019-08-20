@@ -378,7 +378,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:c1c2625370a2c5922fcc662e35565d442c4fa18daa36c3926e76d0ac3014eeba"
+  digest = "1:eeac7ccf131376ad0b00c90ef7d325e9dbb4c8b91b2336e8976c41d01cbf2ed0"
   name = "gonum.org/v1/gonum"
   packages = [
     "blas",
@@ -407,7 +407,7 @@
     "mat",
   ]
   pruneopts = "NUT"
-  revision = "b0ff1e7714e800a995eeab9cc5f70dbd82de5104"
+  revision = "035030958a884ae1378133553856bf025150c5eb"
 
 [[projects]]
   digest = "1:372cd8eba449f9b6db06677d0e73fa193ec5b19aaee148f355503ab6127045ca"
@@ -442,7 +442,7 @@
   version = "v2.2.2"
 
 [[projects]]
-  digest = "1:54ec457562690100d55206c3045e4d584d4188e8354a097d8d21c6b438034f8e"
+  digest = "1:2b55f57d7b6d9f0f23478f2432b03273073f1bf93aed18620472e7117eb4451e"
   name = "k8s.io/api"
   packages = [
     "admission/v1beta1",
@@ -484,11 +484,11 @@
     "storage/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "fdd30b57c827abbc506646ecfd579f6ccb3b80ab"
-  version = "kubernetes-1.15.2"
+  revision = "3544db3b9e4494309507e02eced5cd9dcff47e6a"
+  version = "kubernetes-1.15.3"
 
 [[projects]]
-  digest = "1:4089ab887157e1fc7402327c8d15793888a069ff68febd183a92d39054fd9bcf"
+  digest = "1:d9bd3f606b5992fb28dedbc939cfa1624ab7cc5ddeb9263afb63621c23072554"
   name = "k8s.io/apiextensions-apiserver"
   packages = [
     "pkg/apis/apiextensions",
@@ -498,11 +498,11 @@
     "pkg/client/clientset/clientset/typed/apiextensions/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "cdb999c96590a9647b48f2c523d3842e44e4d436"
-  version = "kubernetes-1.15.2"
+  revision = "0dbe462fe92dfa8b56cc9facf0658a17d0c70fc5"
+  version = "kubernetes-1.15.3"
 
 [[projects]]
-  digest = "1:8b715a7297154b514a182948b4adadc616e3d70378c57c288d7436c5d6d327eb"
+  digest = "1:1f9c2577295f99f818ffdda388d50178f756cf80855e0d6fef1621d98786dedc"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -553,8 +553,8 @@
     "third_party/forked/golang/reflect",
   ]
   pruneopts = "NUT"
-  revision = "1799e75a07195de9460b8ef7300883499f12127b"
-  version = "kubernetes-1.15.2"
+  revision = "f2f3a405f61d6c2cdc0d00687c1b5d90de91e9f0"
+  version = "kubernetes-1.15.3"
 
 [[projects]]
   digest = "1:f37986cc0483625be600ad34e1f887d08a713744d140d9fb0bbe33e61e1f3319"
@@ -567,8 +567,8 @@
     "pkg/endpoints/request",
   ]
   pruneopts = "NUT"
-  revision = "368b2058237c1228e3f4714a517d4681fd33b236"
-  version = "kubernetes-1.15.2"
+  revision = "92cc630367d00d05752f0cf0d6eca534bcd1e5a3"
+  version = "kubernetes-1.15.3"
 
 [[projects]]
   digest = "1:11c1cf7993423f7b6ce03d26a957c37bb2df032a5a869b156cda2aedfafacb69"
@@ -803,7 +803,7 @@
   ]
   pruneopts = "T"
   revision = "18da4a14b22b17d2fa761e50037fabfbacec225b"
-  version = "kubernetes-1.15.2"
+  version = "kubernetes-1.15.3"
 
 [[projects]]
   branch = "master"
@@ -851,8 +851,8 @@
     "plugin/pkg/auth/authorizer/rbac",
   ]
   pruneopts = "NUT"
-  revision = "f6278300bebbb750328ac16ee6dd3aa7d3549568"
-  version = "v1.15.2"
+  revision = "2d3c76f9091b6bec110a5e63777c332469e0cba2"
+  version = "v1.15.3"
 
 [[projects]]
   branch = "master"
