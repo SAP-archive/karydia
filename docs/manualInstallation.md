@@ -24,7 +24,7 @@ kubectl apply -f manifests/karydia/templates/config.yaml
 
 Config the annotations for karydia:
 ```
-kubectl apply -f manifests/karydia/workaround-annotate-kube-system-namespace.yaml
+kubectl apply -f manifests/karydia/templates/workaround-annotate-kube-system-namespace.yaml
 ```
 
 Create a configmap that holds the scripts for TLS/secrete creation and creates the default network policy:
