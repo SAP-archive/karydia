@@ -38,7 +38,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: {{ .Values.metadata.name }}-annotater
-        image: k8s.gcr.io/hyperkube:v1.15.2
+        image: k8s.gcr.io/hyperkube:v1.15.3
         command:
         - kubectl
         - annotate
