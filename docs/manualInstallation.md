@@ -20,6 +20,8 @@ First, register the karydia config custom resource definition (CRD) followed by 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
 kubectl apply -f manifests/karydia/templates/config.yaml
+kubectl apply -f manifests/karydia/templates/crd-karydia-network-policy.yaml
+kubectl apply -f manifests/karydia/templates/karydia-network-policy.yaml
 ```
 
 Configure the annotations for karydia:
