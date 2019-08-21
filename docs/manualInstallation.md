@@ -22,7 +22,7 @@ kubectl apply -f manifests/karydia/templates/crd-config.yaml
 kubectl apply -f manifests/karydia/templates/config.yaml
 ```
 
-Config the annotations for karydia:
+Configure the annotations for karydia:
 ```
 kubectl apply -f manifests/karydia/templates/workaround-annotate-kube-system-namespace.yaml
 ```
