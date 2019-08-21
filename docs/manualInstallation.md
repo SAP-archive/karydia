@@ -34,7 +34,6 @@ kubectl apply -f manifests/karydia/templates/configmap.yaml
 
 Last, create a service account for karydia and deploy the following manifests:
 ```
-kubectl apply -f manifests/karydia/templates/namespace.yaml
 kubectl apply -f manifests/karydia/templates/rbac.yaml
 kubectl apply -f manifests/karydia/templates/deployment.yaml
 kubectl apply -f manifests/karydia/templates/service.yaml
