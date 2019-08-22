@@ -1,5 +1,5 @@
 # Install karydia by hand
-It is possible to install karydia manually without the need of Helm and Tiller. This process is quite more complex and needs patience. If you just want to install karydia have a look at the [installation with Helm](../install/README.md).
+It is possible to install karydia manually without the need of Tiller. This process is quite more complex and needs patience. If you just want to install karydia have a look at the automated [installation with Helm and Tiller](../install/README.md).
 
 The manual process consists of the following steps:
 - Prepare the manual installation
