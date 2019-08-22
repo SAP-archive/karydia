@@ -34,4 +34,10 @@ spec:
       containers:
         - name: {{ .Values.metadata.name }}-pre-delete-container
           image: "lachlanevenson/k8s-kubectl"
-          command: ['sh', '-c', 'kubectl delete mutatingwebhookconfigurations karydia-webhook && kubectl delete validatingwebhookconfigurations karydia-webhook && kubectl delete customresourcedefinitions karydianetworkpolicies.karydia.gardener.cloud && kubectl delete customresourcedefinitions karydiaconfigs.karydia.gardener.cloud']
+          command:
+          - kubectl
+          - delete
+          - mutatingwebhookconfigurations/karydia-webhook
+          - validatingwebhookconfigurations/karydia-webhook
+          - customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud
+          - customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud
