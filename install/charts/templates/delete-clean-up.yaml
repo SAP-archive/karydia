@@ -30,7 +30,7 @@ spec:
       name: {{ .Values.metadata.name }}-pre-delete
     spec:
       serviceAccountName: {{ .Values.rbac.serviceAccount }}
-      restartPolicy: OnFailure
+      restartPolicy: Never
       containers:
         - name: {{ .Values.metadata.name }}-pre-delete-container
           image: "lachlanevenson/k8s-kubectl"
