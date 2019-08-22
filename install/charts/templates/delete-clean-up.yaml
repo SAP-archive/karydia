@@ -83,7 +83,7 @@ spec:
       serviceAccountName: {{ .Values.rbac.serviceAccount }}-cleanup
       restartPolicy: Never
       containers:
-        - name: {{ .Values.metadata.name }}-pre-delete-container
+        - name: {{ .Values.metadata.name }}-cleanup-container
           image: "lachlanevenson/k8s-kubectl"
           command:
           - kubectl
