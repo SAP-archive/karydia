@@ -5,17 +5,6 @@ The installation processes uses [Helm](https://github.com/helm/helm) to get kary
 
 You can also do an [installation by hand](../docs/manualInstallation.md) without Tiller.
 
-## Clone Respository
-
-Clone the repository and install the dependencies:
-
-```
-cd ~
-go install github.com/karydia/karydia
-cd ~/go/src/github.com/karydia/karydia
-go install ./...
-```
-
 ## Prepare Helm and Tiller
 First, create a Helm service account and initiate Tiller on the cluster. Thus, run:
 ```
