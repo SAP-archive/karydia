@@ -29,7 +29,7 @@ kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o 
 
 karydia is up and running, if the following information is logged:
 ```
-time="2018-11-09T10:47:50Z" level=info msg="Listening on 0.0.0.0:33333"
+{"component":"server","level":"info","msg":"[INFO] Listening on 0.0.0.0:33333","time":"2019-08-22T10:47:50Z"}
 [...]
 ```
 
