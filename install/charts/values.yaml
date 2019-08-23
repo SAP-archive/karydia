@@ -24,6 +24,14 @@ config:
   networkPolicy: "karydia-default-network-policy"
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
+exclusionNamespaceLabels:
+  - key: "app"
+    values:
+      - "karydia"
+exclusionObjectLabels:
+  - key: "app"
+    values:
+      - "karydia"
 log:
   level: "info"
 dev:
