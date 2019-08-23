@@ -98,3 +98,10 @@ The feature defaults a service account's `automountServiceAccountToken` to false
 |7| **not defined** | false | false | false |
 |8| true | not defined | true | true |
 |9| false | not defined | false | false |
+
+## Karydia Exclusion Handling
+
+Namespaces and other objects can be opted out of being "watched" by karydia. Therefor, there are two options:
+- (nearly) each feature provides its own annotation for namespaces and / or other objects to be ignored by the respective karydia feature - see feature descriptions above
+- [values.yaml](../install/charts/values.yaml), which provides karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object lables. If they are matched by either namespace or other object the karydia webhooks filter them out and, thus, they get fully excluded / ignored by karydia. These settings need to be adjusted before running the installation of karydia.
+:warning: Karydia's network policy feature works differently, without the use of webhooks and, hence, this feature is independent from that configuration setting.
