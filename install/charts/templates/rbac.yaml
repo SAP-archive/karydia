@@ -25,160 +25,23 @@ metadata:
 kind: ClusterRole
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: {{ .Values.metadata.name }}-view-kc
-rules:
-- apiGroups: ["karydia.gardener.cloud"]
-  resources: ["karydiaconfigs"]
-  verbs: ["get", "watch", "list"]
-
----
-
-kind: ClusterRole
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view-knp
-rules:
-- apiGroups: ["karydia.gardener.cloud"]
-  resources: ["karydianetworkpolicies"]
-  verbs: ["get", "watch", "list"]
-
----
-
-kind: ClusterRole
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-networkpolicies
-rules:
-- apiGroups: ["networking.k8s.io"]
-  resources: ["networkpolicies"]
-  verbs: ["get", "watch", "list", "create", "patch", "update", "delete"]
-
----
-
-kind: ClusterRoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: ClusterRole
-  name: view
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-kind: ClusterRoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-networkpolicies
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: ClusterRole
-  name: {{ .Values.metadata.name }}-networkpolicies
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-kind: ClusterRoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view-kc
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: ClusterRole
-  name: {{ .Values.metadata.name }}-view-kc
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-kind: ClusterRoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view-knp
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: ClusterRole
-  name: {{ .Values.metadata.name }}-view-knp
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-kind: ClusterRole
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view-roles
-rules:
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["clusterroles", "clusterrolebindings", "roles", "rolebindings"]
-  verbs: ["list"]
-
----
-
-kind: ClusterRoleBinding
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-view-roles
-subjects:
-- kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
-  name: {{ .Values.rbac.serviceAccount }}
-roleRef:
-  kind: ClusterRole
-  name: {{ .Values.metadata.name }}-view-roles
-  apiGroup: {{ .Values.rbac.apiGroup }}
-
----
-
-kind: ClusterRole
-apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
-metadata:
-  name: {{ .Values.metadata.name }}-installer
+  name: {{ .Values.metadata.name }}-init
 rules:
 - apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: ["certificates.k8s.io"]
-  resources: ["certificatesigningrequests"]
-  verbs: ["create", "delete", "get"]
-- apiGroups: ["certificates.k8s.io"]
-  resources: ["certificatesigningrequests/approval"]
-  verbs: ["update"]
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get", "create", "patch"]
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["get", "create", "delete"]
-- apiGroups: ["admissionregistration.k8s.io"]
-  resources: ["validatingwebhookconfigurations"]
-  verbs: ["get", "create", "patch"]
-- apiGroups: ["admissionregistration.k8s.io"]
-  resources: ["mutatingwebhookconfigurations"]
-  verbs: ["get", "create", "patch"]
+  resources: [""]
+  verbs: [""]
 
 ---
 
 kind: ClusterRoleBinding
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: install-{{ .Values.metadata.name }}
+  name: init-{{ .Values.metadata.name }}
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.rbac.serviceAccount }}
   namespace: {{ .Values.metadata.namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Values.metadata.name }}-installer
+  name: {{ .Values.metadata.name }}-init
   apiGroup: {{ .Values.rbac.apiGroup }}
