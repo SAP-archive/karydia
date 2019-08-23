@@ -40,10 +40,10 @@ rules:
   verbs: ["get"]
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["validatingwebhookconfigurations"]
-  verbs: ["get", "create"]
+  verbs: ["get", "create", "patch"]
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["mutatingwebhookconfigurations"]
-  verbs: ["get", "create"]
+  verbs: ["get", "create", "patch"]
 
 ---
 
