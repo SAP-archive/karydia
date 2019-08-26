@@ -180,7 +180,7 @@ metadata:
 rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
-  verbs: ["watch", "list", "create"]
+  verbs: ["get", "watch", "list", "create", "update", "delete"]
 
 ---
 
