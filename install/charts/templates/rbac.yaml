@@ -64,7 +64,7 @@ roleRef:
 kind: ClusterRole
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: {{ .Values.metadata.name }}-view
+  name: {{ .Values.metadata.name }}-namespaces
 rules:
 - apiGroups: [""]
   resources: ["namespaces"]
@@ -75,14 +75,14 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
-  name: {{ .Values.metadata.name }}-view
+  name: {{ .Values.metadata.name }}-namespaces
 subjects:
 - kind: ServiceAccount
   namespace: {{ .Values.metadata.namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
-  name: {{ .Values.metadata.name }}-view
+  name: {{ .Values.metadata.name }}-namespaces
   apiGroup: {{ .Values.rbac.apiGroup }}
 
 ---
@@ -180,7 +180,7 @@ metadata:
 rules:
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
-  verbs: ["get", "watch", "list", "create", "patch", "update", "delete"]
+  verbs: ["watch", "list", "create"]
 
 ---
 
