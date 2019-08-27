@@ -59,7 +59,7 @@ func (k *KarydiaAdmission) validatePod(pod *corev1.Pod, ns *corev1.Namespace) *v
 func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Setting {
 	var src string
 	seccompProfile, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/seccompProfile"]
-	if annotated {
+	if annotated && k.karydiaConfig != nil && k.karydiaConfig.Spec.Enforcement == false {
 		src = "namespace"
 	} else if k.karydiaConfig != nil {
 		seccompProfile = k.karydiaConfig.Spec.SeccompProfile
@@ -71,7 +71,7 @@ func (k *KarydiaAdmission) getSeccompProfileSetting(ns *corev1.Namespace) Settin
 func (k *KarydiaAdmission) getSecurityContextSetting(ns *corev1.Namespace) Setting {
 	var src string
 	securityContext, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/podSecurityContext"]
-	if annotated {
+	if annotated && k.karydiaConfig != nil && k.karydiaConfig.Spec.Enforcement == false {
 		src = "namespace"
 	} else if k.karydiaConfig != nil {
 		securityContext = k.karydiaConfig.Spec.PodSecurityContext

@@ -120,6 +120,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		log.Fatalln("Failed to load karydia config:", err)
 	}
 	log.Infoln("KarydiaConfig Name:", karydiaConfig.Name)
+	log.Infoln("KarydiaConfig Enforcement:", karydiaConfig.Spec.Enforcement)
 	log.Infoln("KarydiaConfig AutomountServiceAccountToken:", karydiaConfig.Spec.AutomountServiceAccountToken)
 	log.Infoln("KarydiaConfig SeccompProfile:", karydiaConfig.Spec.SeccompProfile)
 	log.Infoln("KarydiaConfig NetworkPolicy:", karydiaConfig.Spec.NetworkPolicy)
@@ -165,7 +166,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
-		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, karydiaClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, karydiaClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.Enforcement, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
 		karydiaControllers = append(karydiaControllers, reconciler)
 	}
 

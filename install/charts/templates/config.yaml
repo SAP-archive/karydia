@@ -21,6 +21,7 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
   name: {{ .Values.config.name }}
 spec:
+  enforcement: {{ .Values.config.enforcement }}
   automountServiceAccountToken: "{{ .Values.config.automountServiceAccountToken }}"
   seccompProfile: "{{ .Values.config.seccompProfile }}"
   networkPolicy: "{{ .Values.config.networkPolicy }}"
