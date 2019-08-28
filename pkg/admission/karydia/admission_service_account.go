@@ -51,7 +51,7 @@ func (k *KarydiaAdmission) validateServiceAccount(sAcc *corev1.ServiceAccount, n
 func (k *KarydiaAdmission) getAutomountServiceAccountTokenSetting(ns *corev1.Namespace) Setting {
 	automountServiceAccountToken, annotated := ns.ObjectMeta.Annotations["karydia.gardener.cloud/automountServiceAccountToken"]
 	src := "namespace"
-	if !annotated || (k.karydiaConfig != nil && k.karydiaConfig.Spec.Enforcement == true) {
+	if !annotated || (ns.Name != "kube-system" && k.karydiaConfig != nil && k.karydiaConfig.Spec.Enforcement == true) {
 		automountServiceAccountToken = k.karydiaConfig.Spec.AutomountServiceAccountToken
 		src = "config"
 	}
