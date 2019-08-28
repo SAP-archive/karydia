@@ -44,6 +44,7 @@ const controllerAgentName = "networkpolicy_reconciler"
 
 type NetworkpolicyReconciler struct {
 	log                          *logger.Logger
+	defaultEnforcement           bool
 	defaultNetworkPolicyName     string
 	defaultNetworkPolicies       map[string]*networkingv1.NetworkPolicy
 	defaultNetworkPolicyExcludes []string
@@ -64,6 +65,7 @@ type Setting struct {
 }
 
 func (reconciler *NetworkpolicyReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
+	reconciler.defaultEnforcement = karydiaConfig.Spec.Enforcement
 	reconciler.defaultNetworkPolicyName = karydiaConfig.Spec.NetworkPolicy
 	return nil
 }
@@ -72,10 +74,11 @@ func NewNetworkpolicyReconciler(
 	kubeclientset kubernetes.Interface,
 	karydiaClientset versioned.Interface,
 	networkpolicyInformer networkpolicyInformer.NetworkPolicyInformer, namespaceInformer namespaceInformer.NamespaceInformer,
-	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
+	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultEnforcement bool, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
 
 	reconciler := &NetworkpolicyReconciler{
 		log:                          logger.NewComponentLogger(logger.GetCallersFilename()),
+		defaultEnforcement:           defaultEnforcement,
 		defaultNetworkPolicyName:     defaultNetworkPolicyName,
 		kubeclientset:                kubeclientset,
 		karydiaClientset:             karydiaClientset,
@@ -332,7 +335,8 @@ func (reconciler *NetworkpolicyReconciler) getDefaultNetworkpolicySetting(namesp
 
 	npName := reconciler.defaultNetworkPolicyName
 	src := "config"
-	if defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy"]; ok {
+	defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy"]
+	if ok && reconciler.defaultEnforcement == false {
 		reconciler.log.Infof("Found annotation, use network policy '%s'", defaultNetworkPolicyAnnotation)
 		npName = defaultNetworkPolicyAnnotation
 		src = "namespace"

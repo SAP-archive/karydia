@@ -19,6 +19,7 @@ features:
   karydiaAdmission: true
 config:
   name: "karydia-config"
+  enforcement: false
   automountServiceAccountToken: "change-default"
   seccompProfile: "runtime/default"
   networkPolicy: "karydia-default-network-policy"
