@@ -48,3 +48,4 @@ spec:
         - karydia.gardener.cloud/workaroundForIssue=183
         - karydia.gardener.cloud/seccompProfile=unconfined
         - karydia.gardener.cloud/podSecurityContext=none
+        - karydia.gardener.cloud/automountServiceAccountToken=no-change
