@@ -36,6 +36,8 @@ spec:
       properties:
         spec:
           properties:
+            enforcement:
+              type: boolean
             automountServiceAccountToken:
               type: string
             seccompProfile:

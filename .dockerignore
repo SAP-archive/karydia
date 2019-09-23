@@ -1,4 +1,5 @@
 **/.*.sw[po]
+**/.user.kube/
 **/.idea/
 
 .dockerignore
