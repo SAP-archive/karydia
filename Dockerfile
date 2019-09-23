@@ -15,7 +15,7 @@
 # limitations under the License.
 
 ARG golangImageTag=1.12.9
-ARG alpineImageTag=3.10.1
+ARG alpineImageTag=3.10.2
 
 # build
 FROM golang:${golangImageTag} as build-stage
