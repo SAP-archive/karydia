@@ -38,7 +38,7 @@ spec:
       containers:
       - name: {{ .Values.metadata.name }}-seccomp-installer
         image: alpine:3.10.0
-        command: ["/bin/sh", "-c", "cp -r -L /seccomp/*.json /host/seccomp/ && while true; do sleep 3600; done"]
+        command: ["/bin/sh", "-c", "cp -r -L /seccomp/*.json /host/seccomp/ && while true; do sleep 86400; done"]
         volumeMounts:
         - name: profiles
           mountPath: /seccomp
