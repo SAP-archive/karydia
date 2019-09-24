@@ -257,6 +257,7 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 		}
 	}
 	reconciler.log.Infoln("KarydiaConfig Name:", karydiaConfig.Name)
+	reconciler.log.Infoln("KarydiaConfig Enforcement:", karydiaConfig.Spec.Enforcement)
 	reconciler.log.Infoln("KarydiaConfig AutomountServiceAccountToken:", karydiaConfig.Spec.AutomountServiceAccountToken)
 	reconciler.log.Infoln("KarydiaConfig SeccompProfile:", karydiaConfig.Spec.SeccompProfile)
 	reconciler.log.Infoln("KarydiaConfig NetworkPolicy:", karydiaConfig.Spec.NetworkPolicy)

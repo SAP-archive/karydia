@@ -34,6 +34,10 @@ type KarydiaConfig struct {
 }
 
 type KarydiaConfigSpec struct {
+	// Enforcement can be used to enforce this default karydia configuration
+	// and disable the "opt-out via annotation" functionality
+	Enforcement bool `json:"enforcement"`
+
 	// AutomountServiceAccountToken can be used to restrict auto-mounting
 	// of service account tokens by default
 	AutomountServiceAccountToken string `json:"automountServiceAccountToken"`
