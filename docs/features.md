@@ -62,7 +62,8 @@ The features currently supported are:
     - `no-change`represents the fallback option and uses the default Kubernetes setting (e.g. sets `automountServiceAccountToken` of ServiceAccounts to `true`)
 2. Secure-by-default Seccomp profiles
     - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
-    - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod
+    - Place your custom profiles into `install/charts/custom-seccomp-profiles/` and karydia distribute and manage them over all nodes in your cluster.
+    - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod.
 3. Secure-by-default User and Group context for pods
     - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
     - `none` represents the fallback option and disables the feature.
