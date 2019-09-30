@@ -71,7 +71,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Values.metadata.name }}-workaround
-  namespace: karydia
+  namespace: {{ .Values.metadata.namespace }}
   labels:
     app: {{ .Values.metadata.labelApp }}
   annotations:
@@ -91,7 +91,7 @@ spec:
         - annotate
         - --overwrite=true
         - namespace
-        - karydia
+        - {{ .Values.metadata.namespace }}
         - karydia.gardener.cloud/workaroundForIssue=183
         - karydia.gardener.cloud/seccompProfile=unconfined
         - karydia.gardener.cloud/podSecurityContext=none
