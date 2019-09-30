@@ -71,7 +71,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ .Values.metadata.name }}-workaround
-  namespace: kube-system
+  namespace: karydia
   labels:
     app: {{ .Values.metadata.labelApp }}
   annotations:
