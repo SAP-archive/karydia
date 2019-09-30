@@ -62,7 +62,8 @@ The features currently supported are:
     - `no-change`represents the fallback option and uses the default Kubernetes setting (e.g. sets `automountServiceAccountToken` of ServiceAccounts to `true`)
 2. Secure-by-default Seccomp profiles
     - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
-    - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod
+    - Place your custom profiles into `install/charts/custom-seccomp-profiles/` and karydia distribute and manage them over all nodes in your cluster.
+    - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod.
 3. Secure-by-default User and Group context for pods
     - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
     - `none` represents the fallback option and disables the feature.
@@ -98,3 +99,11 @@ The feature defaults a service account's `automountServiceAccountToken` to false
 |7| **not defined** | false | false | false |
 |8| true | not defined | true | true |
 |9| false | not defined | false | false |
+
+## Karydia Exclusion Handling
+
+Namespaces and other objects can be opted out of being "watched" by karydia. Therefore, there are two options:
+- (nearly) each feature provides its own annotation for namespaces and/or other objects to be ignored by the respective karydia feature - see feature descriptions above
+- [values.yaml](../install/charts/values.yaml), which provides karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object labels. If they are matched by either namespace or object the karydia webhooks filter them out and, thus, they get fully excluded/ignored by karydia. These settings need to be adjusted before running the installation of karydia.
+
+:warning: Karydia's network policy feature works differently, without the use of webhooks and, hence, this feature is independent from that configuration setting.

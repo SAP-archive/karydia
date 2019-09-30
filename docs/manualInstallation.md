@@ -30,6 +30,12 @@ kubectl apply -f manifests/karydia/templates/karydia-namespace.yaml
 kubectl apply -f manifests/karydia/templates/workaround-annotate-kube-system-namespace.yaml
 ```
 
+Create and distribute custom seccomp profiles (only if applicable):
+```
+kubectl apply -f manifests/karydia/templates/custom-seccomp-profiles.yaml
+kubectl apply -f manifests/karydia/templates/custom-seccomp-daemonset.yaml
+```
+
 Create a configmap that holds the scripts for TLS/secrete creation and creates the default network policy:
 ```
 kubectl apply -f manifests/karydia/templates/configmap.yaml

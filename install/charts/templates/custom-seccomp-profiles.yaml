@@ -14,36 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-features:
-  defaultNetworkPolicy: true
-  karydiaAdmission: true
-config:
-  name: "karydia-config"
-  enforcement: false
-  automountServiceAccountToken: "change-default"
-  seccompProfile: "runtime/default"
-  networkPolicy: "karydia-default-network-policy"
-  podSecurityContext: "nobody"
-  defaultNetworkPolicyExcludes: ""
-exclusionNamespaceLabels:
-  - key: "app"
-    values:
-      - "karydia"
-exclusionObjectLabels:
-  - key: "app"
-    values:
-      - "karydia"
-log:
-  level: "info"
-dev:
-  active: false
-  timeoutIncreaseValue: 0
+{{- $customSeccompProfiles := .Files.Glob "custom-seccomp-profiles/*.json" }}
+{{ if $customSeccompProfiles }}
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: "karydia"
-  apiGroup: "karydia.gardener.cloud"
-  namespace: "karydia"
-  labelApp: "karydia"
-rbac:
-  apiGroup: "rbac.authorization.k8s.io"
-  apiVersion: "/v1"
-  serviceAccount: "karydia"
+  name: custom-seccomp-profiles
+  namespace: {{ .Values.metadata.namespace }}
+data:
+{{ $root := . }}
+{{ range $path, $bytes := $customSeccompProfiles }}
+{{ regexFind "[^/]+$" $path | indent 2}}: |
+{{ $root.Files.Get $path | indent 4}}
+{{ end }}
+{{ end }}

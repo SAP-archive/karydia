@@ -58,6 +58,38 @@ webhooks:
         - persistentvolumes
         - validatingwebhookconfigurations
         - mutatingwebhookconfigurations
+    {{- if .Values.exclusionNamespaceLabels }}
+    namespaceSelector:
+      matchExpressions:
+        {{- range .Values.exclusionNamespaceLabels }}
+        - key: {{ .key | quote }}
+        {{- if .values }}
+          operator: NotIn
+          values:
+          {{- range .values }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- else }}
+          operator: DoesNotExist
+        {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- if .Values.exclusionObjectLabels }}
+    objectSelector:
+      matchExpressions:
+        {{- range .Values.exclusionObjectLabels }}
+        - key: {{ .key | quote }}
+        {{- if .values }}
+          operator: NotIn
+          values:
+          {{- range .values }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- else }}
+          operator: DoesNotExist
+        {{- end }}
+        {{- end }}
+    {{- end }}
 EOF
 
 cat <<EOF | sed -e "s|§CA_BUNDLE§|${ca_bundle}|g" | kubectl apply -f -
@@ -93,5 +125,37 @@ webhooks:
         - persistentvolumes
         - validatingwebhookconfigurations
         - mutatingwebhookconfigurations
+    {{- if .Values.exclusionNamespaceLabels }}
+    namespaceSelector:
+      matchExpressions:
+        {{- range .Values.exclusionNamespaceLabels }}
+        - key: {{ .key | quote }}
+        {{- if .values }}
+          operator: NotIn
+          values:
+          {{- range .values }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- else }}
+          operator: DoesNotExist
+        {{- end }}
+        {{- end }}
+    {{- end }}
+    {{- if .Values.exclusionObjectLabels }}
+    objectSelector:
+      matchExpressions:
+        {{- range .Values.exclusionObjectLabels }}
+        - key: {{ .key | quote }}
+        {{- if .values }}
+          operator: NotIn
+          values:
+          {{- range .values }}
+          - {{ . | quote }}
+          {{- end }}
+        {{- else }}
+          operator: DoesNotExist
+        {{- end }}
+        {{- end }}
+    {{- end }}
 EOF
 {{ end }}
