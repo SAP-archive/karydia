@@ -50,6 +50,11 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 		},
 	}
 
+	timeout := 3000 * time.Millisecond
+	if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
+		t.Fatal("default service account not created:", err)
+	}
+
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		t.Fatal("failed to create pod:", err)
@@ -64,7 +69,7 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 		t.Fatalf("expected security context group id to be %v but is %v", 65534, *secCtx.RunAsGroup)
 	}
 
-	timeout := 2 * time.Minute
+	timeout = 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
 		t.Fatal("pod never reached state running")
 	}

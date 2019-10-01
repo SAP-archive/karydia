@@ -179,6 +179,11 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 		},
 	}
 
+	timeout := 3000 * time.Millisecond
+	if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
+		t.Fatal("default service account not created:", err)
+	}
+
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		t.Fatal("failed to create pod:", err)
@@ -188,7 +193,7 @@ func TestSeccompWithNamespaceAnnotationUndefinedProfileFromConfig(t *testing.T) 
 		t.Fatalf("expected seccomp profile to be %v but is %v", "unconfined", profile)
 	}
 
-	timeout := 2 * time.Minute
+	timeout = 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
 		t.Fatal("pod never reached state running")
 	}
@@ -223,6 +228,11 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 		},
 	}
 
+	timeout := 3000 * time.Millisecond
+	if err := f.WaitDefaultServiceAccountCreated(ns, timeout); err != nil {
+		t.Fatal("default service account not created:", err)
+	}
+
 	createdPod, err := f.KubeClientset.CoreV1().Pods(ns).Create(pod)
 	if err != nil {
 		t.Fatal("failed to create pod:", err)
@@ -232,7 +242,7 @@ func TestSeccompWithoutNamespaceAnnotationDefinedProfile(t *testing.T) {
 		t.Fatalf("expected seccomp profile to be %v but is %v", "runtime/default", profile)
 	}
 
-	timeout := 2 * time.Minute
+	timeout = 2 * time.Minute
 	if err := f.WaitPodRunning(pod.ObjectMeta.Namespace, pod.ObjectMeta.Name, timeout); err != nil {
 		t.Fatal("pod never reached state running")
 	}
