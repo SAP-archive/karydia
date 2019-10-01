@@ -44,6 +44,9 @@ rules:
 - apiGroups: ["admissionregistration.k8s.io"]
   resources: ["mutatingwebhookconfigurations"]
   verbs: ["delete"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "delete", "patch"]
 
 ---
 
@@ -85,10 +88,4 @@ spec:
       containers:
         - name: {{ .Values.metadata.name }}-cleanup-container
           image: "lachlanevenson/k8s-kubectl"
-          command:
-          - kubectl
-          - delete
-          - mutatingwebhookconfigurations/karydia-webhook
-          - validatingwebhookconfigurations/karydia-webhook
-          - customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud
-          - customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud
+          command: ['sh', '-c', 'kubectl annotate namespace kube-system karydia.gardener.cloud/workaroundForIssue-; kubectl delete mutatingwebhookconfigurations/karydia-webhook validatingwebhookconfigurations/karydia-webhook customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud namespace/karydia']
