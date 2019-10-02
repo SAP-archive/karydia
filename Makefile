@@ -49,11 +49,11 @@ container-dev:
 
 .PHONY: deploy-dev
 deploy-dev:
-	kubectl cp bin/karydia -n kube-system $(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
+	kubectl cp bin/karydia -n karydia $(shell kubectl get pods -n=karydia --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
 
 .PHONY: debug-dev
 debug-dev:
-	kubectl port-forward -n kube-system pod/$(shell kubectl get pods -n=kube-system --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}') 2345
+	kubectl port-forward -n karydia pod/$(shell kubectl get pods -n=karydia --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}') 2345
 
 .PHONY: codegen
 codegen:

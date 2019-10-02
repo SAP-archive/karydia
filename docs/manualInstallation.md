@@ -24,8 +24,9 @@ kubectl apply -f manifests/karydia/templates/crd-karydia-network-policy.yaml
 kubectl apply -f manifests/karydia/templates/karydia-network-policy.yaml
 ```
 
-Configure the annotations for karydia:
+Create the namespace for karydia and configure the annotations:
 ```
+kubectl apply -f manifests/karydia/templates/karydia-namespace.yaml
 kubectl apply -f manifests/karydia/templates/workaround-annotate-kube-system-namespace.yaml
 ```
 
@@ -55,7 +56,7 @@ kubectl apply -f manifests/karydia/templates/post-install-webhook.yaml
 ## Make sure that karydia is running
 Take a quick look at the logs to see if karydia started:
 ```
-kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
+kubectl logs -n karydia $(kubectl get pods -n karydia -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 
 {"component":"server","level":"info","msg":"[INFO] Listening on 0.0.0.0:33333","time":"2019-08-22T10:47:50Z"}
 [...]

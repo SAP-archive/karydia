@@ -22,7 +22,7 @@ set -euo pipefail
 readonly secret_name="${SECRET_NAME:-karydia-tls}"
 readonly cert_path="${CERT_PATH:-karydia.pem}"
 readonly key_path="${KEY_PATH:-karydia-key.pem}"
-readonly namespace="${NAMESPACE:-kube-system}"
+readonly namespace="${NAMESPACE:-{{ .Values.metadata.namespace }}}"
 
 kubectl create secret generic "${secret_name}" \
   --from-file=key.pem="${key_path}" \

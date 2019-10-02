@@ -92,6 +92,7 @@ spec:
         - --overwrite=true
         - namespace
         - kube-system
+        - {{ .Values.metadata.namespace }}
         - karydia.gardener.cloud/workaroundForIssue=183
         - karydia.gardener.cloud/seccompProfile=unconfined
         - karydia.gardener.cloud/podSecurityContext=none

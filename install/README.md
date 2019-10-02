@@ -24,7 +24,7 @@ helm install ./install/charts --name karydia
 ## Make sure that karydia is runnning
 Afterwards, you can check if karydia is running by taking a look at the logs:
 ```
-kubectl logs -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
+kubectl logs -n karydia $(kubectl get pods -n karydia -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 ```
 
 karydia is up and running, if the following information is logged:
