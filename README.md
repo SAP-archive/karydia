@@ -1,42 +1,42 @@
-# Karydia - Kubernetes security walnut
+# Karydia - A Kubernetes Security Walnut
 
 ![Karydia Logo](logo/Karydia@0.5x.png)
 
-Status: beta
+Status: Beta
 
-Karydia is a security add-on to Kubernetes to help with good security practices by inverting insecure Kubernetes defaults. Kubernetes defaults are not focused on security but on running out of the box without complicated upfront configuration. It is easy to get a pod up and running. In the simplest case it is just one command. But of course, with such a simple setup you cannot expect a highly secure application. Defaults are not enough! 
+Karydia is a security add-on for Kubernetes, which helps you follow good security practices by inverting insecure default settings in Kubernetes. Kubernetes default settings are not optimized for security, but rather on running out-of-the-box without complicated configuration upfront. It's easy to get a pod up and running; in the simplest case it's just one command. Unfortunately, the simple setup does not have a highly secure application in mind. Default settings are not enough!
 
-Karydia inverts the following insecure defaults:
+Karydia inverts the following insecure default settings:
 * Unmount service account token
 * Restrict system calls by adding a seccomp profile
-* Run with minimal privileges by adding a none root user
-* Restrict network communication by adding a network policy to each namespace 
+* Run with minimal privileges by adding a non-root user
+* Restrict network communication by adding a network policy to each namespace
 
 Karydia is implemented as [webhook admission
 controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-and configurable through a custom Kubernetes resource.
+and is configurable through a custom Kubernetes resource.
 
 ![](docs/images/karydia-architecture.png)
 
 ## Installing Karydia
-Karydia can be [installed](install/README.md) via a helm chart.
+[Install](install/README.md) Karydia with a helm chart.
 
 ## Demo
-### Invert pod defaults
-The following screen shot shows the pod specification without the usage of Karydia:
-* service accout token is mounted
-* a user is not specified (so root will be taken)
-* no seccomp profile is assigned
+### Invert the Pod Defaults
+The following screenshot shows the pod specification without the usage of Karydia:
+* Service accout token is mounted
+* A user is not specified (so the pod uses root by default)
+* No seccomp profile is assigned
 ```
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
 ![](docs/images/pod-without-karydia.png)
 
-If a pod was created after the installation of Karydia the pod description will be different, even so it was the same call:
-* no service account token is mounted 
-* a user is specified (root user will not be used)
-* seccomp profile runtime/default is assigned
+If you create a pod after the installation of Karydia, the pod description is different, even if you use the same commands:
+* No service account token is mounted
+* A user is specified (the root user is not used)
+* The seccomp profile runtime/default is assigned
 
 ```
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
@@ -44,19 +44,19 @@ kubectl edit  pod/alpine -n demo
 ```
 ![](docs/images/pod-with-karydia.png)
 
-### Add network policy
-Karydia adds a default networkpolicy to each namespace and reconciles it. 
+### Add a Network Policy
+Karydia adds a default network policy to each namespace and reconciles it.
 ```
 kubectl get networkpolicy -n demo
 ```
 ![](docs/images/networkpolicy.png)
 
-## Features and configuration options
-Each feature can be configured to application specific needs:
-* custom seccomp profile
-* custom default network policy
-* specific network policy per namespace
-* usage of root user if necessary
+## Features and Configuration Options
+You can configure each feature to meet the needs of your applications:
+* A custom seccomp profile
+* A custom default network policy
+* A specific network policy per namespace
+* The usage of a root user if necessary
 
 See all [features and options](docs/features.md).
 
@@ -86,7 +86,7 @@ make test
 
 ### Debug Karydia
 
-To be able to debug (e.g. Visual Studio Code), change the following line in the Debug configuration:
+To debug (for example Visual Studio Code), change the following line in the debug configuration:
 
 ```
 "args": ["--kubeconfig","<PATH>/.kube/config"]
