@@ -8,7 +8,7 @@ The following screenshot shows the pod specification without the usage of Karydi
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
-![](./images/pod-without-karydia.png)
+![](../images/pod-without-karydia.png)
 
 If you create a pod after the installation of Karydia, the pod description is different, even if you use the same commands:
 * No service account token is mounted
@@ -19,14 +19,14 @@ If you create a pod after the installation of Karydia, the pod description is di
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
-![](./images/pod-with-karydia.png)
+![](../images/pod-with-karydia.png)
 
 ### Add a Network Policy
 Karydia adds a default network policy to each namespace and reconciles it.
 ```
 kubectl get networkpolicy -n demo
 ```
-![](./images/networkpolicy.png)
+![](../images/networkpolicy.png)
 
 ## Features and Configuration Options
 You can configure each feature to meet the needs of your applications:
@@ -35,4 +35,4 @@ You can configure each feature to meet the needs of your applications:
 * A specific network policy per namespace
 * The usage of a root user if necessary
 
-See all [features and options](./features.md).
+See all [features and options](../features.md).
