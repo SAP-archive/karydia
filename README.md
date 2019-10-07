@@ -12,12 +12,21 @@ Karydia inverts the following insecure default settings:
 * Run with minimal privileges by adding a non-root user
 * Restrict network communication by adding a network policy to each namespace
 
+A description of each feature can be found [here](docs/feature.md) and an overview of the application of these features is describe in the [demo section](docs/demos/overview.md).
+
 Karydia is implemented as [webhook admission
 controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 and is configurable through a custom Kubernetes resource.
 
 ## Installing Karydia
-[Install](install/README.md) Karydia with a helm chart.
+To install Karydia using Helm run the following commands:
+```
+kubectl apply -f ./install/helm-service-account.yaml
+helm init --service-account tiller
+helm install ./install/charts --name karydia
+```
+
+A detailed description of the installation process can be found in the [corresponding readme](install/README.md).
 
 ## Testing
 
