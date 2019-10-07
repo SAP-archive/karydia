@@ -14,10 +14,6 @@ Karydia inverts the following insecure default settings:
 
 A description of each feature can be found [here](docs/feature.md) and an overview of the application of these features is described in the [demo section](docs/demos/overview.md).
 
-Karydia is implemented as [webhook admission
-controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
-and is configurable through a custom Kubernetes resource.
-
 ## Installing Karydia
 To install Karydia using Helm run the following commands:
 ```
