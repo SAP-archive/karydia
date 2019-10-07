@@ -16,8 +16,6 @@ Karydia is implemented as [webhook admission
 controller](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/)
 and is configurable through a custom Kubernetes resource.
 
-![](docs/images/karydia-architecture.png)
-
 ## Installing Karydia
 [Install](install/README.md) Karydia with a helm chart.
 
