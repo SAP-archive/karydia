@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ .Values.metadata.name }}-seccomp
-  namespace: kube-system
+  namespace: {{ .Values.metadata.namespace }}
   labels:
     security: seccomp
     app: {{ .Values.metadata.labelApp }}
