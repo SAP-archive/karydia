@@ -32,10 +32,15 @@ Sources:
 - https://docs.projectcalico.org/v3.9/reference/resources/networkpolicy
 - https://docs.projectcalico.org/v3.9/reference/resources/globalnetworkpolicy
 
+### HostEndpoints
+A `hostEndpoint` are the network interfaces of the host itself. You can use host endpoint policy to secure a NAT gateway or router. Calico supports selector-based policy when running on a gateway or router, allowing for rich, dynamic security policy based on the labels attached to your host endpoints.
+
+Source: https://docs.projectcalico.org/v3.8/security/host-endpoints/
+
 ## Installation
 As Gardener already installs Calico into every cluster, there is not much to do.
 
-On the one hand, you can create a `NetworkPolicy` policy using `kubectly` and a `GlobalNetworkPolicy` (as well as other Calico-specific resources) using `calicoctl`.
+On the one hand, you can create a `NetworkPolicy` policy using `kubectl` and a `GlobalNetworkPolicy` (as well as other Calico-specific resources) using `calicoctl`.
 
 Source: https://docs.projectcalico.org/v3.9/getting-started/calicoctl/install
 
