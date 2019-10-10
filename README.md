@@ -19,7 +19,7 @@ To install Karydia using Helm run the following commands:
 ```
 kubectl apply -f ./install/helm-service-account.yaml
 helm init --service-account tiller
-helm install ./install/charts --name karydia
+helm install ./install/charts --name karydia --namespace karydia
 ```
 
 A detailed description of the installation process can be found in the [corresponding readme](install/README.md).
