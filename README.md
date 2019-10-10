@@ -68,7 +68,7 @@ See all [features and options](docs/features.md).
 ```
 kubectl apply -f ./install/helm-service-account.yaml
 helm init --service-account tiller
-helm install ./install/charts --name karydia --set dev.active=true
+helm install ./install/charts --name karydia --namespace karydia --set dev.active=true
 ```
 
 ##### Build, Swap and Test

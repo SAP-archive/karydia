@@ -18,7 +18,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ .Values.rbac.serviceAccount }}
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
 
 ---
 
@@ -50,7 +50,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: {{ .Values.rbac.serviceAccount }}
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: {{ .Values.metadata.name }}-init
@@ -78,7 +78,7 @@ metadata:
   name: {{ .Values.metadata.name }}-namespaces
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
@@ -106,7 +106,7 @@ metadata:
   name: {{ .Values.metadata.name }}-karydiaconfig
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
@@ -134,7 +134,7 @@ metadata:
   name: {{ .Values.metadata.name }}-karydianetworkpolicies
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
@@ -162,7 +162,7 @@ metadata:
   name: {{ .Values.metadata.name }}-roles
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole
@@ -190,7 +190,7 @@ metadata:
   name: {{ .Values.metadata.name }}-networkpolicies
 subjects:
 - kind: ServiceAccount
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
   name: {{ .Values.rbac.serviceAccount }}
 roleRef:
   kind: ClusterRole

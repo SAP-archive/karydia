@@ -41,7 +41,6 @@ dev:
 metadata:
   name: "karydia"
   apiGroup: "karydia.gardener.cloud"
-  namespace: "karydia"
   labelApp: "karydia"
 rbac:
   apiGroup: "rbac.authorization.k8s.io"

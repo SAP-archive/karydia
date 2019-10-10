@@ -18,7 +18,7 @@ helm init --service-account tiller
 ## Delpoy karydia
 Next, to deploy karydia simply run:
 ```
-helm install ./install/charts --name karydia
+helm install ./install/charts --name karydia --namespace karydia
 ```
 
 ## Make sure that karydia is runnning
@@ -36,6 +36,6 @@ karydia is up and running, if the following information is logged:
 ## Development
 If you want to install the development image, simply run:
 ```
-helm install ./install/charts --name karydia --set dev.active=true
+helm install ./install/charts --name karydia --namespace karydia --set dev.active=true
 ```
 Otherwise, you can set `dev.active` to `true` in the `values.yaml` file.
