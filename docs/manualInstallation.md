@@ -9,7 +9,7 @@ The manual process consists of the following steps:
 First, generate the manifests from the helm templates:
 ```
 mkdir manifests
-helm template ./install/charts/ --output-dir manifests
+helm template ./install/charts/ --output-dir manifests --namespace karydia
 ```
 
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
