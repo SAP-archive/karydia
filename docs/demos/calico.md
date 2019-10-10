@@ -33,7 +33,7 @@ Sources:
 - https://docs.projectcalico.org/v3.9/reference/resources/globalnetworkpolicy
 
 ### HostEndpoints
-A `hostEndpoint` are the network interfaces of the host itself. You can use host endpoint policy to secure a NAT gateway or router. Calico supports selector-based policy when running on a gateway or router, allowing for rich, dynamic security policy based on the labels attached to your host endpoints.
+A `hostEndpoint` are the network interfaces of the host itself. It is an interface attached to a host that is running Calico You can use host endpoint policy to secure a NAT gateway or router. Calico supports selector-based policy when running on a gateway or router, allowing for rich, dynamic security policy based on the labels attached to your host endpoints.
 
 Source: https://docs.projectcalico.org/v3.8/security/host-endpoints/
 
@@ -42,7 +42,9 @@ As Gardener already installs Calico into every cluster, there is not much to do.
 
 On the one hand, you can create a `NetworkPolicy` policy using `kubectl` and a `GlobalNetworkPolicy` (as well as other Calico-specific resources) using `calicoctl`.
 
-Source: https://docs.projectcalico.org/v3.9/getting-started/calicoctl/install
+Sources:
+- https://docs.projectcalico.org/v3.9/getting-started/calicoctl/install
+- https://docs.projectcalico.org/v2.0/reference/calicoctl/resources/hostendpoint
 
 ### Demo
 For testing Calico, we want to achieve the following setup:
@@ -50,9 +52,46 @@ For testing Calico, we want to achieve the following setup:
 
 Let us start!
 First, set up the `NetworkPolicies` with predefined `HostEndpoints`.
+Create a `ServiceAccount` with sufficient permissions:
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: calico-test
+  namespace: default
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: calico-role
+rules:
+- apiGroups: ["crd.projectcalico.org"]
+  resources: ["networkpolicies, globalnetworkpolicies, hostendpoints"]
+  verbs: ["create", "delete", "get", "patch", "update", "list"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["networkpolicies"]
+  verbs: ["create", "delete", "get", "patch", "update", "list"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: calico-binding
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: calico-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+```
+
+
 Get a Shell instance running a pod:
 ```
-kubectl run my-shell --rm -i --tty --image ubuntu -- bash
+kubectl run my-shell --rm -i --tty --image ubuntu --serviceaccount calico-test -- bash
 ```
 
 Install `calicoctl` into the pod's environment:
@@ -61,6 +100,7 @@ apt update
 apt install curl
 curl -O -L  https://github.com/projectcalico/calicoctl/releases/download/v3.5.8/calicoctl
 chmod +x calicoctl
+export DATASTORE_TYPE=kubernetes
 ```
 
 Create a `HostEndpoint`:
