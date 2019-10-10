@@ -31,7 +31,7 @@ readonly service_name="${SERVICE_NAME:-karydia}"
 readonly secret_name="${SECRET_NAME:-karydia-tls}"
 readonly cert_path="${CERT_PATH:-karydia.pem}"
 readonly key_path="${KEY_PATH:-karydia-key.pem}"
-readonly namespace="${NAMESPACE:-{{ .Values.metadata.namespace }}}"
+readonly namespace="${NAMESPACE:-{{ .Release.Namespace }}}"
 
 readonly csr_name="${service_name}.${namespace}"
 

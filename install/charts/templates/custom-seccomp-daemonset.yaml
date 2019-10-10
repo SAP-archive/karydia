@@ -20,11 +20,11 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ .Values.metadata.name }}-seccomp
-  namespace: kube-system
+  namespace: {{ .Release.Namespace }}
   labels:
     security: seccomp
     app: {{ .Values.metadata.labelApp }}
-  namespace: {{ .Values.metadata.namespace }}
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
