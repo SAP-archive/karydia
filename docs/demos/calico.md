@@ -48,11 +48,91 @@ Source: https://docs.projectcalico.org/v3.9/getting-started/calicoctl/install
 For testing Calico, we want to achieve the following setup:
 - ...
 
-Let us start:
+Let us start!
+First, set up the `NetworkPolicies` with predefined `HostEndpoints`.
+Get a Shell instance running a pod:
+```
+kubectl run my-shell --rm -i --tty --image ubuntu -- bash
+```
+
+Install `calicoctl` into the pod's environment:
+```
+apt update
+apt install curl
+curl -O -L  https://github.com/projectcalico/calicoctl/releases/download/v3.5.8/calicoctl
+chmod +x calicoctl
+```
+
+Create a `HostEndpoint`:
+```
+
+```
+
+Create the `GlobalNetworkPolicies`:
+```
+
+```
+
+---
+
+Next, create the test environment.
+Create two namespaces:
+```
+kubectl create namespace test1
+kubectl create namespace test2
+```
+
+Create three pods (two in namespace "test1" and one in "test2"):
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-test1-a
+  namespace: test1
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    args:
+    - sleep
+    - "10000"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-test1-b
+  namespace: test1
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    args:
+    - sleep
+    - "10000"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-test2-a
+  namespace: test2
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    args:
+    - sleep
+    - "10000"
+EOF
+```
+
+---
+
+Last, check the functionality of the implemented policies.
 
 ## Implementation Idea
-Implementing Calico-based host-security policies into karydia needs the following steps:
+Implementing Calico-based host-security policies into Karydia needs the following steps:
 1. Create a service account with sufficient permission for creating the defined policies
 2. Run a pod with `calicoctl` that applies the policies and other calico-specific resources
 3. Kill the pod after it is finished
-4. Remove all calico-related resources created by karydia if karydia is deleted
+4. Remove all calico-related resources created by Karydia if Karydia is deleted
