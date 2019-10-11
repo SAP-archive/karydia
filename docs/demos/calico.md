@@ -51,7 +51,16 @@ For testing Calico, we want to achieve the following setup:
 - ...
 
 Let us start!
-First, set up the `NetworkPolicies` with predefined `HostEndpoints`.
+First, create the test environment.
+Create two namespaces:
+```
+kubectl create namespace test1
+kubectl create namespace test2
+```
+
+---
+
+Next, set up the `NetworkPolicies` ~~with predefined `HostEndpoints`~~.
 Create a `ServiceAccount` with sufficient permissions:
 ```
 cat <<EOF | kubectl apply -f -
@@ -67,7 +76,7 @@ metadata:
   name: calico-role
 rules:
 - apiGroups: ["crd.projectcalico.org"]
-  resources: ["networkpolicies, globalnetworkpolicies, hostendpoints"]
+  resources: ["*"]
   verbs: ["create", "delete", "get", "patch", "update", "list"]
 - apiGroups: ["networking.k8s.io"]
   resources: ["networkpolicies"]
@@ -79,7 +88,7 @@ metadata:
   name: calico-binding
 subjects:
 - kind: ServiceAccount
-  name: default
+  name: calico-test2
   namespace: default
 roleRef:
   kind: ClusterRole
@@ -105,70 +114,63 @@ export DATASTORE_TYPE=kubernetes
 
 Create a `HostEndpoint`:
 ```
-
+n/a
 ```
 
-Create the `GlobalNetworkPolicies`:
+Create a `GlobalNetworkPolicy`that denies all trafic:
 ```
-
-```
-
----
-
-Next, create the test environment.
-Create two namespaces:
-```
-kubectl create namespace test1
-kubectl create namespace test2
-```
-
-Create three pods (two in namespace "test1" and one in "test2"):
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Pod
+./calicoctl create -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
 metadata:
-  name: busybox-test1-a
+  name: deny-all
+spec:
+  order: 10
+  ingress:
+  - action: Deny
+  egress:
+  - action: Deny
+EOF
+```
+
+Create a `NetworkPolicy`that allows trafic for all pods in namesapce `test1`:
+```
+./calicoctl create -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: allow-all
   namespace: test1
 spec:
-  containers:
-  - name: busybox
-    image: busybox
-    args:
-    - sleep
-    - "10000"
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: busybox-test1-b
-  namespace: test1
-spec:
-  containers:
-  - name: busybox
-    image: busybox
-    args:
-    - sleep
-    - "10000"
----
-apiVersion: v1
-kind: Pod
-metadata:
-  name: busybox-test2-a
-  namespace: test2
-spec:
-  containers:
-  - name: busybox
-    image: busybox
-    args:
-    - sleep
-    - "10000"
+  order: 5
+  ingress:
+  - action: Allow
+  egress:
+  - action: Allow
 EOF
 ```
 
 ---
 
 Last, check the functionality of the implemented policies.
+
+Run a pod in namespace `test1`:
+```
+kubectl run my-shell --rm -i --tty --image ubuntu --namespace test1 -- bash
+```
+and try to connect to a server (which should be allowed):
+```
+wget google.com
+```
+
+Run a pod in namespace `test2`:
+```
+kubectl run my-shell --rm -i --tty --image ubuntu --namespace test2 -- bash
+```
+and try to connect to a server (which should be denied):
+```
+wget google.com
+```
 
 ## Implementation Idea
 Implementing Calico-based host-security policies into Karydia needs the following steps:
