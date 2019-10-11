@@ -88,7 +88,7 @@ metadata:
   name: calico-binding
 subjects:
 - kind: ServiceAccount
-  name: calico-test2
+  name: calico-test
   namespace: default
 roleRef:
   kind: ClusterRole
@@ -112,25 +112,9 @@ chmod +x calicoctl
 export DATASTORE_TYPE=kubernetes
 ```
 
-Create a `HostEndpoint`:
+~~Create a `HostEndpoint`:~~
 ```
 n/a
-```
-
-Create a `GlobalNetworkPolicy`that denies all trafic:
-```
-./calicoctl create -f - <<EOF
-apiVersion: projectcalico.org/v3
-kind: GlobalNetworkPolicy
-metadata:
-  name: deny-all
-spec:
-  order: 10
-  ingress:
-  - action: Deny
-  egress:
-  - action: Deny
-EOF
 ```
 
 Create a `NetworkPolicy`that allows trafic for all pods in namesapce `test1`:
@@ -142,11 +126,27 @@ metadata:
   name: allow-all
   namespace: test1
 spec:
-  order: 5
+  order: 10
   ingress:
   - action: Allow
   egress:
   - action: Allow
+EOF
+```
+
+Create a `GlobalNetworkPolicy`that denies all trafic:
+```
+./calicoctl create -f - <<EOF
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: deny-all
+spec:
+  order: 5
+  ingress:
+  - action: Deny
+  egress:
+  - action: Deny
 EOF
 ```
 
