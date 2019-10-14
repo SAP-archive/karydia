@@ -48,7 +48,10 @@ Sources:
 
 ### Demo
 For testing Calico, we want to achieve the following setup:
-- ...
+- Two namespaces with each running a single pod
+- ~~Predefined `HostEndpoints`~~
+- A `GlobalNetworkPolicy` that applies to both namespaces and denies all traffic
+- A `NetworkPolicy` that applies only to one namespace and allows all traffic by overwritting the `GlobalNetworkPolicy`
 
 Let us start!
 First, create the test environment.
@@ -100,7 +103,7 @@ EOF
 
 Get a Shell instance running a pod:
 ```
-kubectl run my-shell --rm -i --tty --image ubuntu --serviceaccount calico-test -- bash
+kubectl run calico-shell --rm -i --tty --image ubuntu --serviceaccount calico-test -- bash
 ```
 
 Install `calicoctl` into the pod's environment:
@@ -123,10 +126,10 @@ Create a `NetworkPolicy`that allows trafic for all pods in namesapce `test1`:
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
-  name: allow-all
+  name: allow-all-low
   namespace: test1
 spec:
-  order: 10
+  order: 1
   ingress:
   - action: Allow
   egress:
@@ -142,6 +145,7 @@ kind: GlobalNetworkPolicy
 metadata:
   name: deny-all
 spec:
+  selector: projectcalico.org/namespace in {'test1', 'test2'}
   order: 5
   ingress:
   - action: Deny
@@ -156,20 +160,33 @@ Last, check the functionality of the implemented policies.
 
 Run a pod in namespace `test1`:
 ```
-kubectl run my-shell --rm -i --tty --image ubuntu --namespace test1 -- bash
+kubectl run test-shell1 --rm -i --tty --image ubuntu --namespace test1 -- bash
 ```
 and try to connect to a server (which should be allowed):
 ```
-wget google.com
+apt update
+apt install fping
+fping google.com
+
+=> google.com is alive
 ```
 
 Run a pod in namespace `test2`:
 ```
-kubectl run my-shell --rm -i --tty --image ubuntu --namespace test2 -- bash
+kubectl run test-shell2 --rm -i --tty --image ubuntu --namespace test2 -- bash
 ```
 and try to connect to a server (which should be denied):
 ```
-wget google.com
+apt update
+
+=> Err:1 http://archive.ubuntu.com/ubuntu bionic InRelease                  
+  Temporary failure resolving 'archive.ubuntu.com'
+Err:2 http://security.ubuntu.com/ubuntu bionic-security InRelease        
+  Temporary failure resolving 'security.ubuntu.com'
+Err:3 http://archive.ubuntu.com/ubuntu bionic-updates InRelease          
+  Temporary failure resolving 'archive.ubuntu.com'
+Err:4 http://archive.ubuntu.com/ubuntu bionic-backports InRelease
+  Temporary failure resolving 'archive.ubuntu.com'
 ```
 
 ## Implementation Idea
