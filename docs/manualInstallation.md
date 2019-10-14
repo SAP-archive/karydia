@@ -1,5 +1,5 @@
-# Install karydia by hand
-It is possible to install karydia manually without the need of Tiller. This process is quite more complex and needs patience. If you just want to install karydia have a look at the automated [installation with Helm and Tiller](../install/README.md).
+# Install Karydia by hand
+It is possible to install Karydia manually without the need of Tiller. This process is quite more complex and needs patience. If you just want to install Karydia have a look at the automated [installation with Helm and Tiller](../install/README.md).
 
 The manual process consists of the following steps:
 - Prepare the manual installation
@@ -15,7 +15,7 @@ helm template ./install/charts/ --output-dir manifests --namespace karydia
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
 ## Deploy Manifests
-First, register the karydia config custom resource definition (CRD) followed by the creation of a karydia config custom resource that holds the karydia default config which should be used.
+First, register the Karydia config custom resource definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
@@ -48,13 +48,13 @@ kubectl apply -f manifests/karydia/templates/deployment.yaml
 kubectl apply -f manifests/karydia/templates/service.yaml
 ```
 
-Finally, configure karydia as both a validating and mutating admission controller with the API server:
+Finally, configure Karydia as both a validating and mutating admission controller with the API server:
 ```
 kubectl apply -f manifests/karydia/templates/post-install-webhook.yaml
 ```
 
-## Make sure that karydia is running
-Take a quick look at the logs to see if karydia started:
+## Make sure that Karydia is running
+Take a quick look at the logs to see if Karydia started:
 ```
 kubectl logs -n karydia $(kubectl get pods -n karydia -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 

@@ -1,1 +1,1 @@
-This folder holds all your custom seccomp profiles. These will be deployed on each node of your cluster. Thus, they are accessible for each pod and you can configuring them directly in the `values.yaml` to be managed by karydia or annotate each pod/container seperately.
+This folder holds all your custom seccomp profiles. These will be deployed on each node of your cluster. Thus, they are accessible for each pod and you can configuring them directly in the `values.yaml` to be managed by Karydia or annotate each pod/container seperately.

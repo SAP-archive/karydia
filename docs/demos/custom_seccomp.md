@@ -130,7 +130,7 @@ spec:
 
 For more inforamtion have a look at the [kubernetes documentation](https://kubernetes.io/docs/concepts/policy/pod-security-policy/#seccomp).
 
-## Using karydia to handle seccomp profiles
-karydia makes it easy to enforce (custom) seccomp profiles on all your pods. You can configure the used profile in the `values.yaml` file by setting the `config.seccompProfile` value. You can use the same values as described in the table above. For your custom profile the value must be: `seccompProfile: "localhost/custom-seccomp.json"`.
+## Using Karydia to handle seccomp profiles
+Karydia makes it easy to enforce (custom) seccomp profiles on all your pods. You can configure the used profile in the `values.yaml` file by setting the `config.seccompProfile` value. You can use the same values as described in the table above. For your custom profile the value must be: `seccompProfile: "localhost/custom-seccomp.json"`.
 
-karydia will take care of the rest and enforces the defined profile in all pods and containers.
+Karydia will take care of the rest and enforces the defined profile in all pods and containers.
