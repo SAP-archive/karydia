@@ -7,7 +7,7 @@ Karydia inverts the following insecure default settings:
 * Run with minimal privileges by adding a non-root user
 * Restrict network communication by adding a network policy to each namespace
 
-A description of each feature can be found [here](./feature.md) and an overview of the application of these features is described in the [demo section](./demos/overview.md). This project provides some demos providing instructions for the features provided by Karydia. This includes:
+A description of each feature can be found [here](./features.md) and an overview of the application of these features is described in the [demo section](./demos/overview.md). This project provides some demos providing instructions for the features provided by Karydia. This includes:
 - A basic tutorial about [seccomp profile](./demos/seccomp.md) and instructions to use [custom seccomp profiles](custom_seccomp.d).
 
 ## Installing Karydia
