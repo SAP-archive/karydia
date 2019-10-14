@@ -12,7 +12,7 @@ Karydia inverts the following insecure default settings:
 * Run with minimal privileges by adding a non-root user
 * Restrict network communication by adding a network policy to each namespace
 
-A description of each feature can be found [here](docs/feature.md) and an overview of the application of these features is described in the [demo section](docs/demos/overview.md).
+A description of each feature can be found [here](docs/features.md) and an overview of the application of these features is described in the [demo section](docs/demos/overview.md).
 
 ## Installing Karydia
 To install Karydia using Helm run the following commands:
