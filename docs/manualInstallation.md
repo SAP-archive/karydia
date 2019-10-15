@@ -15,7 +15,7 @@ helm template ./install/charts/ --output-dir manifests --namespace karydia
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
 ## Deploy Manifests
-First, register the Karydia config custom resource definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
+First, register the Karydia config Custom Resource Definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
@@ -24,7 +24,7 @@ kubectl apply -f manifests/karydia/templates/crd-karydia-network-policy.yaml
 kubectl apply -f manifests/karydia/templates/karydia-network-policy.yaml
 ```
 
-Create the namespace for karydia and configure the annotations:
+Create the namespace for Karydia and configure the annotations:
 ```
 kubectl create namespace karydia
 kubectl apply -f manifests/karydia/templates/workaround-annotate-kube-system-namespace.yaml
@@ -41,7 +41,7 @@ Create a configmap that holds the scripts for TLS/secrete creation and creates t
 kubectl apply -f manifests/karydia/templates/configmap.yaml
 ````
 
-Last, create a service account for karydia and deploy the following manifests:
+Last, create a service account for Karydia and deploy the following manifests:
 ```
 kubectl apply -f manifests/karydia/templates/rbac.yaml
 kubectl apply -f manifests/karydia/templates/deployment.yaml
