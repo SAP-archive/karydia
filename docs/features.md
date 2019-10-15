@@ -21,23 +21,19 @@ helm upgrade karydia ./install/charts
 ## Karydia Network Policy
 
 When `--enable-network-policy` is set, Karydia takes the custom Karydia network policy resource
-found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed into all namespaces.
+found at the deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
-For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to true`/`false`.
+For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to `true`/`false`.
 
 You can configure the default network policy for a specific namespace with the following namespace annotation:
-
 
 | Name | Type | Possible values |
 |---|---|---|
 |"karydia.gardener.cloud/networkPolicy"|string|Name of a deployed Karydia network policy, e.g. `karydia-default-network-policy-l2`|
 
-Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
-previously deployed network policies. New namespaces created while Karydia was
-not running will not be updated when Karydia starts.
-
+Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update previously deployed network policies. New namespaces created while Karydia was not running will not be updated when Karydia starts.
 
 The current network policy called `karydia-default-network-policy` has two security measures:
 1. block access to host network (AWS only)
@@ -45,7 +41,7 @@ The current network policy called `karydia-default-network-policy` has two secur
 
 Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
 
-Karydia annotates the created network policy resources with the at the time and context valid security settings:
+Karydia annotates the created network policy resources with the currently valid security settings (depending on time and context):
 
 | Resource | Annotation | Possible values |
 |---|---|---|
@@ -55,7 +51,7 @@ Karydia annotates the created network policy resources with the at the time and 
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature by setting `karydiaAdmission` to `true`/`false`.
 
-The features currently supported are:
+The currently supported features are:
 1. Secure-by-default mounting of service account tokens
     - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
     - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
@@ -103,7 +99,7 @@ The feature defaults a service account's `automountServiceAccountToken` to false
 ## Karydia Exclusion Handling
 
 Namespaces and other objects can be opted out of being "watched" by Karydia. Therefore, there are two options:
-- (nearly) each feature provides its own annotation for namespaces and/or other objects to be ignored by the respective Karydia feature - see feature descriptions above
-- [values.yaml](../install/charts/values.yaml), which provides Karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object labels. If they are matched by either namespace or object the Karydia webhooks filter them out and, thus, they get fully excluded/ignored by Karydia. These settings need to be adjusted before running the installation of Karydia.
+- (nearly) each feature provides its own annotation for namespaces and/or other objects to be ignored by the respective Karydia feature (see the feature descriptions above).
+- [values.yaml](../install/charts/values.yaml), which provides Karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object labels. If they are matched by either a namespace or an object, the Karydia webhooks filter them out and, thus, they get fully excluded/ignored by Karydia. These settings need to be adjusted before running the installation of Karydia.
 
 :warning: Karydia's network policy feature works differently, without the use of webhooks and, hence, this feature is independent from that configuration setting.
