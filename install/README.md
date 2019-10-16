@@ -1,7 +1,7 @@
 # Installation
-karydia can be installed as a webhook into any Kubernetes cluster.
+Karydia can be installed as a webhook into any Kubernetes cluster.
 
-The installation processes uses [Helm](https://github.com/helm/helm) to get karydia up and running and is split up into two parts.
+The installation processes uses [Helm](https://github.com/helm/helm) to get Karydia up and running and is split up into two parts.
 
 You can also do an [installation by hand](../docs/manualInstallation.md) without Tiller.
 
@@ -15,19 +15,19 @@ and afterwards execute:
 helm init --service-account tiller
 ```
 
-## Delpoy karydia
-Next, to deploy karydia simply run:
+## Delpoy Karydia
+Next, to deploy Karydia simply run:
 ```
-helm install ./install/charts --name karydia --namespace karydia
+helm install ./install/charts --name karydia --namespace Karydia
 ```
 
-## Make sure that karydia is runnning
-Afterwards, you can check if karydia is running by taking a look at the logs:
+## Make sure that Karydia is runnning
+Afterwards, you can check if Karydia is running by taking a look at the logs:
 ```
 kubectl logs -n karydia $(kubectl get pods -n karydia -l app=karydia -o jsonpath='{.items[0].metadata.name}') -f -c karydia
 ```
 
-karydia is up and running, if the following information is logged:
+Karydia is up and running, if the following information is logged:
 ```
 {"component":"server","level":"info","msg":"[INFO] Listening on 0.0.0.0:33333","time":"2019-08-22T10:47:50Z"}
 [...]

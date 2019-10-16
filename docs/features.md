@@ -1,4 +1,4 @@
-# karydia features
+# Karydia features
 
 | Feature | CLI flags | install/charts/values.yaml keys | Control with Kubernetes resources | Status |
 |---------|-----------|---------------------------|-----------------------------------|--------|
@@ -8,36 +8,32 @@
 
 ## Karydia Config
 
-With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `install/charts/values.yaml`:
+With `--config` the default name of the cluster-wide `KarydiaConfig` custom resource, which Karydia is using as default configuration, can be changed. By default, it is set to `karydia-config` which is the same as mentioned at `install/charts/values.yaml`:
 ```
 config:
   name: "karydia-config"
 ```
-If you want to adjust the default karydia behavior you can just modify the specific values at `install/charts/values.yaml` and re-deploy these changes to your karydia-controlled cluster:
+If you want to adjust the default Karydia behavior you can just modify the specific values at `install/charts/values.yaml` and re-deploy these changes to your Karydia-controlled cluster:
 ```
 helm upgrade karydia ./install/charts
 ```
 
 ## Karydia Network Policy
 
-When `--enable-network-policy` is set, karydia takes the custom karydia network policy resource
-found at deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed into all namespaces.
+When `--enable-network-policy` is set, Karydia takes the custom Karydia network policy resource
+found at the deployed custom resource yaml `install/charts/templates/config.yaml` with key `networkPolicy` as a template for a network policy, which will be installed into all namespaces.
 
 Particular namespaces can be excluded with `--default-network-policy-excludes`.
 
-For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to true`/`false`.
+For easy change, adjust `enableDefaultNetworkPolicy` and `defaultNetworkPolicyExcludes` in `install/charts/values.yaml`. You can enable/disable this feature by setting `defaultNetworkPolicy` to `true`/`false`.
 
 You can configure the default network policy for a specific namespace with the following namespace annotation:
 
-
 | Name | Type | Possible values |
 |---|---|---|
-|"karydia.gardener.cloud/networkPolicy"|string|Name of a deployed karydia network policy, e.g. `karydia-default-network-policy-l2`|
+|"karydia.gardener.cloud/networkPolicy"|string|Name of a deployed Karydia network policy, e.g. `karydia-default-network-policy-l2`|
 
-Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update
-previously deployed network policies. New namespaces created while karydia was
-not running will not be updated when karydia starts.
-
+Please note: an update of `networkPolicy` at `install/charts/values.yaml` does not update previously deployed network policies. New namespaces created while Karydia was not running will not be updated when Karydia starts.
 
 The current network policy called `karydia-default-network-policy` has two security measures:
 1. block access to host network (AWS only)
@@ -45,7 +41,7 @@ The current network policy called `karydia-default-network-policy` has two secur
 
 Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
 
-Karydia annotates the created network policy resources with the at the time and context valid security settings:
+Karydia annotates the created network policy resources with the currently valid security settings (depending on time and context):
 
 | Resource | Annotation | Possible values |
 |---|---|---|
@@ -55,14 +51,14 @@ Karydia annotates the created network policy resources with the at the time and 
 
 Karydia Admission (`--enable-karydia-admission`) offers features with the goal of a secure-by-default cluster setup. You can enable/disable this feature by setting `karydiaAdmission` to `true`/`false`.
 
-The features currently supported are:
+The currently supported features are:
 1. Secure-by-default mounting of service account tokens
     - `change-default` sets `automountServiceAccountToken` of default ServiceAccounts to `false` when undefined
     - `change-all` sets `automountServiceAccountToken` of all ServiceAccounts to `false` when undefined
     - `no-change`represents the fallback option and uses the default Kubernetes setting (e.g. sets `automountServiceAccountToken` of ServiceAccounts to `true`)
 2. Secure-by-default Seccomp profiles
     - Applies the given Seccomp profile to all pods that do not explicitly specify another profile.
-    - Place your custom profiles into `install/charts/custom-seccomp-profiles/` and karydia distribute and manage them over all nodes in your cluster.
+    - Place your custom profiles into `install/charts/custom-seccomp-profiles/` and Karydia distribute and manage them over all nodes in your cluster.
     - `unconfined` represents the fallback option and will not apply any Seccomp profile to any pod.
 3. Secure-by-default User and Group context for pods
     - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
@@ -84,11 +80,11 @@ Karydia annotates the mutated resources with the at the time and context valid s
 | Pod |karydia.gardener.cloud/podSecurityContext.internal | (`config` \| `namespace`) /(`nobody` \| `none`) |
 | ServiceAccount | karydia.gardener.cloud/automountServiceAccountToken.internal | (`config` \| `namespace`) /(`change-default` \| `change-all`)|
 
-### karydia.gardener.cloud/automountServiceAccountToken
+### Karydia.gardener.cloud/automountServiceAccountToken
 
 The feature defaults a service account's `automountServiceAccountToken` to false in cases 5, 6 and 7 of the following table. With setting `change-default` this is enforced for default service accounts, with setting `change-all` this is enforced for all service accounts (apart the ones in the `kube-system` namespace). The actual behavior of auto-mounting only changes in case 5, when `automountServiceAccountToken` is also undefined in the Pod definition. 
 
-| # | service account | pod | k8s behavior | karydia behavior |
+| # | service account | pod | k8s behavior | Karydia behavior |
 |---|-----------------|-----|--------------|-----------------|
 |1| true | true | true | true |
 |2| false | true | true | true |
@@ -102,8 +98,8 @@ The feature defaults a service account's `automountServiceAccountToken` to false
 
 ## Karydia Exclusion Handling
 
-Namespaces and other objects can be opted out of being "watched" by karydia. Therefore, there are two options:
-- (nearly) each feature provides its own annotation for namespaces and/or other objects to be ignored by the respective karydia feature - see feature descriptions above
-- [values.yaml](../install/charts/values.yaml), which provides karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object labels. If they are matched by either namespace or object the karydia webhooks filter them out and, thus, they get fully excluded/ignored by karydia. These settings need to be adjusted before running the installation of karydia.
+Namespaces and other objects can be opted out of being "watched" by Karydia. Therefore, there are two options:
+- (nearly) each feature provides its own annotation for namespaces and/or other objects to be ignored by the respective Karydia feature (see the feature descriptions above).
+- [values.yaml](../install/charts/values.yaml), which provides Karydia (component) installation configurations, provides two blocks called `exclusionNamespaceLabels` and `exclusionObjectLabels`. These blocks define either namespace or other object labels. If they are matched by either a namespace or an object, the Karydia webhooks filter them out and, thus, they get fully excluded/ignored by Karydia. These settings need to be adjusted before running the installation of Karydia.
 
 :warning: Karydia's network policy feature works differently, without the use of webhooks and, hence, this feature is independent from that configuration setting.
