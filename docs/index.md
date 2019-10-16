@@ -8,7 +8,7 @@ Karydia inverts the following insecure default settings:
 * Restrict network communication by adding a network policy to each namespace
 
 A description of each feature can be found [here](./features.md) and an overview of the application of these features is described in the [demo section](./demos/overview.md). This project provides some demos providing instructions for the features provided by Karydia. This includes:
-- A basic tutorial about [seccomp profile](./demos/seccomp.md) and instructions to use [custom seccomp profiles](custom_seccomp.d).
+- A basic tutorial about [seccomp profile](./demos/seccomp.md) and instructions to use [custom seccomp profiles](custom_seccomp.nd).
 
 ## Installing Karydia
 To install Karydia using Helm run the following commands:
@@ -21,4 +21,4 @@ helm install ./install/charts --name karydia --namespace karydia
 A detailed description of the installation process can be found in the [corresponding readme](../install/README.md).
 
 ## Development
-For developers we provide an [architectural overview](./devel/architecture.md) and instructions to use a [hot swap technology](./hotswap.md).
+For developers we provide an [architectural overview](./devel/architecture.md) and instructions to use a [hot swap technology](./devel/hotswap.md).
