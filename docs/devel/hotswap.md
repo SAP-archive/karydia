@@ -1,9 +1,9 @@
-# karydia development with hotswap in running container
+# Karydia development with hotswap in running container
 
 ## Why
 
 During development it is easier and faster just to build the go binary locally
-and manually test it directly in an already running Kubernetes karydia
+and manually test it directly in an already running Kubernetes Karydia
 (development) deployment in the cloud rather than building and pushing a new
 Docker image and deploy it to Kubernetes as well.
 
@@ -12,7 +12,7 @@ Make sure your kubectl cli talks to your desired Kubernetes cluster
 
 ## [OPTIONAL] Build
 
-Build the dev karydia container:
+Build the dev Karydia container:
 ```
 make container-dev
 ```
@@ -20,20 +20,20 @@ and push it to your docker registry.
 
 ## <a name="getting-started"></a> Getting started
 
-Follow the steps of [installing karydia](../install/README.md) using the parameter `--set dev.active=true`.
+Follow the steps of [installing Karydia](../install/README.md) using the parameter `--set dev.active=true`.
 
 Develop a new feature.
 
 ### Live testing
 
-Build karydia and copy this new karydia go binary directly into the running cloud dev container:
+Build Karydia and copy this new Karydia go binary directly into the running cloud dev container:
 ```
 make build deploy-dev
 ```
 
 ### Live debugging
 
-Build karydia with debug symbols and copy this new karydia go binary directly into the running cloud dev container:
+Build Karydia with debug symbols and copy this new Karydia go binary directly into the running cloud dev container:
 ```
 make build-debug deploy-dev
 ```
@@ -47,9 +47,9 @@ Connect code debugger, e.g. from IDE, to (remote) debug port (default: `localhos
 
 ## FAQ
 
-### - Did the hotswap script noticed the newly copied / uploaded karydia binary and did it restart karydia?
+### - Did the hotswap script noticed the newly copied / uploaded Karydia binary and did it restart Karydia?
 
-Please monitor the Kubernetes (K8s) karydia(-dev) pod logs while running `make deploy-dev`, e.g. with:
+Please monitor the Kubernetes (K8s) Karydia(-dev) pod logs while running `make deploy-dev`, e.g. with:
 ```
 kubectl logs -f -n kube-system $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -c karydia | grep 'karydia-dev'
 ```
@@ -77,11 +77,11 @@ Possible reason: failing / incomplete `kubectl cp` or `karydia` shutdown takes t
 
 #### If there are no outputs
 
-Issue & solution: __you may use an incomplete karydia installation or a wrong deployment, e.g. did not set `--set dev.active=true` - start from scratch and jump to [Getting started](#getting-started)__
+Issue & solution: __you may use an incomplete Karydia installation or a wrong deployment, e.g. did not set `--set dev.active=true` - start from scratch and jump to [Getting started](#getting-started)__
 
-### - Where are the files located within the karydia container?
+### - Where are the files located within the Karydia container?
 
-With the following command it is possible to connect to bash terminal within the running karydia container:
+With the following command it is possible to connect to bash terminal within the running Karydia container:
 ```
 kubectl exec -n kube-system -it $(kubectl get pods -n kube-system -l app=karydia -o jsonpath='{.items[0].metadata.name}') -- /bin/bash
 ```
@@ -91,6 +91,6 @@ File            | Location                           | Description
 hotswap-dev.log | /go/src/github.com/karydia/karydia | hotswap logs like the ones mentioned above, e.g. infos about restarts and / or errors
 karydia.log     | /go/src/github.com/karydia/karydia | potentially some additional logs from specified run command
 hotswap-dev     | /usr/local/bin                     | hotswap-dev script bound to main container process
-karydia         | /usr/local/bin                     | karydia binary called from hotswap-dev script
-karydia-dev     | /usr/local/bin                     | karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
+karydia         | /usr/local/bin                     | Karydia binary called from hotswap-dev script
+karydia-dev     | /usr/local/bin                     | Karydia-dev binary copied / uploaded via `kubectl cp` - creation / modification of this file triggers hotswap routine; This file only exists for a short period of time (between `kubectl cp` and hotswap routine start) because it gets renamed as `karydia` and, thus, replaces the old `karydia` file.
 

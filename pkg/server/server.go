@@ -77,7 +77,7 @@ func New(config *Config, webhook *webhook.Webhook) (*Server, error) {
 }
 
 func (s *Server) ListenAndServe() error {
-	s.logger.Infoln("karydia server version:", karydia.Version)
+	s.logger.Infoln("Karydia server version:", karydia.Version)
 	s.logger.Infoln("Listening on", s.config.Addr)
 	return s.httpServer.ListenAndServeTLS("", "")
 }
