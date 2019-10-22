@@ -45,9 +45,6 @@ spec:
           {{- if .Values.dev.active }}
           - hotswap-dev
           - -r
-          {{- if gt .Values.dev.timeoutIncreaseValue 0.0 }}
-          - t{{ .Values.dev.timeoutIncreaseValue }}
-          {{- end }}
           - 'dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient
             exec {{"{{"}}binPath{{"}}"}} --'
           - --

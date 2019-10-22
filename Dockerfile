@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ARG golangImageTag=1.12.9
+ARG golangImageTag=1.13.3
 ARG alpineImageTag=3.10.2
 
 # build
