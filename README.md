@@ -2,7 +2,7 @@
 
 ![Karydia Logo](logo/Karydia@0.5x.png)
 
-Status: Beta
+** Status: Beta ** | ** Kubernetes Version >=1.15.x **
 
 Karydia is a security add-on for Kubernetes, which helps you follow good security practices by inverting insecure default settings in Kubernetes. Kubernetes default settings are not optimized for security, but rather on running out-of-the-box without complicated configuration upfront. It's easy to get a pod up and running; in the simplest case it's just one command. Unfortunately, the simple setup does not have a highly secure application in mind. Default settings are not enough!
 
