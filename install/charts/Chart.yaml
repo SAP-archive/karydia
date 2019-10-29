@@ -17,7 +17,7 @@
 apiVersion: v1
 name: karydia
 version: 0.2.0
-kubeVersion: >=1.15
+kubeVersion: ">= 1.15"
 description: A Helm chart for karydia
 keywords:
   - karydia
