@@ -41,11 +41,12 @@ import (
 )
 
 const controllerAgentName = "networkpolicy_reconciler"
+const defaultNetworkPoiliciesDelimiter = ";"
 
 type NetworkpolicyReconciler struct {
 	log                          *logger.Logger
 	defaultEnforcement           bool
-	defaultNetworkPolicyName     string
+	defaultNetworkPolicyNames    string
 	defaultNetworkPolicies       map[string]*networkingv1.NetworkPolicy
 	defaultNetworkPolicyExcludes []string
 
@@ -66,7 +67,7 @@ type Setting struct {
 
 func (reconciler *NetworkpolicyReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	reconciler.defaultEnforcement = karydiaConfig.Spec.Enforcement
-	reconciler.defaultNetworkPolicyName = karydiaConfig.Spec.NetworkPolicy
+	reconciler.defaultNetworkPolicyNames = karydiaConfig.Spec.NetworkPolicy
 	return nil
 }
 
@@ -74,12 +75,12 @@ func NewNetworkpolicyReconciler(
 	kubeclientset kubernetes.Interface,
 	karydiaClientset versioned.Interface,
 	networkpolicyInformer networkpolicyInformer.NetworkPolicyInformer, namespaceInformer namespaceInformer.NamespaceInformer,
-	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultEnforcement bool, defaultNetworkPolicyName string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
+	defaultNetworkPolicies map[string]*networkingv1.NetworkPolicy, defaultEnforcement bool, defaultNetworkPolicyNames string, defaultNetworkPolicyExcludes []string) *NetworkpolicyReconciler {
 
 	reconciler := &NetworkpolicyReconciler{
 		log:                          logger.NewComponentLogger(logger.GetCallersFilename()),
 		defaultEnforcement:           defaultEnforcement,
-		defaultNetworkPolicyName:     defaultNetworkPolicyName,
+		defaultNetworkPolicyNames:    defaultNetworkPolicyNames,
 		kubeclientset:                kubeclientset,
 		karydiaClientset:             karydiaClientset,
 		networkPolicyLister:          networkpolicyInformer.Lister(),
@@ -241,37 +242,39 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	}
 
 	setting := reconciler.getDefaultNetworkpolicySetting(namespace)
-	npName := setting.value
+	npNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
-	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		if err := reconciler.updateBuffer(npName); err != nil {
+	for _, npName := range npNames {
+		if _, ok := reconciler.defaultNetworkPolicies[npNames]; !ok {
+			if err := reconciler.updateBuffer(npName); err != nil {
 
-			reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
-			return nil
-		}
-	}
-
-	if name == reconciler.defaultNetworkPolicies[npName].GetName() {
-		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(name)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				reconciler.log.Errorf("networkpolicy '%s' in work queue no longer exists", key)
-				if err := reconciler.createDefaultNetworkPolicy(namespaceName, setting); err != nil {
-					reconciler.log.Errorln("failed to recreate default network policy:", err)
-					return fmt.Errorf("error syncing '%s': %v", namespaceName, err)
-				}
+				reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
 				return nil
 			}
-			return err
-		} else {
-			reconciler.log.Infof("Found networkpolicy '%s'", key)
-			if reconciler.reconcileIsNeeded(networkPolicy, name) {
-				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
-					reconciler.log.Errorln("failed to update default network policy:", err)
-					return fmt.Errorf("error syncing '%s': %v", key, err)
+		}
+
+		if name == reconciler.defaultNetworkPolicies[npName].GetName() {
+			networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(name)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					reconciler.log.Errorf("networkpolicy '%s' in work queue no longer exists", key)
+					if err := reconciler.createDefaultNetworkPolicy(namespaceName, setting); err != nil {
+						reconciler.log.Errorln("failed to recreate default network policy:", err)
+						return fmt.Errorf("error syncing '%s': %v", namespaceName, err)
+					}
+					return nil
 				}
-			} else if err != nil {
-				return fmt.Errorf("error syncing buffer '%s': %v", key, err)
+				return err
+			} else {
+				reconciler.log.Infof("Found networkpolicy '%s'", key)
+				if reconciler.reconcileIsNeeded(networkPolicy, name) {
+					if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
+						reconciler.log.Errorln("failed to update default network policy:", err)
+						return fmt.Errorf("error syncing '%s': %v", key, err)
+					}
+				} else if err != nil {
+					return fmt.Errorf("error syncing buffer '%s': %v", key, err)
+				}
 			}
 		}
 	}
@@ -296,52 +299,53 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 	}
 
 	setting := reconciler.getDefaultNetworkpolicySetting(namespace)
-	npName := setting.value
+	npNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
-	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		if err := reconciler.updateBuffer(npName); err != nil {
+	for _, npName := range npNames {
+		if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
+			if err := reconciler.updateBuffer(npName); err != nil {
 
-			reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
-			return nil
-		}
-	}
-
-	networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(key).Get(npName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			if err := reconciler.createDefaultNetworkPolicy(key, setting); err != nil {
-				reconciler.log.Errorln("failed to create default network policy:", err)
-				return fmt.Errorf("error syncing '%s': %v", key, err)
+				reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
+				return nil
 			}
-			reconciler.log.Infof("Successfully synced namespace '%s'", key)
-			return nil
 		}
-		return err
-	} else {
-		reconciler.log.Infof("Found networkpolicy '%s/%s'", key, npName)
-		if reconciler.reconcileIsNeeded(networkPolicy, npName) {
-			if err := reconciler.updateDefaultNetworkPolicy(key, npName); err != nil {
-				reconciler.log.Errorln("failed to update default network policy:", err)
-				return fmt.Errorf("error syncing '%s': %v", key, err)
+
+		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(key).Get(npName)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				if err := reconciler.createDefaultNetworkPolicy(key, setting); err != nil {
+					reconciler.log.Errorln("failed to create default network policy:", err)
+					return fmt.Errorf("error syncing '%s': %v", key, err)
+				}
+				reconciler.log.Infof("Successfully synced namespace '%s'", key)
+				return nil
 			}
-		} else if err != nil {
-			return fmt.Errorf("error syncing buffer '%s': %v", key, err)
+			return err
+		} else {
+			reconciler.log.Infof("Found networkpolicy '%s/%s'", key, npName)
+			if reconciler.reconcileIsNeeded(networkPolicy, npName) {
+				if err := reconciler.updateDefaultNetworkPolicy(key, npName); err != nil {
+					reconciler.log.Errorln("failed to update default network policy:", err)
+					return fmt.Errorf("error syncing '%s': %v", key, err)
+				}
+			} else if err != nil {
+				return fmt.Errorf("error syncing buffer '%s': %v", key, err)
+			}
 		}
 	}
 	return nil
 }
 
 func (reconciler *NetworkpolicyReconciler) getDefaultNetworkpolicySetting(namespace *corev1.Namespace) Setting {
-
-	npName := reconciler.defaultNetworkPolicyName
+	npNames := reconciler.defaultNetworkPolicyNames
 	src := "config"
 	defaultNetworkPolicyAnnotation, ok := namespace.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy"]
 	if ok && reconciler.defaultEnforcement == false {
-		reconciler.log.Infof("Found annotation, use network policy '%s'", defaultNetworkPolicyAnnotation)
-		npName = defaultNetworkPolicyAnnotation
+		reconciler.log.Infof("Found annotation, use network policies '%s'", defaultNetworkPolicyAnnotation)
+		npNames = defaultNetworkPolicyAnnotation
 		src = "namespace"
 	}
-	return Setting{value: npName, src: src}
+	return Setting{value: npNames, src: src}
 }
 
 func (reconciler *NetworkpolicyReconciler) enqueueNetworkPolicy(obj interface{}) {
@@ -401,31 +405,36 @@ func (reconciler *NetworkpolicyReconciler) updateBuffer(networkpolicyName string
 }
 
 func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace string, setting Setting) error {
-	networkpolicyName := setting.value
-	desiredPolicy := reconciler.defaultNetworkPolicies[networkpolicyName].DeepCopy()
-	desiredPolicy.ObjectMeta.Namespace = namespace
+	npNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
-	annotations := make(map[string]string)
-	annotations["karydia.gardener.cloud/networkPolicy.internal"] = setting.src + "/" + setting.value
-	desiredPolicy.ObjectMeta.SetAnnotations(annotations)
+	for _, npName := range npNames {
+		desiredPolicy := reconciler.defaultNetworkPolicies[npName].DeepCopy()
+		desiredPolicy.ObjectMeta.Namespace = namespace
 
-	reconciler.log.Infof("Deep copy of network policy with name '%s'", desiredPolicy.GetName())
-	if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
-		reconciler.log.Errorf("Network policy creation failed. Name specified: '%s'; Actual name: '%s'", networkpolicyName, desiredPolicy.GetName())
-		return err
+		annotations := make(map[string]string)
+		annotations["karydia.gardener.cloud/networkPolicy.internal"] = setting.src + "/" + setting.value
+		desiredPolicy.ObjectMeta.SetAnnotations(annotations)
+
+		reconciler.log.Infof("Deep copy of network policy with name '%s'", desiredPolicy.GetName())
+		if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
+			reconciler.log.Errorf("Network policy creation failed. Name specified: '%s'; Actual name: '%s'", networkpolicyName, desiredPolicy.GetName())
+			return err
+		}
 	}
-	if err := reconciler.deleteMultipleDefaultNetworkPolicies(namespace, networkpolicyName); err != nil {
+
+	if err := reconciler.deleteMultipleDefaultNetworkPolicies(namespace, npNames); err != nil {
 		reconciler.log.Errorln("Failed to delete network policy", networkpolicyName)
 		return err
 	}
+
 	return nil
 }
 
-func (reconciler *NetworkpolicyReconciler) deleteMultipleDefaultNetworkPolicies(namespace string, networkpolicyName string) error {
-	for npName := range reconciler.defaultNetworkPolicies {
-		if npName != networkpolicyName {
-			if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Get(npName, meta_v1.GetOptions{}); err == nil {
-				err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Delete(npName, &meta_v1.DeleteOptions{})
+func (reconciler *NetworkpolicyReconciler) deleteMultipleDefaultNetworkPolicies(namespace string, expectedNpNames []string) error {
+	for defaultNpName := range reconciler.defaultNetworkPolicies {
+		if !(stringInSlice(defaultNpName, expectedNpNames)) {
+			if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Get(defaultNpName, meta_v1.GetOptions{}); err == nil {
+				err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Delete(defaultNpName, &meta_v1.DeleteOptions{})
 				if err != nil {
 					return err
 				}
@@ -434,4 +443,13 @@ func (reconciler *NetworkpolicyReconciler) deleteMultipleDefaultNetworkPolicies(
 	}
 
 	return nil
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
