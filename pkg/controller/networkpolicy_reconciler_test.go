@@ -158,7 +158,7 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 	assert := assert.New(t)
 	f := newFixture(t)
 	reconciler, _ := f.newReconciler()
-	reconciler.defaultNetworkPolicyName = "default"
+	reconciler.defaultNetworkPolicyNames = "default"
 
 	newNetworkpolicyName := "newName"
 
@@ -175,11 +175,11 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 	}
 
 	// first check for different config values
-	assert.NotEqual(newNetworkpolicyName, reconciler.defaultNetworkPolicyName, "config values shouldn't be equal before updated")
+	assert.NotEqual(newNetworkpolicyName, reconciler.defaultNetworkPolicyNames, "config values shouldn't be equal before updated")
 	// try update with right network policy name
 	assert.NoError(reconciler.UpdateConfig(newConfig), "config update should succeed because of right network policy name")
 	// check for equal config values
-	assert.Equal(newNetworkpolicyName, reconciler.defaultNetworkPolicyName, "config values should be equal after succeeded update")
+	assert.Equal(newNetworkpolicyName, reconciler.defaultNetworkPolicyNames, "config values should be equal after succeeded update")
 
 }
 
