@@ -129,7 +129,7 @@ func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) 
 			})
 			annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
 		}
-		containers := pod.Spec.Containers;
+		containers := pod.Spec.Containers
 		for i := range containers {
 			secCtxContainers := pod.Spec.Containers[i].SecurityContext
 			if secCtxContainers == nil || secCtxContainers.AllowPrivilegeEscalation == nil {

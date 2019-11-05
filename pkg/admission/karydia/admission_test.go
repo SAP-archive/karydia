@@ -84,8 +84,8 @@ func TestPodPlainSeccomp(t *testing.T) {
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
-	if len(patches) != 4 {
-		t.Error("expected number of patches to be 4 but is", len(patches))
+	if len(patches) != 5 {
+		t.Error("expected number of patches to be 5 but is", len(patches))
 	}
 
 	t.Log(patches)
@@ -162,8 +162,8 @@ func TestPodPlainSecContext(t *testing.T) {
 
 	var patches []patchOperation
 	err = json.Unmarshal(mutationResponse.Patch, &patches)
-	if len(patches) != 2 {
-		t.Error("expected number of patches to be 2 but is", len(patches))
+	if len(patches) != 3 {
+		t.Error("expected number of patches to be 3 but is", len(patches))
 	}
 
 	t.Log(patches)
@@ -207,6 +207,7 @@ func TestPodDefinedSecContext(t *testing.T) {
 	}
 
 	var uid int64 = 1000
+	var allowPrivilegeEscalation = true
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -221,6 +222,9 @@ func TestPodDefinedSecContext(t *testing.T) {
 				{
 					Name:  "nginx",
 					Image: "nginx",
+					SecurityContext: &corev1.SecurityContext{
+						AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+					},
 				},
 			},
 		},

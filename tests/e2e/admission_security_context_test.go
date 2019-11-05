@@ -1,4 +1,3 @@
-
 // Copyright (C) 2019 SAP SE or an SAP affiliate company. All rights reserved.
 // This file is licensed under the Apache Software License, v. 2 except as
 // noted otherwise in the LICENSE file.
@@ -70,7 +69,7 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 		t.Fatalf("expected security context group id to be %v but is %v", 65534, *secCtx.RunAsGroup)
 	}
 
-	containers := createdPod.Spec.Containers;
+	containers := createdPod.Spec.Containers
 	for i := range containers {
 		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
 		if secCtxContainers == nil {
@@ -135,7 +134,7 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 		t.Fatalf("expected security context group id to be %v but is %v", "nil", *secCtx.RunAsGroup)
 	}
 
-	containers := createdPod.Spec.Containers;
+	containers := createdPod.Spec.Containers
 	for i := range containers {
 		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
 		if secCtxContainers == nil {
@@ -189,7 +188,7 @@ func TestSecurityContextWithoutNamespaceAnnotationUndefinedContextFromConfig(t *
 		t.Fatalf("expected security context group id to be %v but is %v", 65534, *secCtx.RunAsGroup)
 	}
 
-	containers := createdPod.Spec.Containers;
+	containers := createdPod.Spec.Containers
 	for i := range containers {
 		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
 		if secCtxContainers == nil {
