@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/karydia/karydia/pkg/logger"
+	"strings"
 	"time"
 
 	"github.com/karydia/karydia/pkg/apis/karydia/v1alpha1"
@@ -245,7 +246,7 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 	npNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
 	for _, npName := range npNames {
-		if _, ok := reconciler.defaultNetworkPolicies[npNames]; !ok {
+		if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
 			if err := reconciler.updateBuffer(npName); err != nil {
 
 				reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
@@ -417,13 +418,13 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 
 		reconciler.log.Infof("Deep copy of network policy with name '%s'", desiredPolicy.GetName())
 		if _, err := reconciler.kubeclientset.NetworkingV1().NetworkPolicies(namespace).Create(desiredPolicy); err != nil {
-			reconciler.log.Errorf("Network policy creation failed. Name specified: '%s'; Actual name: '%s'", networkpolicyName, desiredPolicy.GetName())
+			reconciler.log.Errorf("Network policy creation failed. Name specified: '%s'; Actual name: '%s'", npName, desiredPolicy.GetName())
 			return err
 		}
 	}
 
 	if err := reconciler.deleteMultipleDefaultNetworkPolicies(namespace, npNames); err != nil {
-		reconciler.log.Errorln("Failed to delete network policy", networkpolicyName)
+		reconciler.log.Errorln("Failed to delete network policies: ", npNames)
 		return err
 	}
 
