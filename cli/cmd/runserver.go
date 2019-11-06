@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -45,6 +46,7 @@ import (
 )
 
 const resyncInterval = 30 * time.Second
+const defaultNetworkPoiliciesDelimiter = ";"
 
 var runserverCmd = &cobra.Command{
 	Use:   "runserver",
@@ -123,7 +125,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 	log.Infoln("KarydiaConfig Enforcement:", karydiaConfig.Spec.Enforcement)
 	log.Infoln("KarydiaConfig AutomountServiceAccountToken:", karydiaConfig.Spec.AutomountServiceAccountToken)
 	log.Infoln("KarydiaConfig SeccompProfile:", karydiaConfig.Spec.SeccompProfile)
-	log.Infoln("KarydiaConfig NetworkPolicy:", karydiaConfig.Spec.NetworkPolicy)
+	log.Infoln("KarydiaConfig NetworkPolicies:", karydiaConfig.Spec.NetworkPolicies)
 	log.Infoln("KarydiaConfig PodSecurityContext:", karydiaConfig.Spec.PodSecurityContext)
 
 	if enableKarydiaAdmission {
@@ -141,16 +143,18 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy)
 	if enableDefaultNetworkPolicy {
+		karydiaDefaultNetworkPolicyNames := strings.Split(karydiaConfig.Spec.NetworkPolicies, defaultNetworkPoiliciesDelimiter)
 
-		karydiaDefaultNetworkPolicyName := karydiaConfig.Spec.NetworkPolicy
-		karydiaDefaulNetworkPolicy, err := karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(karydiaDefaultNetworkPolicyName, metav1.GetOptions{})
-		if err != nil {
-			log.Fatalln("Failed to load KarydiaDefaultNetworkPolicy:", err)
+		for _, npName := range karydiaDefaultNetworkPolicyNames {
+			karydiaDefaulNetworkPolicy, err := karydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(npName, metav1.GetOptions{})
+			if err != nil {
+				log.Fatalln("Failed to load KarydiaDefaultNetworkPolicy: %v. Error: %v", npName, err)
+			}
+			var policy networkingv1.NetworkPolicy
+			policy.Spec = *karydiaDefaulNetworkPolicy.Spec.DeepCopy()
+			policy.Name = npName
+			defaultNetworkPolicies[npName] = &policy
 		}
-		var policy networkingv1.NetworkPolicy
-		policy.Spec = *karydiaDefaulNetworkPolicy.Spec.DeepCopy()
-		policy.Name = karydiaDefaultNetworkPolicyName
-		defaultNetworkPolicies[karydiaDefaultNetworkPolicyName] = &policy
 	}
 
 	var reconciler *controller.NetworkpolicyReconciler
@@ -166,7 +170,7 @@ func runserverFunc(cmd *cobra.Command, args []string) {
 		kubeInformerFactory = kubeinformers.NewSharedInformerFactory(kubeClientset, resyncInterval)
 		namespaceInformer := kubeInformerFactory.Core().V1().Namespaces()
 		networkPolicyInformer := kubeInformerFactory.Networking().V1().NetworkPolicies()
-		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, karydiaClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.Enforcement, karydiaConfig.Spec.NetworkPolicy, viper.GetStringSlice("default-network-policy-excludes"))
+		reconciler = controller.NewNetworkpolicyReconciler(kubeClientset, karydiaClientset, networkPolicyInformer, namespaceInformer, defaultNetworkPolicies, karydiaConfig.Spec.Enforcement, karydiaConfig.Spec.NetworkPolicies, viper.GetStringSlice("default-network-policy-excludes"))
 		karydiaControllers = append(karydiaControllers, reconciler)
 	}
 

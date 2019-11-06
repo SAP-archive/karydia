@@ -68,7 +68,7 @@ type Setting struct {
 
 func (reconciler *NetworkpolicyReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaConfig) error {
 	reconciler.defaultEnforcement = karydiaConfig.Spec.Enforcement
-	reconciler.defaultNetworkPolicyNames = karydiaConfig.Spec.NetworkPolicy
+	reconciler.defaultNetworkPolicyNames = karydiaConfig.Spec.NetworkPolicies
 	return nil
 }
 

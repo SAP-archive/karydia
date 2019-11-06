@@ -170,7 +170,7 @@ func TestNetworkpolicyReconciler_UpdateConfig(t *testing.T) {
 		Spec: v1alpha1.KarydiaConfigSpec{
 			AutomountServiceAccountToken: "testASAT",
 			SeccompProfile:               "testSP",
-			NetworkPolicy:                newNetworkpolicyName,
+			NetworkPolicies:              newNetworkpolicyName,
 		},
 	}
 
