@@ -18,7 +18,7 @@ helm init --service-account tiller
 ## Delpoy Karydia
 Next, to deploy Karydia simply run:
 ```
-helm install ./install/charts --name karydia --namespace Karydia
+helm install ./install/charts --name karydia --namespace karydia
 ```
 
 ## Make sure that Karydia is runnning
