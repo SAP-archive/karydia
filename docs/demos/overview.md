@@ -1,4 +1,4 @@
-## Overview of Features provided by Karydia
+mn## Overview of Features provided by Karydia
 ### Invert the Pod Defaults
 The following screenshot shows the pod specification without the usage of Karydia:
 * Service accout token is mounted
@@ -19,7 +19,7 @@ If you create a pod after the installation of Karydia, the pod description is di
 kubectl run -it --rm --restart=Never alpine --image=alpine sh -n demo
 kubectl edit  pod/alpine -n demo
 ```
-![](../images/pod-with-karydia.png)
+![](../images/pod-with-karydia-and-container-sec-context.png)
 
 ### Add a Network Policy
 Karydia adds a default network policy to each namespace and reconciles it.
@@ -34,5 +34,6 @@ You can configure each feature to meet the needs of your applications:
 * A custom default network policy
 * A specific network policy per namespace
 * The usage of a root user if necessary
+* Privilege escalation container option
 
 See all [features and options](../features.md).
