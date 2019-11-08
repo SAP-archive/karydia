@@ -1,4 +1,4 @@
-mn## Overview of Features provided by Karydia
+## Overview of Features provided by Karydia
 ### Invert the Pod Defaults
 The following screenshot shows the pod specification without the usage of Karydia:
 * Service accout token is mounted
