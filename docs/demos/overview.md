@@ -13,6 +13,7 @@ kubectl edit  pod/alpine -n demo
 If you create a pod after the installation of Karydia, the pod description is different, even if you use the same commands:
 * No service account token is mounted
 * A user is specified (the root user is not used)
+* Privilege escalation is denied
 * The seccomp profile runtime/default is assigned
 
 ```
@@ -34,6 +35,6 @@ You can configure each feature to meet the needs of your applications:
 * A custom default network policy
 * A specific network policy per namespace
 * The usage of a root user if necessary
-* Privilege escalation container option
+* The privilege escalation container option
 
 See all [features and options](../features.md).
