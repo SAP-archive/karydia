@@ -62,11 +62,21 @@ func TestSecurityContextWithNamespaceAnnotationUndefinedContext(t *testing.T) {
 
 	secCtx := createdPod.Spec.SecurityContext
 	if secCtx == nil {
-		t.Fatal("expected security context to be defined by admssion but is nil")
+		t.Fatal("expected security context to be defined by admission but is nil")
 	} else if *secCtx.RunAsUser != 65534 {
 		t.Fatalf("expected security context user id to be %v but is %v", 65534, *secCtx.RunAsUser)
 	} else if *secCtx.RunAsGroup != 65534 {
 		t.Fatalf("expected security context group id to be %v but is %v", 65534, *secCtx.RunAsGroup)
+	}
+
+	containers := createdPod.Spec.Containers
+	for i := range containers {
+		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
+		if secCtxContainers == nil {
+			t.Fatal("expected security context to be definded by admission but is nil")
+		} else if *secCtxContainers.AllowPrivilegeEscalation != false {
+			t.Fatalf("expected container security context allow priviledge escalation to be %v but is %v", false, *secCtxContainers.AllowPrivilegeEscalation)
+		}
 	}
 
 	timeout = 2 * time.Minute
@@ -87,6 +97,7 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 	ns := namespace.ObjectMeta.Name
 
 	var uid int64 = 1000
+	var allowPrivilegeEscalation = true
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -101,6 +112,9 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 				{
 					Name:  "redis",
 					Image: "redis",
+					SecurityContext: &corev1.SecurityContext{
+						AllowPrivilegeEscalation: &allowPrivilegeEscalation,
+					},
 				},
 			},
 		},
@@ -118,6 +132,16 @@ func TestSecurityContextWithNamespaceAnnotationDefinedContext(t *testing.T) {
 		t.Fatalf("expected security context user id to be %v but is %v", 1000, *secCtx.RunAsUser)
 	} else if secCtx.RunAsGroup != nil {
 		t.Fatalf("expected security context group id to be %v but is %v", "nil", *secCtx.RunAsGroup)
+	}
+
+	containers := createdPod.Spec.Containers
+	for i := range containers {
+		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
+		if secCtxContainers == nil {
+			t.Fatal("expected security context to be definded by pod definition but is nil")
+		} else if *secCtxContainers.AllowPrivilegeEscalation != true {
+			t.Fatalf("expected container security context allow priviledge escalation to be %v but is %v", true, *secCtxContainers.AllowPrivilegeEscalation)
+		}
 	}
 
 	timeout := 2 * time.Minute
@@ -157,11 +181,21 @@ func TestSecurityContextWithoutNamespaceAnnotationUndefinedContextFromConfig(t *
 
 	secCtx := createdPod.Spec.SecurityContext
 	if secCtx == nil {
-		t.Fatal("expected security context to be defined by admssion but is nil")
+		t.Fatal("expected security context to be defined by admission but is nil")
 	} else if *secCtx.RunAsUser != 65534 {
 		t.Fatalf("expected security context user id to be %v but is %v", 65534, *secCtx.RunAsUser)
 	} else if *secCtx.RunAsGroup != 65534 {
 		t.Fatalf("expected security context group id to be %v but is %v", 65534, *secCtx.RunAsGroup)
+	}
+
+	containers := createdPod.Spec.Containers
+	for i := range containers {
+		secCtxContainers := createdPod.Spec.Containers[i].SecurityContext
+		if secCtxContainers == nil {
+			t.Fatal("expected security context to be defined by admission but is nil")
+		} else if *secCtxContainers.AllowPrivilegeEscalation != false {
+			t.Fatalf("expected container security context allow priviledge escalation to be %v but is %v", false, *secCtxContainers.AllowPrivilegeEscalation)
+		}
 	}
 
 	timeout := 2 * time.Minute

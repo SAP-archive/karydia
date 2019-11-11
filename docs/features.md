@@ -63,6 +63,8 @@ The currently supported features are:
 3. Secure-by-default User and Group context for pods
     - `nobody` set the user and group of all pods that do not explicitly specify another security context to id `65534`.
     - `none` represents the fallback option and disables the feature.
+4. Secure-by-default security context for containers
+    - `allowPrivilegeEscalation` is set to false if it is not explicitly specified.
 
 It is configured with the following namespace annotations:
 
