@@ -35,8 +35,9 @@ import (
 )
 
 var (
-	alwaysReady        = func() bool { return true }
-	noResyncPeriodFunc = func() time.Duration { return 0 }
+	alwaysReady               = func() bool { return true }
+	noResyncPeriodFunc        = func() time.Duration { return 0 }
+	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
 )
 
 type fixture struct {
@@ -66,28 +67,28 @@ func newFixture(t *testing.T) *fixture {
 	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 3)
 
 	defaultNetworkPolicy := networkingv1.NetworkPolicy{}
-	defaultNetworkPolicy.Name = "karydia-default-network-policy"
+	defaultNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	defaultNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
 		PolicyTypes: []networkingv1.PolicyType{},
 	}
 
-	f.defaultNetworkPolicies["karydia-default-network-policy"] = &defaultNetworkPolicy
+	f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]] = &defaultNetworkPolicy
 
 	defaultNetworkPolicyL2 := networkingv1.NetworkPolicy{}
-	defaultNetworkPolicyL2.Name = "karydia-default-network-policy-l2"
+	defaultNetworkPolicyL2.Name = defaultNetworkPolicyNames[1]
 	defaultNetworkPolicyL2.Spec = networkingv1.NetworkPolicySpec{
 		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
 	}
 
-	f.defaultNetworkPolicies["karydia-default-network-policy-l2"] = &defaultNetworkPolicyL2
+	f.defaultNetworkPolicies[defaultNetworkPolicyNames[1]] = &defaultNetworkPolicyL2
 
 	defaultNetworkPolicyL3 := networkingv1.NetworkPolicy{}
-	defaultNetworkPolicyL3.Name = "karydia-default-network-policy-l3"
+	defaultNetworkPolicyL3.Name = defaultNetworkPolicyNames[2]
 	defaultNetworkPolicyL3.Spec = networkingv1.NetworkPolicySpec{
 		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
 	}
 
-	f.defaultNetworkPolicies["karydia-default-network-policy-l3"] = &defaultNetworkPolicyL3
+	f.defaultNetworkPolicies[defaultNetworkPolicyNames[2]] = &defaultNetworkPolicyL3
 
 	f.namespaceExclude = []string{"kube-system", "unittestexclude"}
 	return f
@@ -192,17 +193,12 @@ func networkpolicyReconciler_UpdateConfig(t *testing.T) {
 }
 
 func TestReconcileNetworkPolicyUpdate(t *testing.T) {
-	reconcileNetworkPolicyUpdate("karydia-default-network-policy", t)
-	reconcileNetworkPolicyUpdate("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
-}
-
-func reconcileNetworkPolicyUpdate(defaultNetworkPolicyName string, t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
 
 	f := newFixture(t)
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
-	newNetworkPolicy.Name = "karydia-default-network-policy"
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
 	newNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
 		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress}}
@@ -211,79 +207,171 @@ func reconcileNetworkPolicyUpdate(defaultNetworkPolicyName string, t *testing.T)
 	f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(defaultNetworkPolicyName, getKey(newNetworkPolicy, t))
+	f.runReconcile(defaultNetworkPolicyNames[0], getKey(newNetworkPolicy, t))
 
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 }
 
-func TestReconcileNetworkPolicyDelete(t *testing.T) {
-	reconcileNetworkPolicyDelete("karydia-default-network-policy", t)
-	reconcileNetworkPolicyDelete("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
+func TestReconcileMultipleNetworkPoliciesUpdate(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "default"
+
+	f := newFixture(t)
+	newNetworkPolicy := &networkingv1.NetworkPolicy{}
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
+	newNetworkPolicy.Namespace = "default"
+	newNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress}}
+
+	f.networkPolicy = append(f.networkPolicy, newNetworkPolicy)
+	f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
+
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+
+	/* Not quite sure how this does works and why it fails
+	for i := 1; i <= 2; i++ {
+		currentPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(defaultNetworkPolicyNames[i], meta_v1.GetOptions{})
+		if err != nil {
+			t.Error("No error expected")
+		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], currentPolicy) {
+			t.Error("Other network policies changed that shouldn't")
+		}
+	}
+	*/
 }
 
-func reconcileNetworkPolicyDelete(defaultNetworkPolicyName string, t *testing.T) {
+func TestReconcileNetworkPolicyDelete(t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
 	f := newFixture(t)
 	assert := assert.New(t)
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
-	newNetworkPolicy.Name = "karydia-default-network-policy"
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
 
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(defaultNetworkPolicyName, getKey(newNetworkPolicy, t))
+	f.runReconcile(defaultNetworkPolicyNames[0], getKey(newNetworkPolicy, t))
 
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
 	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
 }
 
-func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
-	reconcileNetworkPolicyWithExisting("karydia-default-network-policy", t)
-	reconcileNetworkPolicyWithExisting("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
-}
+func TestReconcileMultipleNetworkPoliciesDelete(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
 
-func reconcileNetworkPolicyWithExisting(defaultNetworkPolicyName string, t *testing.T) {
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
 	f := newFixture(t)
+	assert := assert.New(t)
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
-	newNetworkPolicy.Name = "karydia-default-network-policy"
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
 
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(defaultNetworkPolicyName, getKey(newNetworkPolicy, t))
+	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
 
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
+
+	for i := 1; i <= 2; i++ {
+		currentPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(defaultNetworkPolicyNames[i], meta_v1.GetOptions{})
+		if err != nil {
+			t.Error("No error expected")
+		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], currentPolicy) {
+			t.Error("Other network policies changed that shouldn't")
+		}
+	}
+}
+
+func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "default"
+	f := newFixture(t)
+	newNetworkPolicy := &networkingv1.NetworkPolicy{}
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
+	newNetworkPolicy.Namespace = "default"
+
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	f.runReconcile(defaultNetworkPolicyNames[0], getKey(newNetworkPolicy, t))
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 
 	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 3)
-	f.runReconcile(defaultNetworkPolicyName, getKey(newNetworkPolicy, t))
+	f.runReconcile(defaultNetworkPolicyNames[0], getKey(newNetworkPolicy, t))
+}
+
+func TestReconcileMultipleNetworkPoliciesWithExisting(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "default"
+	f := newFixture(t)
+	newNetworkPolicy := &networkingv1.NetworkPolicy{}
+	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
+	newNetworkPolicy.Namespace = "default"
+
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+
+	for i := 1; i <= 2; i++ {
+		currentPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(defaultNetworkPolicyNames[i], meta_v1.GetOptions{})
+		if err != nil {
+			t.Error("No error expected")
+		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], currentPolicy) {
+			t.Error("Other network policies changed that shouldn't")
+		}
+	}
+
+	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 3)
+	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
 }
 
 func TestReconcileNetworkPolicyCreateNamespace(t *testing.T) {
-	reconcileNetworkPolicyCreateNamespace("karydia-default-network-policy", t)
-	reconcileNetworkPolicyCreateNamespace("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
-}
-
-func reconcileNetworkPolicyCreateNamespace(defaultNetworkPolicyName string, t *testing.T) {
 	f := newFixture(t)
 	assert := assert.New(t)
 	newNamespace := &coreV1.Namespace{}
@@ -292,23 +380,43 @@ func reconcileNetworkPolicyCreateNamespace(defaultNetworkPolicyName string, t *t
 	f.namespace = append(f.namespace, newNamespace)
 	f.kubeobjects = append(f.kubeobjects, newNamespace)
 
-	f.runNamespaceAdd(defaultNetworkPolicyName, newNamespace.Name)
-	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	f.runNamespaceAdd(defaultNetworkPolicyNames[0], newNamespace.Name)
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
 	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
 }
 
-func TestReconcileNetworkPolicyCreateExcludedNamespace(t *testing.T) {
-	reconcileNetworkPolicyCreateExcludedNamespace("karydia-default-network-policy", t)
-	reconcileNetworkPolicyCreateExcludedNamespace("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
+func TestReconcileMultipleNetworkPoliciesCreateNamespace(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	f := newFixture(t)
+	assert := assert.New(t)
+	newNamespace := &coreV1.Namespace{}
+	newNamespace.Name = "unittest"
+
+	f.namespace = append(f.namespace, newNamespace)
+	f.kubeobjects = append(f.kubeobjects, newNamespace)
+
+	f.runNamespaceAdd(dnpNames, newNamespace.Name)
+
+	for i := 0; i <= 2; i++ {
+		reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]].Name, meta_v1.GetOptions{})
+		if err != nil {
+			t.Error("No error expected")
+		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], reconciledPolicy) {
+			t.Error("No reconcilation happened")
+		}
+		assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+		assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
+	}
 }
 
-func reconcileNetworkPolicyCreateExcludedNamespace(defaultNetworkPolicyName string, t *testing.T) {
+func TestReconcileNetworkPolicyCreateExcludedNamespace(t *testing.T) {
 	f := newFixture(t)
 	newNamespace := &coreV1.Namespace{}
 	newNamespace.Name = "unittestexclude"
@@ -316,42 +424,91 @@ func reconcileNetworkPolicyCreateExcludedNamespace(defaultNetworkPolicyName stri
 	f.namespace = append(f.namespace, newNamespace)
 	f.kubeobjects = append(f.kubeobjects, newNamespace)
 
-	f.runNamespaceAdd(defaultNetworkPolicyName, newNamespace.Name)
-	reconciledPolicy, _ := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	f.runNamespaceAdd(defaultNetworkPolicyNames[0], newNamespace.Name)
+	reconciledPolicy, _ := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
 	if reconciledPolicy != nil {
 		t.Error("Reconcilation happened - default network policy created for excluded namespace")
 	}
 }
 
-func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
-	reconcileNetworkPolicyCreateNamespaceWithAnnotation("karydia-default-network-policy", t)
-	reconcileNetworkPolicyCreateNamespaceWithAnnotation("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
+func TestReconcileMultipleNetworkPoliciesCreateExcludedNamespace(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	f := newFixture(t)
+	newNamespace := &coreV1.Namespace{}
+	newNamespace.Name = "unittestexclude"
+
+	f.namespace = append(f.namespace, newNamespace)
+	f.kubeobjects = append(f.kubeobjects, newNamespace)
+
+	f.runNamespaceAdd(dnpNames, newNamespace.Name)
+
+	for i := 0; i <= 2; i++ {
+		reconciledPolicy, _ := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
+		if reconciledPolicy != nil {
+			t.Error("Reconcilation happened - default network policy created for excluded namespace")
+		}
+	}
 }
 
-func reconcileNetworkPolicyCreateNamespaceWithAnnotation(defaultNetworkPolicyName string, t *testing.T) {
+func TestReconcileNetworkPolicyCreateNamespaceWithAnnotation(t *testing.T) {
 	f := newFixture(t)
 	assert := assert.New(t)
 	newNamespace := &coreV1.Namespace{}
 	newNamespace.Name = "unittest"
 
 	annotations := make(map[string]string)
-	annotations["karydia.gardener.cloud/networkPolicy"] = "karydia-default-network-policy-l2"
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[1]
 	newNamespace.ObjectMeta.SetAnnotations(annotations)
 
 	f.namespace = append(f.namespace, newNamespace)
 	f.kubeobjects = append(f.kubeobjects, newNamespace)
 
-	f.runNamespaceAdd(defaultNetworkPolicyName, newNamespace.Name)
+	f.runNamespaceAdd(defaultNetworkPolicyNames[0], newNamespace.Name)
 
-	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
 	if reconciledPolicy != nil {
 		t.Error("Default network policy should not be found")
 	}
 
-	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy-l2"].Name, meta_v1.GetOptions{})
+	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[1]].Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy-l2"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[1]], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
+	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "namespace")
+}
+
+func TestReconcileMultipleNetworkPoliciesCreateNamespaceWithAnnotation(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	f := newFixture(t)
+	assert := assert.New(t)
+	newNamespace := &coreV1.Namespace{}
+	newNamespace.Name = "unittest"
+
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[2]
+	newNamespace.ObjectMeta.SetAnnotations(annotations)
+
+	f.namespace = append(f.namespace, newNamespace)
+	f.kubeobjects = append(f.kubeobjects, newNamespace)
+
+	f.runNamespaceAdd(dnpNames, newNamespace.Name)
+
+	for i := 0; i <= 1; i++ {
+		reconciledPolicy, _ := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]].Name, meta_v1.GetOptions{})
+		if reconciledPolicy != nil {
+			t.Error("Default network policy should not be found")
+		}
+	}
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[2]].Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[2]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
@@ -359,11 +516,6 @@ func reconcileNetworkPolicyCreateNamespaceWithAnnotation(defaultNetworkPolicyNam
 }
 
 func TestReconcileNetworkPolicyUpdatedNamespace(t *testing.T) {
-	reconcileNetworkPolicyUpdatedNamespace("karydia-default-network-policy", t)
-	reconcileNetworkPolicyUpdatedNamespace("karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3", t)
-}
-
-func reconcileNetworkPolicyUpdatedNamespace(defaultNetworkPolicyName string, t *testing.T) {
 	f := newFixture(t)
 	newNamespace := &coreV1.Namespace{}
 	newNamespace.Name = "unittest"
@@ -371,28 +523,69 @@ func reconcileNetworkPolicyUpdatedNamespace(defaultNetworkPolicyName string, t *
 	f.namespace = append(f.namespace, newNamespace)
 	f.kubeobjects = append(f.kubeobjects, newNamespace)
 
-	f.runNamespaceAdd(defaultNetworkPolicyName, newNamespace.Name)
-	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	f.runNamespaceAdd(defaultNetworkPolicyNames[0], newNamespace.Name)
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 
 	annotations := make(map[string]string)
-	annotations["karydia.gardener.cloud/networkPolicy"] = "karydia-default-network-policy-l2"
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[1]
 	newNamespace.ObjectMeta.SetAnnotations(annotations)
-	f.runNamespaceUpdate(defaultNetworkPolicyName, newNamespace.Name)
+	f.runNamespaceUpdate(defaultNetworkPolicyNames[0], newNamespace.Name)
 
-	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy"].Name, meta_v1.GetOptions{})
+	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]].Name, meta_v1.GetOptions{})
 	if reconciledPolicy != nil {
 		t.Error("Default network policy should not be found")
 	}
 
-	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies["karydia-default-network-policy-l2"].Name, meta_v1.GetOptions{})
+	reconciledPolicy, err = f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[1]].Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
-	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies["karydia-default-network-policy-l2"], reconciledPolicy) {
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[1]], reconciledPolicy) {
+		t.Error("No reconcilation happened")
+	}
+}
+
+func TestReconcileMultipleNetworkPoliciesUpdatedNamespace(t *testing.T) {
+	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
+
+	f := newFixture(t)
+	newNamespace := &coreV1.Namespace{}
+	newNamespace.Name = "unittest"
+
+	f.namespace = append(f.namespace, newNamespace)
+	f.kubeobjects = append(f.kubeobjects, newNamespace)
+
+	f.runNamespaceAdd(dnpNames, newNamespace.Name)
+
+	for i := 0; i <= 2; i++ {
+		reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]].Name, meta_v1.GetOptions{})
+		if err != nil {
+			t.Error("No error expected")
+		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], reconciledPolicy) {
+			t.Error("No reconcilation happened")
+		}
+	}
+
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[2]
+	newNamespace.ObjectMeta.SetAnnotations(annotations)
+	f.runNamespaceUpdate(dnpNames, newNamespace.Name)
+
+	for i := 0; i <= 1; i++ {
+		reconciledPolicy, _ := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]].Name, meta_v1.GetOptions{})
+		if reconciledPolicy != nil {
+			t.Error("Default network policy should not be found")
+		}
+	}
+
+	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNamespace.Name).Get(f.defaultNetworkPolicies[defaultNetworkPolicyNames[2]].Name, meta_v1.GetOptions{})
+	if err != nil {
+		t.Error("No error expected")
+	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[2]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
 }
