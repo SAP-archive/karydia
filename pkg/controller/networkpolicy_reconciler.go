@@ -254,28 +254,26 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 			}
 		}
 
-		if name == reconciler.defaultNetworkPolicies[npName].GetName() {
-			networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(name)
-			if err != nil {
-				if errors.IsNotFound(err) {
-					reconciler.log.Errorf("networkpolicy '%s' in work queue no longer exists", key)
-					if err := reconciler.createDefaultNetworkPolicy(namespaceName, npName, setting); err != nil {
-						reconciler.log.Errorln("failed to recreate default network policy:", err)
-						return fmt.Errorf("error syncing '%s': %v", namespaceName, err)
-					}
-					continue
+		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(npName)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				reconciler.log.Errorf("networkpolicy '%s' in work queue no longer exists", key)
+				if err := reconciler.createDefaultNetworkPolicy(namespaceName, npName, setting); err != nil {
+					reconciler.log.Errorln("failed to recreate default network policy:", err)
+					return fmt.Errorf("error syncing '%s': %v", namespaceName, err)
 				}
-				return err
-			} else {
-				reconciler.log.Infof("Found networkpolicy '%s'", key)
-				if reconciler.reconcileIsNeeded(networkPolicy, name) {
-					if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
-						reconciler.log.Errorln("failed to update default network policy:", err)
-						return fmt.Errorf("error syncing '%s': %v", key, err)
-					}
-				} else if err != nil {
-					return fmt.Errorf("error syncing buffer '%s': %v", key, err)
+				continue
+			}
+			return err
+		} else {
+			reconciler.log.Infof("Found networkpolicy '%s'", key)
+			if reconciler.reconcileIsNeeded(networkPolicy, name) {
+				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
+					reconciler.log.Errorln("failed to update default network policy:", err)
+					return fmt.Errorf("error syncing '%s': %v", key, err)
 				}
+			} else if err != nil {
+				return fmt.Errorf("error syncing buffer '%s': %v", key, err)
 			}
 		}
 	}
