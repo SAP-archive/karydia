@@ -266,9 +266,9 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 			}
 			return err
 		} else {
-			reconciler.log.Infof("Found networkpolicy '%s'", key)
+			reconciler.log.Infof("Found networkpolicy '%s'", npName)
 			if reconciler.reconcileIsNeeded(networkPolicy, name) {
-				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, name); err != nil {
+				if err := reconciler.updateDefaultNetworkPolicy(namespaceName, npName); err != nil {
 					reconciler.log.Errorln("failed to update default network policy:", err)
 					return fmt.Errorf("error syncing '%s': %v", key, err)
 				}
@@ -330,7 +330,6 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 			}
 			return err
 		} else {
-			reconciler.log.Infof("Found")
 			reconciler.log.Infof("Found networkpolicy '%s/%s'", key, npName)
 			if reconciler.reconcileIsNeeded(networkPolicy, npName) {
 				if err := reconciler.updateDefaultNetworkPolicy(key, npName); err != nil {
