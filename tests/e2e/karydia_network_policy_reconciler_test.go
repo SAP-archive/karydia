@@ -29,6 +29,7 @@ import (
 
 var (
 	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
+
 //	defaultNetworkPolicyName   = "karydia-default-network-policy"
 //	defaultNetworkPolicyL2Name = "karydia-default-network-policy-l2"
 )
@@ -421,8 +422,6 @@ func TestCreateMultipleKarydiaNetworkPoliciesForNamespaceAndUpdateWithAnnotation
 			t.Fatal("Network policy for created namespace is not equal to the default network policy("+dnpName+"):", err)
 		}
 	}
-
-	
 
 	_, err = f.KubeClientset.NetworkingV1().NetworkPolicies(namespace.GetName()).Get(defaultNetworkPolicyNames[2], meta_v1.GetOptions{})
 	if err == nil {
