@@ -280,10 +280,10 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 		}
 	}
 
-        if err := reconciler.deleteMultipleDefaultNetworkPolicies(key, setting); err != nil {
-                reconciler.log.Errorln("Failed to delete network policies: ", setting.value)
-                return err
-        }
+	if err := reconciler.deleteMultipleDefaultNetworkPolicies(key, setting); err != nil {
+		reconciler.log.Errorln("Failed to delete network policies: ", setting.value)
+		return err
+	}
 
 	return nil
 }
@@ -345,10 +345,10 @@ func (reconciler *NetworkpolicyReconciler) syncNamespaceHandler(key string) erro
 		}
 	}
 
-        if err := reconciler.deleteMultipleDefaultNetworkPolicies(key, setting); err != nil {
-                reconciler.log.Errorln("Failed to delete network policies: ", setting.value)
-                return err
-        }
+	if err := reconciler.deleteMultipleDefaultNetworkPolicies(key, setting); err != nil {
+		reconciler.log.Errorln("Failed to delete network policies: ", setting.value)
+		return err
+	}
 
 	return nil
 }
@@ -441,7 +441,7 @@ func (reconciler *NetworkpolicyReconciler) createDefaultNetworkPolicy(namespace 
 func (reconciler *NetworkpolicyReconciler) deleteMultipleDefaultNetworkPolicies(namespace string, setting Setting) error {
 	expectedNpNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
-	reconciler.log.Infof("Expected:"+setting.value+", but got: ")
+	reconciler.log.Infof("Expected:" + setting.value + ", but got: ")
 
 	for defaultNpName := range reconciler.defaultNetworkPolicies {
 		reconciler.log.Infof(defaultNpName)
