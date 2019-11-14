@@ -231,8 +231,8 @@ func TestReconcileMultipleNetworkPoliciesUpdate(t *testing.T) {
 	newNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
 		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress}}
 
-	//f.networkPolicy = append(f.networkPolicy, newNetworkPolicy)
-	//f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
+	f.networkPolicy = append(f.networkPolicy, newNetworkPolicy)
+	f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
 	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
@@ -305,7 +305,7 @@ func TestReconcileMultipleNetworkPoliciesDelete(t *testing.T) {
 	for i := 1; i <= 2; i++ {
 		currentPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(defaultNetworkPolicyNames[i], meta_v1.GetOptions{})
 		if err != nil {
-			t.Error("No error expected")
+			t.Error("No error expected", err)
 		} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[i]], currentPolicy) {
 			t.Error("Other network policies changed that shouldn't")
 		}

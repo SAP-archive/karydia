@@ -22,7 +22,7 @@ config:
   enforcement: false
   automountServiceAccountToken: "change-default"
   seccompProfile: "runtime/default"
-  networkPolicies: "karydia-default-network-policy;network-policy-l2"
+  networkPolicies: "karydia-default-network-policy;karydia-default-network-policy-l2;karydia-default-network-policy-l3"
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
 exclusionNamespaceLabels:
