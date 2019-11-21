@@ -18,6 +18,7 @@ package karydia
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"k8s.io/api/admission/v1beta1"
@@ -115,6 +116,7 @@ func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) 
 	if setting.value == "nobody" {
 		var uid int64 = 65534
 		var gid int64 = 65534
+		var privilegeEscalation = false
 		secCtx := pod.Spec.SecurityContext
 		if secCtx == nil || (secCtx.RunAsUser == nil && secCtx.RunAsGroup == nil) {
 			patches.operations = append(patches.operations, patchOperation{
@@ -127,8 +129,20 @@ func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) 
 			})
 			annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
 		}
+		containers := pod.Spec.Containers
+		for i := range containers {
+			secCtxContainers := pod.Spec.Containers[i].SecurityContext
+			if secCtxContainers == nil || secCtxContainers.AllowPrivilegeEscalation == nil {
+				patches.operations = append(patches.operations, patchOperation{
+					Op:   "add",
+					Path: "/spec/containers/" + strconv.Itoa(i) + "/securityContext",
+					Value: corev1.SecurityContext{
+						AllowPrivilegeEscalation: &privilegeEscalation,
+					},
+				})
+			}
+		}
 	}
-
 	return patches
 }
 

@@ -10,6 +10,7 @@ Karydia inverts the following insecure default settings:
 * Unmount service account token
 * Restrict system calls by adding a seccomp profile
 * Run with minimal privileges by adding a non-root user
+* Disallow privilege escalation
 * Restrict network communication by adding a network policy to each namespace
 
 A description of each feature can be found [here](docs/features.md) and an overview of the application of these features is described in the [demo section](docs/demos/overview.md).
