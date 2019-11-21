@@ -143,6 +143,7 @@ func (f *fixture) runNamespaceAdd(defaultNetworkPolicyName string, namespace str
 		f.t.Error("error syncing foo:", err)
 	}
 }
+
 func (f *fixture) runNamespaceUpdate(defaultNetworkPolicyName string, namespace string) {
 
 	f.runNamespaceAdd(defaultNetworkPolicyName, namespace)
@@ -221,10 +222,26 @@ func TestReconcileNetworkPolicyUpdate(t *testing.T) {
 func TestReconcileMultipleNetworkPoliciesUpdate(t *testing.T) {
 	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
 
+	f := newFixture(t)
+
+	// reset "default" namespace
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
 
-	f := newFixture(t)
+	f.namespace = append(f.namespace, namespace)
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	reconciler, k8sI := f.newReconciler(dnpNames)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	k8sI.Start(stopCh)
+
+	err := reconciler.syncNamespaceHandler(namespace.Name)
+	if err != nil {
+		f.t.Error("error syncing foo:", err)
+	}
+
+	// update single network policy
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
 	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
@@ -235,12 +252,16 @@ func TestReconcileMultipleNetworkPoliciesUpdate(t *testing.T) {
 	f.kubeobjects = append(f.kubeobjects, newNetworkPolicy)
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+	err = reconciler.syncNetworkPolicyHandler(getKey(newNetworkPolicy, t))
+	if err != nil {
+		f.t.Error("error syncing networkpolicy:", err)
+	}
 
+	// check if single network policy changed and the others stayed unchanged
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 
 	if err != nil {
-		t.Error("No error expected")
+		t.Error("No error expected", err)
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
@@ -281,24 +302,46 @@ func TestReconcileNetworkPolicyDelete(t *testing.T) {
 func TestReconcileMultipleNetworkPoliciesDelete(t *testing.T) {
 	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
 
-	namespace := &coreV1.Namespace{}
-	namespace.Name = "default"
 	f := newFixture(t)
 	assert := assert.New(t)
+
+	// reset "default" namespace
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "default"
+
+	f.namespace = append(f.namespace, namespace)
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	reconciler, k8sI := f.newReconciler(dnpNames)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	k8sI.Start(stopCh)
+
+	err := reconciler.syncNamespaceHandler(namespace.Name)
+	if err != nil {
+		f.t.Error("error syncing foo:", err)
+	}
+
+	// delete single network policy
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
 	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
 
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+	err = reconciler.syncNetworkPolicyHandler(getKey(newNetworkPolicy, t))
+	if err != nil {
+		f.t.Error("error syncing networkpolicy:", err)
+	}
 
+	// check if single network policy was deleted and the others stayed unchanged
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
 	} else if !networkPoliciesAreEqual(f.defaultNetworkPolicies[defaultNetworkPolicyNames[0]], reconciledPolicy) {
 		t.Error("No reconcilation happened")
 	}
+
 	assert.Equal(len(reconciledPolicy.ObjectMeta.Annotations), 1, "network policy should contain internal karydia annotation")
 	assert.Contains(reconciledPolicy.ObjectMeta.Annotations["karydia.gardener.cloud/networkPolicy.internal"], "config")
 
@@ -338,17 +381,38 @@ func TestReconcileNetworkPolicyWithExisting(t *testing.T) {
 func TestReconcileMultipleNetworkPoliciesWithExisting(t *testing.T) {
 	dnpNames := defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2]
 
+	f := newFixture(t)
+
+	// reset "default" namespace
 	namespace := &coreV1.Namespace{}
 	namespace.Name = "default"
-	f := newFixture(t)
+
+	f.namespace = append(f.namespace, namespace)
+	f.kubeobjects = append(f.kubeobjects, namespace)
+
+	reconciler, k8sI := f.newReconciler(dnpNames)
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	k8sI.Start(stopCh)
+
+	err := reconciler.syncNamespaceHandler(namespace.Name)
+	if err != nil {
+		f.t.Error("error syncing foo:", err)
+	}
+
+	// delete single network policy
 	newNetworkPolicy := &networkingv1.NetworkPolicy{}
 	newNetworkPolicy.Name = defaultNetworkPolicyNames[0]
 	newNetworkPolicy.Namespace = "default"
 
 	f.kubeobjects = append(f.kubeobjects, namespace)
 
-	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+	err = reconciler.syncNetworkPolicyHandler(getKey(newNetworkPolicy, t))
+	if err != nil {
+		f.t.Error("error syncing networkpolicy:", err)
+	}
 
+	// check if single network policy changed and the others stayed unchanged
 	reconciledPolicy, err := f.kubeclient.NetworkingV1().NetworkPolicies(newNetworkPolicy.Namespace).Get(newNetworkPolicy.Name, meta_v1.GetOptions{})
 	if err != nil {
 		t.Error("No error expected")
@@ -366,7 +430,11 @@ func TestReconcileMultipleNetworkPoliciesWithExisting(t *testing.T) {
 	}
 
 	f.defaultNetworkPolicies = make(map[string]*networkingv1.NetworkPolicy, 3)
-	f.runReconcile(dnpNames, getKey(newNetworkPolicy, t))
+
+	err = reconciler.syncNetworkPolicyHandler(getKey(newNetworkPolicy, t))
+	if err != nil {
+		f.t.Error("error syncing networkpolicy:", err)
+	}
 }
 
 func TestReconcileNetworkPolicyCreateNamespace(t *testing.T) {
