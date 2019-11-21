@@ -18,12 +18,12 @@ package e2e
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 	"time"
-	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -34,13 +34,13 @@ var (
 
 func TestCreateKarydiaNetworkPolicyForNewNamespace(t *testing.T) {
 	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	defaultNetworkPolicy := &networkingv1.NetworkPolicy{}
 	defaultNetworkPolicy.Name = defaultNetworkPolicyNames[0]
-	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[0],  metav1.GetOptions{})
+	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[0], metav1.GetOptions{})
 	if err != nil {
 		t.Fatal("failed to get karydia default network policy:", err)
 	}
@@ -102,10 +102,10 @@ func TestCreateKarydiaNetworkPolicyForNewNamespace(t *testing.T) {
 }
 
 func TestCreateKarydiaNetworkPolicyForAnnotatedNamespace(t *testing.T) {
-        err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	defaultNetworkPolicy := &networkingv1.NetworkPolicy{}
 	defaultNetworkPolicy.Name = defaultNetworkPolicyNames[1]
@@ -113,11 +113,11 @@ func TestCreateKarydiaNetworkPolicyForAnnotatedNamespace(t *testing.T) {
 		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
 	}
 
-	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[1],  metav1.GetOptions{})
-        if err != nil {
-                t.Fatal("failed to get karydia default network policy:", err)
-        }
-        defaultNetworkPolicy.Spec = *karydiaNetworkpolicy.Spec.DeepCopy()
+	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[1], metav1.GetOptions{})
+	if err != nil {
+		t.Fatal("failed to get karydia default network policy:", err)
+	}
+	defaultNetworkPolicy.Spec = *karydiaNetworkpolicy.Spec.DeepCopy()
 
 	annotations := make(map[string]string)
 	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[1]
@@ -147,22 +147,22 @@ func TestCreateKarydiaNetworkPolicyForAnnotatedNamespace(t *testing.T) {
 }
 
 func TestCreateNamespaceAndUpdateWithAnnotation(t *testing.T) {
-        err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
-        
-        defaultNetworkPolicy := &networkingv1.NetworkPolicy{}
-        defaultNetworkPolicy.Name = defaultNetworkPolicyNames[1]
-        defaultNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
-                PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
-        }
-        
-        karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[1],  metav1.GetOptions{})
-        if err != nil {
-                t.Fatal("failed to get karydia default network policy:", err)
-        }
-        defaultNetworkPolicy.Spec = *karydiaNetworkpolicy.Spec.DeepCopy()
+	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
+
+	defaultNetworkPolicy := &networkingv1.NetworkPolicy{}
+	defaultNetworkPolicy.Name = defaultNetworkPolicyNames[1]
+	defaultNetworkPolicy.Spec = networkingv1.NetworkPolicySpec{
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+	}
+
+	karydiaNetworkpolicy, err := f.KarydiaClientset.KarydiaV1alpha1().KarydiaNetworkPolicies().Get(defaultNetworkPolicyNames[1], metav1.GetOptions{})
+	if err != nil {
+		t.Fatal("failed to get karydia default network policy:", err)
+	}
+	defaultNetworkPolicy.Spec = *karydiaNetworkpolicy.Spec.DeepCopy()
 
 	namespace, err := f.CreateTestNamespace()
 	if err != nil {
@@ -207,10 +207,10 @@ func TestCreateNamespaceAndUpdateWithAnnotation(t *testing.T) {
 }
 
 func TestGetKarydiaNetworkPolicyForExcludedNamespace(t *testing.T) {
-        err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	if _, err := f.KubeClientset.NetworkingV1().NetworkPolicies("kube-system").Get(defaultNetworkPolicyNames[0], metav1.GetOptions{}); err == nil {
 		t.Fatal("Default network policy should not be found for excluded namespace")
@@ -305,9 +305,9 @@ func TestCreateMultipleKarydiaNetworkPoliciesForNewNamespace(t *testing.T) {
 
 func TestCreateMultipleKarydiaNetworkPoliciesForAnnotatedNamespace(t *testing.T) {
 	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy, 3)
 
@@ -361,9 +361,9 @@ func TestCreateMultipleKarydiaNetworkPoliciesForAnnotatedNamespace(t *testing.T)
 
 func TestCreateMultipleKarydiaNetworkPoliciesForNamespaceAndUpdateWithAnnotation(t *testing.T) {
 	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	defaultNetworkPolicies := make(map[string]*networkingv1.NetworkPolicy, 3)
 
@@ -435,9 +435,9 @@ func TestCreateMultipleKarydiaNetworkPoliciesForNamespaceAndUpdateWithAnnotation
 
 func TestGetKarydiaMultipleNetworkPoliciesForExcludedNamespace(t *testing.T) {
 	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0] + ";" + defaultNetworkPolicyNames[1] + ";" + defaultNetworkPolicyNames[2])
-        if err != nil {
-                t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-        }
+	if err != nil {
+		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+	}
 
 	for _, dnpName := range defaultNetworkPolicyNames {
 		if _, err := f.KubeClientset.NetworkingV1().NetworkPolicies("kube-system").Get(dnpName, metav1.GetOptions{}); err == nil {
@@ -449,26 +449,26 @@ func TestGetKarydiaMultipleNetworkPoliciesForExcludedNamespace(t *testing.T) {
 // helper functions
 
 func updateDefaultNetworkPolicy(defaultNetworkPolicies string) error {
-        curKarydiaConfig, curErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
+	curKarydiaConfig, curErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
 
-        if curErr != nil {
-                return curErr
-        }
+	if curErr != nil {
+		return curErr
+	}
 
-        curKarydiaConfig.Spec.NetworkPolicies = defaultNetworkPolicies
-        f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Update(curKarydiaConfig)
+	curKarydiaConfig.Spec.NetworkPolicies = defaultNetworkPolicies
+	f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Update(curKarydiaConfig)
 
-        newKarydiaConfig, newErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
+	newKarydiaConfig, newErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
 
-        if newErr != nil {
-                return newErr
-        }
+	if newErr != nil {
+		return newErr
+	}
 
-        if newKarydiaConfig.Spec.NetworkPolicies != defaultNetworkPolicies {
-                return fmt.Errorf("defaultNetworkPolicies in karydiaConfig did not change but should")
-        }
+	if newKarydiaConfig.Spec.NetworkPolicies != defaultNetworkPolicies {
+		return fmt.Errorf("defaultNetworkPolicies in karydiaConfig did not change but should")
+	}
 
-        return nil
+	return nil
 }
 
 func networkPoliciesAreEqual(np1, np2 *networkingv1.NetworkPolicy) bool {
