@@ -260,7 +260,7 @@ func (reconciler *ConfigReconciler) UpdateConfig(karydiaConfig v1alpha1.KarydiaC
 	reconciler.log.Infoln("KarydiaConfig Enforcement:", karydiaConfig.Spec.Enforcement)
 	reconciler.log.Infoln("KarydiaConfig AutomountServiceAccountToken:", karydiaConfig.Spec.AutomountServiceAccountToken)
 	reconciler.log.Infoln("KarydiaConfig SeccompProfile:", karydiaConfig.Spec.SeccompProfile)
-	reconciler.log.Infoln("KarydiaConfig NetworkPolicy:", karydiaConfig.Spec.NetworkPolicy)
+	reconciler.log.Infoln("KarydiaConfig NetworkPolicies:", karydiaConfig.Spec.NetworkPolicies)
 	reconciler.log.Infoln("KarydiaConfig PodSecurityContext:", karydiaConfig.Spec.PodSecurityContext)
 	return nil
 }

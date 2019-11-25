@@ -42,5 +42,5 @@ spec:
               type: string
             seccompProfile:
               type: string
-            networkPolicy:
+            networkPolicies:
               type: string

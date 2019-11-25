@@ -19,17 +19,9 @@ kind: KarydiaNetworkPolicy
 metadata:
   labels:
     app: {{ .Values.metadata.labelApp }}
-  name: karydia-default-network-policy
+  name: karydia-default-network-policy-l2
+  namespace: "default"
 spec:
-  podSelector: {}
+  podSelector: {} # Block access to Internet
   policyTypes:
   - Egress
-  egress:
-  - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
-        except:
-        - 10.250.0.0/16      # host network (AWS only)
-        - 169.254.169.254/16 # meta data services (AWS, GCP, Azure)
-        - 100.100.0.0/16     # meta data services (Alibaba Cloud)
-

@@ -22,6 +22,8 @@ kubectl apply -f manifests/karydia/templates/crd-config.yaml
 kubectl apply -f manifests/karydia/templates/config.yaml
 kubectl apply -f manifests/karydia/templates/crd-karydia-network-policy.yaml
 kubectl apply -f manifests/karydia/templates/karydia-network-policy.yaml
+kubectl apply -f manifests/karydia/templates/karydia-network-policy-l2.yaml
+kubectl apply -f manifests/karydia/templates/karydia-network-policy-l3.yaml
 ```
 
 Create the namespace for Karydia and configure the annotations:

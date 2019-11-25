@@ -23,7 +23,7 @@ kubectl edit  pod/alpine -n demo
 ![](../images/pod-with-karydia-and-container-sec-context.png)
 
 ### Add a Network Policy
-Karydia adds a default network policy to each namespace and reconciles it.
+Karydia adds one or multiple default network policies to each namespace and reconciles it.
 ```
 kubectl get networkpolicy -n demo
 ```
@@ -32,7 +32,7 @@ kubectl get networkpolicy -n demo
 ## Features and Configuration Options
 You can configure each feature to meet the needs of your applications:
 * A custom seccomp profile
-* A custom default network policy
+* One or multiple default network policies
 * A specific network policy per namespace
 * The usage of a root user if necessary
 * The privilege escalation container option

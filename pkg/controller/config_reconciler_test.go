@@ -61,7 +61,7 @@ func newTestSettings(t *testing.T, kubeObjects []runtime.Object, karydiaControll
 type testConfigParams struct {
 	automountServiceAccountToken string
 	seccompProfile               string
-	networkPolicy                string
+	networkPolicies              string
 }
 type testConfig struct {
 	t      *testing.T
@@ -80,7 +80,7 @@ func newTestConfig(t *testing.T, resourceVersion string, params testConfigParams
 			Spec: v1alpha1.KarydiaConfigSpec{
 				AutomountServiceAccountToken: params.automountServiceAccountToken,
 				SeccompProfile:               params.seccompProfile,
-				NetworkPolicy:                params.networkPolicy,
+				NetworkPolicies:              params.networkPolicies,
 			},
 		},
 	}
@@ -114,7 +114,7 @@ func TestNewConfigReconciler(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 
@@ -146,7 +146,7 @@ func TestConfigReconciler_syncConfigHandlerWithoutConfigElement(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -179,7 +179,7 @@ func TestConfigReconciler_enqueueConfig(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -207,7 +207,7 @@ func TestConfigReconciler_reconcileIsNeeded(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -231,7 +231,7 @@ func TestConfigReconciler_UpdateConfigWithoutControllers(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -258,7 +258,7 @@ func TestConfigReconciler_UpdateConfigWithController(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -301,7 +301,7 @@ func TestConfigReconciler_UpdateConfigWithControllers(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	controller0 := testController{name: "testController0"}
 	controller1 := testController{name: "testController1"}
@@ -355,7 +355,7 @@ func TestConfigReconciler_UpdateConfigWithControllersAndError(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	controller0 := testController{name: "testController0"}
 	controller1 := testController{name: "testController1", updateError: fmt.Errorf("test config update error")}
@@ -409,7 +409,7 @@ func TestConfigReconciler_createConfig(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -431,12 +431,12 @@ func TestConfigReconciler_RunWithoutStartConfig(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	newC := newTestConfig(t, "2", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "newValue",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	s := newTestSettings(t, []runtime.Object{}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -510,17 +510,17 @@ func TestConfigReconciler_RunWithStartConfig(t *testing.T) {
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	newC := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "newValue",
+		networkPolicies:              "newValue",
 	})
 	differentC := newTestConfig(t, "2", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "differentValue",
+		networkPolicies:              "differentValue",
 	})
 	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
 	r := NewConfigReconciler(c.config, s.controllers, s.clientset, s.configInformer)
@@ -629,12 +629,12 @@ func TestConfigReconciler_RunWithStartConfigAndWorkingWithDifferentConfig(t *tes
 	c := newTestConfig(t, "1", testConfigParams{
 		automountServiceAccountToken: "testAutomountServiceAccountToken",
 		seccompProfile:               "testSeccompProfile",
-		networkPolicy:                "testNetworkPolicy",
+		networkPolicies:              "testNetworkPolicy",
 	})
 	differentC := newTestConfig(t, "2", testConfigParams{
 		automountServiceAccountToken: "differentAutomountServiceAccountToken",
 		seccompProfile:               "differentSeccompProfile",
-		networkPolicy:                "differentNetworkPolicy",
+		networkPolicies:              "differentNetworkPolicy",
 	})
 	differentC.config.Name = "differentName"
 	s := newTestSettings(t, []runtime.Object{&c.config}, []ControllerInterface{new(testController)})
