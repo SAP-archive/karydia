@@ -22,6 +22,15 @@ metadata:
   name: karydia-default-network-policy-l2
   namespace: "default"
 spec:
-  podSelector: {} # Block access to Internet
+  podSelector:
+    matchLabels: {}
   policyTypes:
   - Egress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector: {}

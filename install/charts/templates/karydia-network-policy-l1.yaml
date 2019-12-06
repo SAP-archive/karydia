@@ -19,9 +19,10 @@ kind: KarydiaNetworkPolicy
 metadata:
   labels:
     app: {{ .Values.metadata.labelApp }}
-  name: karydia-default-network-policy
+  name: karydia-default-network-policy-l1
 spec:
-  podSelector: {}
+  podSelector:
+    matchLabels: {}
   policyTypes:
   - Egress
   egress:
@@ -29,7 +30,13 @@ spec:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:
-        - 10.250.0.0/16      # host network (AWS only)
-        - 169.254.169.254/16 # meta data services (AWS, GCP, Azure)
-        - 100.100.0.0/16     # meta data services (Alibaba Cloud)
-
+        - 100.64.0.0/10 # local network
+        {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") }}
+        - 169.254.169.254/32 # meta data service (Azure, AWS, GCP, OpenStack)
+        {{- end }}
+        {{- if eq .Values.config.cloudProvider "AliCloud"}}
+        - 100.100.100.200/32 # meta data service (Alicloud)
+        {{- end }}
+    - namespaceSelector:
+        matchExpressions:
+          - {key: name, operator: NotIn, values: [kube-system]}
