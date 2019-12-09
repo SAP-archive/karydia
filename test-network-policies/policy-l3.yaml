@@ -9,7 +9,17 @@ spec:
   - Egress
   - Ingress
   egress:
-  - to:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:  
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     - podSelector:
         matchLabels: {}
   ingress:
