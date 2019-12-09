@@ -31,10 +31,10 @@ spec:
         cidr: 0.0.0.0/0
         except:
         - 100.64.0.0/10 # local network
-        {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") }}
+        {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") (eq .Values.config.cloudProvider "") }}
         - 169.254.169.254/32 # meta data service (Azure, AWS, GCP, OpenStack)
         {{- end }}
-        {{- if eq .Values.config.cloudProvider "AliCloud"}}
+        {{- if or (eq .Values.config.cloudProvider "AliCloud") (eq .Values.config.cloudProvider "")}}
         - 100.100.100.200/32 # meta data service (Alicloud)
         {{- end }}
     - namespaceSelector:
