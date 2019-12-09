@@ -26,6 +26,7 @@ spec:
     matchLabels: {}
   policyTypes:
   - Egress
+  - Ingress
   egress:
   - ports:
     - port: 53
@@ -33,4 +34,7 @@ spec:
     - port: 53
       protocol: TCP
   - to:
+    - namespaceSelector: {}
+  ingress:
+  - from:
     - namespaceSelector: {}

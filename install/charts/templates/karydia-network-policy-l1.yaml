@@ -25,8 +25,25 @@ spec:
     matchLabels: {}
   policyTypes:
   - Egress
+  - Ingress
   egress:
   - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 10.250.0.0/16 # host network
+        - 100.64.0.0/10 # local network
+        {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") (eq .Values.config.cloudProvider "") }}
+        - 169.254.169.254/32 # meta data service (Azure, AWS, GCP, OpenStack)
+        {{- end }}
+        {{- if or (eq .Values.config.cloudProvider "AliCloud") (eq .Values.config.cloudProvider "")}}
+        - 100.100.100.200/32 # meta data service (Alicloud)
+        {{- end }}
+    - namespaceSelector:
+        matchExpressions:
+          - {key: name, operator: NotIn, values: [kube-system]}
+  ingress:
+  - from:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:
