@@ -90,10 +90,7 @@ func testMetaDataServicesReachability(t *testing.T) {
 
 	podName := createdPod.ObjectMeta.Name
 
-	destinations := [3]string{
-		"169.254.169.254", // meta data services (Azure, AWS, GCP, OpenStack)
-		"100.100.100.200", // meta data services (AliCloud)
-	}
+	destination := "169.254.169.254" // meta data services (Azure, AWS, GCP, OpenStack)
 
 	for destination := range destinations {
 		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination

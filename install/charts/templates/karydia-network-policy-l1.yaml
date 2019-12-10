@@ -32,6 +32,7 @@ spec:
         cidr: 0.0.0.0/0
         except:
         - 10.250.0.0/16 # host network
+        - 10.250.0.0/16 # host network
         - 100.64.0.0/10 # local network
         {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") (eq .Values.config.cloudProvider "") }}
         - 169.254.169.254/32 # meta data service (Azure, AWS, GCP, OpenStack)
@@ -47,6 +48,7 @@ spec:
     - ipBlock:
         cidr: 0.0.0.0/0
         except:
+        - 10.250.0.0/16 # host network
         - 10.250.0.0/16 # host network
         - 100.64.0.0/10 # local network
         {{- if or (eq .Values.config.cloudProvider "Azure") (eq .Values.config.cloudProvider "AWS") (eq .Values.config.cloudProvider "GCP") (eq .Values.config.cloudProvider "OpenStack") (eq .Values.config.cloudProvider "") }}
