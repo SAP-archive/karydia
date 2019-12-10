@@ -95,7 +95,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	// allowed communication
 	testEgressCommunication(t, namespaceName, podName, Success)
 	// testDifferentNamespaceReachability(t)
-	// testSameNamespaceReachability(t)
+	testSameNamespaceReachability(t, namespaceName, podName, Success)
 
 	// Delete test pod
 	err = f.KubeClientset.CoreV1().Pods(namespaceName).Delete(podName, &metav1.DeleteOptions{})
@@ -199,7 +199,7 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 	serviceName := service.ObjectMeta.Name
 	timeout := 3000 * time.Millisecond
 
-	if err := f.WaitEndpointCreated("kube-system", serviceName, 5*timeout); err != nil {
+	if err := f.WaitEndpointCreated("kube-system", serviceName, 10*timeout); err != nil {
 		t.Fatal("Endpoint was never fully created")
 	}
 
@@ -211,7 +211,7 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 	serviceIp := endpoints.Subsets[0].Addresses[0].IP // ip of the test-deployment service
 
 	destinations := [2]string{
-		"test-deployment.kube-system",
+		serviceName + ".kube-system",
 		serviceIp,
 	}
 
@@ -255,16 +255,11 @@ func TestNetworkPolicyLevel2(t *testing.T) {
 }
 
 func testEgressCommunication(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	/*destinations := [3]string{
+	destinations := [3]string{
 		"https://8.8.8.8", // Google DNS
 		"google.com",      // Google domain
 		"sap.com",         // SAP domain
-	}*/
-
-        destinations := [2]string{
-                "google.com",      // Google domain
-                "sap.com",         // SAP domain
-        }
+	}
 
 	for _, destination := range destinations {
 		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
@@ -296,12 +291,113 @@ func TestNetworkPolicyLevel3(t *testing.T) {
 	*/
 }
 
-func testDifferentNamespaceReachability(t *testing.T) {
+func testDifferentNamespaceReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
+
 
 }
 
-func testSameNamespaceReachability(t *testing.T) {
+func testSameNamespaceReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
+	// creeate deployment in same namespace
+        deploymentSepc := appsv1.Deployment{
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:      "test-deployment",
+                        Namespace: namespaceName,
+                },
+                Spec: appsv1.DeploymentSpec{
+                        Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
+                                "run": "test-deployment",
+                        },
+                        },
+                        Replicas: func() *int32 { i := int32(1); return &i }(),
+                        Template: corev1.PodTemplateSpec{
+                                ObjectMeta: metav1.ObjectMeta{
+                                        Labels: map[string]string{
+                                                "run": "test-deployment",
+                                        },
+                                },
+                                Spec: corev1.PodSpec{
+                                        Containers: []corev1.Container{
+                                                {       
+                                                        Name:  "test-deployment",
+                                                        Image: "nginx",
+                                                        Ports: []corev1.ContainerPort{
+                                                                {       
+                                                                        ContainerPort: 80,
+                                                                },
+                                                        },
+                                                },
+                                        },
+                                },
+                        },
+                },
+        }
 
+        deployment, err := f.KubeClientset.AppsV1().Deployments(namespaceName).Create(&deploymentSepc)
+        if err != nil {
+                t.Fatal("Failed to create service:", err.Error())
+        }
+
+        deploymentName := deployment.ObjectMeta.Name
+
+	// create service in same  namespace
+        serviceSpec := &corev1.Service{
+                ObjectMeta: metav1.ObjectMeta{
+                        Name:      "test-deployment",
+                        Namespace: namespaceName,
+                        Labels: map[string]string{
+                                "run": "test-deployment",
+                        },
+                },
+                Spec: corev1.ServiceSpec{
+                        Ports: []corev1.ServicePort{
+                                {Port: 80, Protocol: "TCP"},
+                        },
+                        Selector: map[string]string{
+                                "run": "test-deployment",
+                        },
+                },
+        }
+
+        service, err := f.KubeClientset.CoreV1().Services(namespaceName).Create(serviceSpec)
+        if err != nil {
+                t.Fatal("Failed to create service:", err.Error())
+        }
+
+        serviceName := service.ObjectMeta.Name
+        timeout := 3000 * time.Millisecond
+
+        if err := f.WaitEndpointCreated(namespaceName, serviceName, 10*timeout); err != nil {
+                t.Fatal("Endpoint was never fully created")
+        }
+
+        endpoints, err := f.KubeClientset.CoreV1().Endpoints(namespaceName).Get(serviceName, metav1.GetOptions{})
+        if err != nil {
+                t.Fatal("Could not get endpoint", err.Error())
+        }
+
+	t.Log(endpoints.Subsets)
+        serviceIp := endpoints.Subsets[0].Addresses[1].IP // ip of the test-deployment service
+
+        destinations := [2]string{
+                serviceName + "." + namespaceName,
+                serviceIp,
+        }
+
+        for _, destination := range destinations {
+                cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
+                execCommandAssertExitCode(t, cmd, expectedExitCode)
+        }
+
+        // clean-up deplyoment and service
+        err = f.KubeClientset.AppsV1().Deployments(namespaceName).Delete(deploymentName, &metav1.DeleteOptions{})
+        if err != nil {
+                t.Fatal("Deployment could not be deleted", err.Error())
+        }
+
+        err = f.KubeClientset.CoreV1().Services(namespaceName).Delete(serviceName, &metav1.DeleteOptions{})
+        if err != nil {
+                t.Fatal("Service could not be deleted", err.Error())
+        }
 }
 
 func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode int) {
