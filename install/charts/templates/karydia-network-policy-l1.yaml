@@ -43,6 +43,11 @@ spec:
     - namespaceSelector:
         matchExpressions:
           - {key: name, operator: NotIn, values: [kube-system]}
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
   ingress:
   - from:
     - ipBlock:
