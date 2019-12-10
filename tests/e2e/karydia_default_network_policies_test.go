@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -60,7 +60,7 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 	// Create test pod
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "karydia-network-policy-1",
+			Name:      "karydia-network-policy-l1",
 			Namespace: namespaceName,
 		},
 		Spec: corev1.PodSpec{
@@ -197,9 +197,18 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 	}
 
 	serviceName := service.ObjectMeta.Name
+	timeout := 3000 * time.Millisecond
 
-	t.Log(f.KubeClientset.CoreV1().Services("kube-system").Get(serviceName, metav1.GetOptions{}))
-	serviceIp := "" // ip of the test-deployment service
+	if err := f.WaitEndpointCreated("kube-system", serviceName, 5*timeout); err != nil {
+		t.Fatal("Endpoint was never fully created")
+	}
+
+	endpoints, err := f.KubeClientset.CoreV1().Endpoints("kube-system").Get(serviceName, metav1.GetOptions{})
+       	if err != nil {
+        	t.Fatal("Could not get endpoint", err.Error())
+        }	
+
+	serviceIp := endpoints.Subsets[0].Addresses[0].IP // ip of the test-deployment service
 
 	destinations := [2]string{
 		"test-deployment.kube-system",
@@ -212,24 +221,23 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 	}
 
 	// clean-up deplyoment and service
-	err = f.KubeClientset.AppsV1().Deployments(namespaceName).Delete(deploymentName, &metav1.DeleteOptions{})
+	err = f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentName, &metav1.DeleteOptions{})
 	if err != nil {
 		t.Fatal("Deployment could not be deleted", err.Error())
 	}
 
-	err = f.KubeClientset.CoreV1().Services(namespaceName).Delete(serviceName, &metav1.DeleteOptions{})
+	err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceName, &metav1.DeleteOptions{})
 	if err != nil {
 		t.Fatal("Service could not be deleted", err.Error())
 	}
 }
 
 func TestNetworkPolicyLevel2(t *testing.T) {
-	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[1])
+	/*err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[1])
 	if err != nil {
 		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
 	}
 
-	/*
 		// security implications of network policy l1
 		testMetaDataServicesReachability(t)
 
@@ -247,11 +255,16 @@ func TestNetworkPolicyLevel2(t *testing.T) {
 }
 
 func testEgressCommunication(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	destinations := [3]string{
+	/*destinations := [3]string{
 		"https://8.8.8.8", // Google DNS
 		"google.com",      // Google domain
 		"sap.com",         // SAP domain
-	}
+	}*/
+
+        destinations := [2]string{
+                "google.com",      // Google domain
+                "sap.com",         // SAP domain
+        }
 
 	for _, destination := range destinations {
 		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
@@ -260,12 +273,11 @@ func testEgressCommunication(t *testing.T, namespaceName string, podName string,
 }
 
 func TestNetworkPolicyLevel3(t *testing.T) {
-	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[2])
+	/*err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[2])
 	if err != nil {
 		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
 	}
 
-	/*
 		// security implications of network policy l1
 		testMetaDataServicesReachability(t)
 
@@ -306,7 +318,7 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 			exitCode = ws.ExitStatus()
 
 			if exitCode != expectedExitCode {
-				t.Fatal("Exit status with unexpected code:", exitCode, command)
+				t.Fatal("Exit status with unexpected code:", exitCode, expectedExitCode, command)
 			}
 		} else {
 			t.Fatal("Could not get exit code.")
@@ -317,7 +329,7 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 		exitCode = ws.ExitStatus()
 
 		if exitCode != expectedExitCode {
-			t.Fatal("Exit status with unexpected code:", exitCode, command)
+			t.Fatal("Exit status with unexpected code:", exitCode, expectedExitCode, command)
 		}
 	}
 }
