@@ -30,37 +30,82 @@ import (
 )
 
 const (
-	Success int = 0
-	TimeOut int = 1
+	SuccessInt int           = 0
+	TimeOutInt int           = 1
+	timeout    time.Duration = 3000 * time.Millisecond
 )
 
 var (
 	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy-l1", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
 )
 
-func TestNetworkPolicyLevel1(t *testing.T) {
-	err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[0])
-	if err != nil {
-		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
+func TestNetworkPolicies(t *testing.T) {
+	// ===== set-up =====
+	// set-up test namespace
+	namespaceTest, namespaceName := setUpTestNamespace(t)
+
+	// set-up test pod
+	podName := setUpPod(t, namespaceName, "karydia-test-network-policy-pod")
+
+	// set-up same namespace deployment
+	deploymentName := setUpDeployment(t, namespaceName, "karydia-test-network-policy-deployment")
+
+	// set-up same namespace service
+	serviceName, destinationsTest := setUpService(t, namespaceName, "karydia-test-network-policy-service", deploymentName)
+
+	// set-up other namespace
+	_, namespaceNameOther := setUpTestNamespace(t)
+
+	// set-up other namespace deployment
+	deploymentNameOther := setUpDeployment(t, namespaceNameOther, "karydia-test-network-policy-deployment")
+
+	// set-up other namespace service
+	serviceNameOther, destinationsOther := setUpService(t, namespaceNameOther, "karydia-test-network-policy-service", deploymentNameOther)
+
+	// set-up kube-system deployment
+	deploymentNameKubeSystem := setUpDeployment(t, "kube-system", "karydia-test-network-policy-deployment")
+
+	// set-up kube-system service
+	serviceNameKubeSystem, destinationsKubeSystem := setUpService(t, "kube-system", "karydia-test-network-policy-service", deploymentNameKubeSystem)
+
+	destinationsMetadata := [1]string{
+		"169.254.169.254", // meta data services (Azure, AWS, GCP, OpenStack)
 	}
 
-	// Create test namespace
+	destinationsHostNetwork := [3]string{
+		"10.250.0.0",
+		"10.250.255.255",
+		"10.250.100.100",
+	}
+
+	destinationsEgress := [3]string{
+		"https://8.8.8.8", // Google DNS
+		"google.com",      // Google domain
+		"sap.com",         // SAP domain
+	}
+
+	// ===== run tests =====
+	namespaceTest =	testNetworkPolicyLevel1(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
+	namespaceTest = testNetworkPolicyLevel2(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
+	namespaceTest = testNetworkPolicyLevel3(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
+
+	// ===== clean-up =====
+	cleanUp(t, namespaceName, deploymentName, serviceName, podName, deploymentNameKubeSystem, serviceNameKubeSystem, namespaceNameOther, deploymentNameOther, serviceNameOther)
+}
+
+func setUpTestNamespace(t *testing.T) (*corev1.Namespace, string) {
 	namespace, err := f.CreateTestNamespace()
 	if err != nil {
 		t.Fatal("failed to create test namespace:", err)
 	}
 
-	namespaceName := namespace.ObjectMeta.Name
+	return namespace, namespace.ObjectMeta.Name
+}
 
-	timeout := 3000 * time.Millisecond
-	if err := f.WaitNetworkPolicyCreated(namespaceName, defaultNetworkPolicyNames[0], timeout); err != nil {
-		t.Fatal("failed to create default network policy for new namespace:", err)
-	}
-
-	// Create test pod
+func setUpPod(t *testing.T, namespaceName string, podName string) string {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "karydia-network-policy-l1",
+			Name:      podName,
 			Namespace: namespaceName,
 		},
 		Spec: corev1.PodSpec{
@@ -79,79 +124,39 @@ func TestNetworkPolicyLevel1(t *testing.T) {
 		t.Fatal("Failed to create pod:", err.Error())
 	}
 
-	podName := createdPod.ObjectMeta.Name
-
 	if err := f.WaitPodRunning(namespaceName, podName, 2*timeout); err != nil {
 		t.Fatal("Pod never reached state running", err.Error())
 	}
 
-	// security implications of network policy l1
-	testMetaDataServicesReachability(t, namespaceName, podName, TimeOut)
-
-	testHostNetworkReachability(t, namespaceName, podName, TimeOut)
-
-	testCommunicationToKubeSystemNamespace(t, namespaceName, podName, TimeOut)
-
-	// allowed communication
-	testEgressCommunication(t, namespaceName, podName, Success)
-	// testDifferentNamespaceReachability(t)
-	testSameNamespaceReachability(t, namespaceName, podName, Success)
-
-	// Delete test pod
-	err = f.KubeClientset.CoreV1().Pods(namespaceName).Delete(podName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Fatal("Pod could not be deleted", err.Error())
-	}
-
-	err = f.KubeClientset.CoreV1().Namespaces().Delete(namespaceName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Fatal("Namespace could not be deleted", err.Error())
-	}
+	return createdPod.ObjectMeta.Name
 }
 
-func testMetaDataServicesReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	destination := "169.254.169.254" // meta data services (Azure, AWS, GCP, OpenStack)
-
-	cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
-	execCommandAssertExitCode(t, cmd, expectedExitCode)
-}
-
-func testHostNetworkReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	destinations := [3]string{
-		"10.250.0.0",
-		"10.250.255.255",
-		"10.250.100.100",
-	}
-
-	for _, destination := range destinations {
-		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
-		execCommandAssertExitCode(t, cmd, expectedExitCode)
-	}
-}
-
-func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	// creeate deployment in "kube-system" namespace
+func setUpDeployment(t *testing.T, namespaceName string, deploymentName string) string {
 	deploymentSepc := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-deployment",
-			Namespace: "kube-system",
+			Name:      deploymentName,
+			Namespace: namespaceName,
+			Labels: map[string]string{
+				"app": "karydia",
+			},
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
-				"run": "test-deployment",
+				"run": deploymentName,
 			},
 			},
 			Replicas: func() *int32 { i := int32(1); return &i }(),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"run": "test-deployment",
+						"run": deploymentName,
+						"app": "karydia",
 					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "test-deployment",
+							Name:  deploymentName,
 							Image: "nginx",
 							Ports: []corev1.ContainerPort{
 								{
@@ -165,20 +170,25 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 		},
 	}
 
-	deployment, err := f.KubeClientset.AppsV1().Deployments("kube-system").Create(&deploymentSepc)
+	deployment, err := f.KubeClientset.AppsV1().Deployments(namespaceName).Create(&deploymentSepc)
 	if err != nil {
-		t.Fatal("Failed to create service:", err.Error())
+		t.Fatal("Failed to create deployment:", err.Error())
 	}
 
-	deploymentName := deployment.ObjectMeta.Name
+	if err := f.WaitDeploymentCreated(namespaceName, deployment.ObjectMeta.Name, timeout); err != nil {
+		t.Fatal("Failed to get deployment", err.Error())
+	}
 
-	// create service in "kube-system" namespace
+	return deployment.ObjectMeta.Name
+}
+
+func setUpService(t *testing.T, namespaceName string, serviceName string, deploymentName string) (string, []string) {
 	serviceSpec := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-deployment",
-			Namespace: "kube-system",
+			Name:      serviceName,
+			Namespace: namespaceName,
 			Labels: map[string]string{
-				"run": "test-deployment",
+				"run": deploymentName,
 			},
 		},
 		Spec: corev1.ServiceSpec{
@@ -186,222 +196,213 @@ func testCommunicationToKubeSystemNamespace(t *testing.T, namespaceName string, 
 				{Port: 80, Protocol: "TCP"},
 			},
 			Selector: map[string]string{
-				"run": "test-deployment",
+				"run": deploymentName,
 			},
 		},
 	}
 
-	service, err := f.KubeClientset.CoreV1().Services("kube-system").Create(serviceSpec)
+	service, err := f.KubeClientset.CoreV1().Services(namespaceName).Create(serviceSpec)
 	if err != nil {
 		t.Fatal("Failed to create service:", err.Error())
 	}
 
-	serviceName := service.ObjectMeta.Name
-	timeout := 3000 * time.Millisecond
-
-	if err := f.WaitEndpointCreated("kube-system", serviceName, 10*timeout); err != nil {
+	if err := f.WaitEndpointCreated(namespaceName, serviceName, 10*timeout); err != nil {
 		t.Fatal("Endpoint was never fully created")
 	}
 
-	endpoints, err := f.KubeClientset.CoreV1().Endpoints("kube-system").Get(serviceName, metav1.GetOptions{})
-       	if err != nil {
-        	t.Fatal("Could not get endpoint", err.Error())
-        }	
-
-	serviceIp := endpoints.Subsets[0].Addresses[0].IP // ip of the test-deployment service
-
-	destinations := [2]string{
-		serviceName + ".kube-system",
-		serviceIp,
+	endpoints, err := f.KubeClientset.CoreV1().Endpoints(namespaceName).Get(serviceName, metav1.GetOptions{})
+	if err != nil {
+		t.Fatal("Could not get endpoint", err.Error())
 	}
 
+	var destinations []string
+	destinations = append(destinations, serviceName+"."+namespaceName)
+
+	for _, subset := range endpoints.Subsets {
+		for _, address := range subset.Addresses {
+			destinations = append(destinations, address.IP)
+		}
+	}
+
+	return service.ObjectMeta.Name, destinations[:]
+}
+
+func cleanUp(t *testing.T, namespaceName string, deploymentName string, serviceName string, podName string, deploymentNameKubeSystem string, serviceNameKubeSystem string, namespaceNameOther string, deploymentNameOther string, serviceNameOther string) {
+	// delete test pod
+	err := f.KubeClientset.CoreV1().Pods(namespaceName).Delete(podName, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Pod (test) could not be deleted", err.Error())
+	}
+
+	// delete test deployment
+	err = f.KubeClientset.AppsV1().Deployments(namespaceName).Delete(deploymentName, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Deployment (test) could not be deleted", err.Error())
+	}
+
+	// delete test service
+	err = f.KubeClientset.CoreV1().Services(namespaceName).Delete(serviceName, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Service (test) could not be deleted", err.Error())
+	}
+
+	// delete test namespace
+	err = f.KubeClientset.CoreV1().Namespaces().Delete(namespaceName, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Namespace (test) could not be deleted", err.Error())
+	}
+
+	// delete kube-system deployment
+	err = f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentNameKubeSystem, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Deployment (kube-system) could not be deleted", err.Error())
+	}
+
+	// delete kube-system service
+	err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceNameKubeSystem, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Service (kube-system) could not be deleted", err.Error())
+	}
+
+	// delete other deployment
+	err = f.KubeClientset.AppsV1().Deployments(namespaceNameOther).Delete(deploymentNameOther, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Deployment (other) could not be deleted", err.Error())
+	}
+
+	// delete other service
+	err = f.KubeClientset.CoreV1().Services(namespaceNameOther).Delete(serviceNameOther, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Service (other) could not be deleted", err.Error())
+	}
+
+	// delete other namespace
+	err = f.KubeClientset.CoreV1().Namespaces().Delete(namespaceNameOther, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Namespace (other) could not be deleted", err.Error())
+	}
+}
+
+func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[0]
+	namespaceTest.SetAnnotations(annotations)
+	namespaceTest, err := f.KubeClientset.CoreV1().Namespaces().Update(namespaceTest)
+	if err != nil {
+		t.Fatal("failed to update test namespace:", err)
+	}
+
+	if err := f.WaitNetworkPolicyCreated(testNamespaceName, defaultNetworkPolicyNames[0], timeout); err != nil {
+		t.Fatal("failed to create default network policy for new namespace:", err)
+	}
+
+	// ===== security implications of network policy l1 =====
+	// test metadata service reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsMetadata[:], TimeOutInt)
+
+	// test host network reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsHostNetwork[:], TimeOutInt)
+
+	// test kube-system namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsKubeSystem[:], TimeOutInt)
+
+	// ===== allowed communication =====
+	// test egress reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsEgress[:], SuccessInt)
+
+	// test other namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsOther[:], SuccessInt)
+
+	// test same namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsTest[:], SuccessInt)
+
+	return namespaceTest
+}
+
+func testNetworkPolicyLevel2(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[1]
+	namespaceTest.SetAnnotations(annotations)
+	namespaceTest, err := f.KubeClientset.CoreV1().Namespaces().Update(namespaceTest)
+	if err != nil {
+		t.Fatal("failed to update test namespace:", err)
+	}
+
+	if err := f.WaitNetworkPolicyCreated(testNamespaceName, defaultNetworkPolicyNames[1], timeout); err != nil {
+		t.Fatal("failed to create default network policy for new namespace:", err)
+	}
+
+	// ===== security implications of network policy l1 =====
+	// test metadata service reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsMetadata[:], TimeOutInt)
+
+	// test host network reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsHostNetwork[:], TimeOutInt)
+
+	// test kube-system namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsKubeSystem[:], TimeOutInt)
+
+	// ===== security implications of network policy l2 =====
+	// test egress reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsEgress[:], TimeOutInt)
+
+	// ===== allowed communication =====
+	// test other namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsOther[:], SuccessInt)
+
+	// test same namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsTest[:], SuccessInt)
+
+	return namespaceTest
+}
+
+func testNetworkPolicyLevel3(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+	annotations := make(map[string]string)
+	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[2]
+	namespaceTest.SetAnnotations(annotations)
+	namespaceTest, err := f.KubeClientset.CoreV1().Namespaces().Update(namespaceTest)
+	if err != nil {
+		t.Fatal("failed to update test namespace:", err)
+	}
+
+	if err := f.WaitNetworkPolicyCreated(testNamespaceName, defaultNetworkPolicyNames[2], timeout); err != nil {
+		t.Fatal("failed to create default network policy for new namespace:", err)
+	}
+
+	// ===== security implications of network policy l1 =====
+	// test metadata service reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsMetadata[:], TimeOutInt)
+
+	// test host network reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsHostNetwork[:], TimeOutInt)
+
+	// test kube-system namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsKubeSystem[:], TimeOutInt)
+
+	// ===== security implications of network policy l2 =====
+	// test egress reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsEgress[:], TimeOutInt)
+
+	// ===== security implications of network policy l3 =====
+	// test other namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsOther[:], TimeOutInt)
+
+	// ===== allowed communication =====
+	// test same namespace reachability
+	testReachability(t, testNamespaceName, testPodName, destinationsTest[:], SuccessInt)
+
+	return namespaceTest
+}
+
+func testReachability(t *testing.T, namespaceName string, podName string, destinations []string, expectedExitCode int) {
 	for _, destination := range destinations {
 		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
 		execCommandAssertExitCode(t, cmd, expectedExitCode)
 	}
-
-	// clean-up deplyoment and service
-	err = f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Fatal("Deployment could not be deleted", err.Error())
-	}
-
-	err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Fatal("Service could not be deleted", err.Error())
-	}
-}
-
-func TestNetworkPolicyLevel2(t *testing.T) {
-	/*err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[1])
-	if err != nil {
-		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-	}
-
-		// security implications of network policy l1
-		testMetaDataServicesReachability(t)
-
-		testHostNetworkReachability(t)
-
-		testCommunicationToKubeSystemNamespace(t)
-
-		// security implications of network policy l2
-		testEgressCommunication(t)
-
-		// allowed communication
-		testDifferentNamespaceReachability(t)
-		testSameNamespaceReachability(t)
-	*/
-}
-
-func testEgressCommunication(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	destinations := [3]string{
-		"https://8.8.8.8", // Google DNS
-		"google.com",      // Google domain
-		"sap.com",         // SAP domain
-	}
-
-	for _, destination := range destinations {
-		cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
-		execCommandAssertExitCode(t, cmd, expectedExitCode)
-	}
-}
-
-func TestNetworkPolicyLevel3(t *testing.T) {
-	/*err := updateDefaultNetworkPolicy(defaultNetworkPolicyNames[2])
-	if err != nil {
-		t.Fatal("Could not change defaultNetworkPolicies in karydiaConfig", err)
-	}
-
-		// security implications of network policy l1
-		testMetaDataServicesReachability(t)
-
-		testHostNetworkReachability(t)
-
-		testCommunicationToKubeSystemNamespacet()
-
-		// security implications of network policy l2
-		testEgressCommunication(t)
-
-		// security implications of network policy l3
-		testDifferentNamespaceReachability(t)
-
-		// allowed communication
-		testSameNamespaceReachability(t)
-	*/
-}
-
-func testDifferentNamespaceReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-
-
-}
-
-func testSameNamespaceReachability(t *testing.T, namespaceName string, podName string, expectedExitCode int) {
-	// creeate deployment in same namespace
-        deploymentSepc := appsv1.Deployment{
-                ObjectMeta: metav1.ObjectMeta{
-                        Name:      "test-deployment",
-                        Namespace: namespaceName,
-                },
-                Spec: appsv1.DeploymentSpec{
-                        Selector: &metav1.LabelSelector{MatchLabels: map[string]string{
-                                "run": "test-deployment",
-                        },
-                        },
-                        Replicas: func() *int32 { i := int32(1); return &i }(),
-                        Template: corev1.PodTemplateSpec{
-                                ObjectMeta: metav1.ObjectMeta{
-                                        Labels: map[string]string{
-                                                "run": "test-deployment",
-                                        },
-                                },
-                                Spec: corev1.PodSpec{
-                                        Containers: []corev1.Container{
-                                                {       
-                                                        Name:  "test-deployment",
-                                                        Image: "nginx",
-                                                        Ports: []corev1.ContainerPort{
-                                                                {       
-                                                                        ContainerPort: 80,
-                                                                },
-                                                        },
-                                                },
-                                        },
-                                },
-                        },
-                },
-        }
-
-        deployment, err := f.KubeClientset.AppsV1().Deployments(namespaceName).Create(&deploymentSepc)
-        if err != nil {
-                t.Fatal("Failed to create service:", err.Error())
-        }
-
-        deploymentName := deployment.ObjectMeta.Name
-
-	// create service in same  namespace
-        serviceSpec := &corev1.Service{
-                ObjectMeta: metav1.ObjectMeta{
-                        Name:      "test-deployment",
-                        Namespace: namespaceName,
-                        Labels: map[string]string{
-                                "run": "test-deployment",
-                        },
-                },
-                Spec: corev1.ServiceSpec{
-                        Ports: []corev1.ServicePort{
-                                {Port: 80, Protocol: "TCP"},
-                        },
-                        Selector: map[string]string{
-                                "run": "test-deployment",
-                        },
-                },
-        }
-
-        service, err := f.KubeClientset.CoreV1().Services(namespaceName).Create(serviceSpec)
-        if err != nil {
-                t.Fatal("Failed to create service:", err.Error())
-        }
-
-        serviceName := service.ObjectMeta.Name
-        timeout := 3000 * time.Millisecond
-
-        if err := f.WaitEndpointCreated(namespaceName, serviceName, 10*timeout); err != nil {
-                t.Fatal("Endpoint was never fully created")
-        }
-
-        endpoints, err := f.KubeClientset.CoreV1().Endpoints(namespaceName).Get(serviceName, metav1.GetOptions{})
-        if err != nil {
-                t.Fatal("Could not get endpoint", err.Error())
-        }
-
-	t.Log(endpoints.Subsets)
-        serviceIp := endpoints.Subsets[0].Addresses[1].IP // ip of the test-deployment service
-
-        destinations := [2]string{
-                serviceName + "." + namespaceName,
-                serviceIp,
-        }
-
-        for _, destination := range destinations {
-                cmd := "kubectl exec --namespace=" + namespaceName + " " + podName + " -- wget --spider --timeout 3 " + destination
-                execCommandAssertExitCode(t, cmd, expectedExitCode)
-        }
-
-        // clean-up deplyoment and service
-        err = f.KubeClientset.AppsV1().Deployments(namespaceName).Delete(deploymentName, &metav1.DeleteOptions{})
-        if err != nil {
-                t.Fatal("Deployment could not be deleted", err.Error())
-        }
-
-        err = f.KubeClientset.CoreV1().Services(namespaceName).Delete(serviceName, &metav1.DeleteOptions{})
-        if err != nil {
-                t.Fatal("Service could not be deleted", err.Error())
-        }
 }
 
 func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode int) {
-	exitCode := Success
+	exitCode := SuccessInt
 
 	args := strings.Fields(command)
 	cmd := exec.Command(args[0], args[1:]...)
