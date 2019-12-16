@@ -223,17 +223,17 @@ func setUpService(t *testing.T, namespaceName string, serviceName string, deploy
 }
 
 func cleanUp(t *testing.T, deploymentNameKubeSystem string, serviceNameKubeSystem string) {
-        // delete kube-system deployment
-        err := f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentNameKubeSystem, &metav1.DeleteOptions{})
-        if err != nil {
-                t.Log("Deployment (kube-system) could not be deleted", err.Error())
-        }
+	// delete kube-system deployment
+	err := f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentNameKubeSystem, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Deployment (kube-system) could not be deleted", err.Error())
+	}
 
-        // delete kube-system service
-        err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceNameKubeSystem, &metav1.DeleteOptions{})
-        if err != nil {
-                t.Log("Service (kube-system) could not be deleted", err.Error())
-        }
+	// delete kube-system service
+	err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceNameKubeSystem, &metav1.DeleteOptions{})
+	if err != nil {
+		t.Log("Service (kube-system) could not be deleted", err.Error())
+	}
 }
 
 func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) *corev1.Namespace {
