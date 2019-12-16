@@ -41,7 +41,7 @@ spec:
         {{- end }}
     - namespaceSelector:
         matchExpressions:
-          - {key: name, operator: NotIn, values: [kube-system]}
+          - {key: gardener.cloud/purpose, operator: NotIn, values: [kube-system]}
     - namespaceSelector:
         matchLabels: {}
       podSelector:
@@ -62,4 +62,4 @@ spec:
         {{- end }}
     - namespaceSelector:
         matchExpressions:
-          - {key: name, operator: NotIn, values: [kube-system]}
+          - {key: gardener.cloud/purpose, operator: NotIn, values: [kube-system]}

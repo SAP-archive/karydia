@@ -40,7 +40,7 @@ Karydia provides three different levels of network policies:
 2. `karydia-default-network-policy-l2`: Level 1 security implications and block internet access (egress).
 3. `karydia-default-network-policy-l3`: Level 2 security implications and block communication between different namespaces.
 
-You can specify one or multiple default network policies (including custom policies). By default, `karydia-default-network-policy-l1` is deployed in every namespace. You can set the cloud provider in the `install/charts/values.yaml` (key `cloudProvider`) to `Azure`, `AWS`, `GCP`, `OpenStack` or `AliCloud`. If you cannot specify the cloud provider, use the default empty value.
+You can specify one or multiple default network policies (including custom policies). By default, `karydia-default-network-policy-l1` is deployed in every namespace. You can set the cloud provider in the `install/charts/values.yaml` (key `cloudProvider`) to `Azure`, `AWS`, `GCP`, `OpenStack` or `AliCloud`. If you cannot specify the cloud provider, use the backup empty value (i.e. `""`).
 
 Karydia annotates the created network policy resources with the currently valid security settings (depending on time and context):
 
