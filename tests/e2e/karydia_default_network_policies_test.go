@@ -34,10 +34,6 @@ const (
 	timeout    time.Duration = 3000 * time.Millisecond
 )
 
-var (
-	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy-l1", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
-)
-
 func TestNetworkPolicies(t *testing.T) {
 	// ===== set-up =====
 	// set-up test namespace
