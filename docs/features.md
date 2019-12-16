@@ -35,11 +35,12 @@ You can configure the default network policies for a specific namespace with the
 
 Please note: an update of `networkPolicies` at `install/charts/values.yaml` does not update previously deployed network policies. New namespaces created while Karydia was not running will not be updated when Karydia starts.
 
-The current network policy called `karydia-default-network-policy` has two security measures:
-1. block access to host network (AWS only)
-2. block access to Meta Data Services (AWS, GCP, Azure, Alibaba Cloud)
+Karydia provides three different levels of network policies:
+1. `karydia-default-network-policy-l1`: Block metadata service, access to kube-system namespace and access to the host network.
+2. `karydia-default-network-policy-l2`: Level 1 security implications and block internet access (egress).
+3. `karydia-default-network-policy-l3`: Level 2 security implications and block communication between different namespaces.
 
-Note: The network policy is still quite open. It uses a blacklisting approach and does not block Internet access (Egress).
+You can specify one or multiple default network policies (including custom policies). By default, `karydia-default-network-policy-l1` is deployed in every namespace. You can set the cloud provider in the `install/charts/values.yaml` (key `cloudProvider`) to `Azure`, `AWS`, `GCP`, `OpenStack` or `AliCloud`. If you cannot specify the cloud provider, use the default empty value.
 
 Karydia annotates the created network policy resources with the currently valid security settings (depending on time and context):
 
