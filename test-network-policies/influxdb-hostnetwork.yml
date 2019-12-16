@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Pod
-metadata:
-  name: influxdb
-spec:
-  hostNetwork: true
-  containers:
-    - name: influxdb
-      image: influxdb

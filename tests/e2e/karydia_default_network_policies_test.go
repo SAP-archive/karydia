@@ -17,7 +17,6 @@
 package e2e
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -429,27 +428,4 @@ func execCommandAssertExitCode(t *testing.T, command string, expectedExitCode in
 			t.Fatal("Exit status with unexpected code:", exitCode, expectedExitCode, command)
 		}
 	}
-}
-
-func updateDefaultNetworkPolicy(defaultNetworkPolicies string) error {
-	curKarydiaConfig, curErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
-
-	if curErr != nil {
-		return curErr
-	}
-
-	curKarydiaConfig.Spec.NetworkPolicies = defaultNetworkPolicies
-	f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Update(curKarydiaConfig)
-
-	newKarydiaConfig, newErr := f.KarydiaClientset.KarydiaV1alpha1().KarydiaConfigs().Get("karydia-config", metav1.GetOptions{})
-
-	if newErr != nil {
-		return newErr
-	}
-
-	if newKarydiaConfig.Spec.NetworkPolicies != defaultNetworkPolicies {
-		return fmt.Errorf("defaultNetworkPolicies in karydiaConfig did not change but should")
-	}
-
-	return nil
 }
