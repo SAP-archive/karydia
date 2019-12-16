@@ -43,5 +43,10 @@ spec:
         matchLabels: {}
   ingress:
   - from:
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
     - podSelector:
         matchLabels: {}
