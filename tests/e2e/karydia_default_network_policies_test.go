@@ -85,7 +85,7 @@ func TestNetworkPolicies(t *testing.T) {
 	}
 
 	// ===== run tests =====
-	namespaceTest =	testNetworkPolicyLevel1(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
+	namespaceTest = testNetworkPolicyLevel1(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
 	namespaceTest = testNetworkPolicyLevel2(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
 	namespaceTest = testNetworkPolicyLevel3(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
 
@@ -283,7 +283,7 @@ func cleanUp(t *testing.T, namespaceName string, deploymentName string, serviceN
 	}
 }
 
-func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) *corev1.Namespace {
 	annotations := make(map[string]string)
 	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[0]
 	namespaceTest.SetAnnotations(annotations)
@@ -319,7 +319,7 @@ func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *co
 	return namespaceTest
 }
 
-func testNetworkPolicyLevel2(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+func testNetworkPolicyLevel2(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) *corev1.Namespace {
 	annotations := make(map[string]string)
 	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[1]
 	namespaceTest.SetAnnotations(annotations)
@@ -356,7 +356,7 @@ func testNetworkPolicyLevel2(t *testing.T, testPodName string, namespaceTest *co
 	return namespaceTest
 }
 
-func testNetworkPolicyLevel3(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) (*corev1.Namespace) {
+func testNetworkPolicyLevel3(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) *corev1.Namespace {
 	annotations := make(map[string]string)
 	annotations["karydia.gardener.cloud/networkPolicy"] = defaultNetworkPolicyNames[2]
 	namespaceTest.SetAnnotations(annotations)
