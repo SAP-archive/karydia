@@ -36,7 +36,7 @@ spec:
   - to:
     - namespaceSelector: 
         matchExpressions:
-          - {key: gardener.cloud/purpose, operator: NotIn, values: [kube-system]}
+          - {key: karydia.gardener.cloud/name, operator: NotIn, values: [kube-system]}
     - namespaceSelector:
         matchLabels: {}
       podSelector:
@@ -46,7 +46,7 @@ spec:
   - from:
     - namespaceSelector: 
         matchExpressions:
-          - {key: gardener.cloud/purpose, operator: NotIn, values: [kube-system]}
+          - {key: karydia.gardener.cloud/name, operator: NotIn, values: [kube-system]}
     - namespaceSelector:
         matchLabels: {}
       podSelector:

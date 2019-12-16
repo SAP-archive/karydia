@@ -46,7 +46,7 @@ func TestNetworkPolicies(t *testing.T) {
 	deploymentName := setUpDeployment(t, namespaceName, "karydia-test-network-policy-deployment")
 
 	// set-up same namespace service
-	serviceName, destinationsTest := setUpService(t, namespaceName, "karydia-test-network-policy-service", deploymentName)
+	_, destinationsTest := setUpService(t, namespaceName, "karydia-test-network-policy-service", deploymentName)
 
 	// set-up other namespace
 	_, namespaceNameOther := setUpTestNamespace(t)
@@ -55,7 +55,7 @@ func TestNetworkPolicies(t *testing.T) {
 	deploymentNameOther := setUpDeployment(t, namespaceNameOther, "karydia-test-network-policy-deployment")
 
 	// set-up other namespace service
-	serviceNameOther, destinationsOther := setUpService(t, namespaceNameOther, "karydia-test-network-policy-service", deploymentNameOther)
+	_, destinationsOther := setUpService(t, namespaceNameOther, "karydia-test-network-policy-service", deploymentNameOther)
 
 	// set-up kube-system deployment
 	deploymentNameKubeSystem := setUpDeployment(t, "kube-system", "karydia-test-network-policy-deployment")
@@ -85,7 +85,7 @@ func TestNetworkPolicies(t *testing.T) {
 	namespaceTest = testNetworkPolicyLevel3(t, podName, namespaceTest, namespaceName, destinationsMetadata, destinationsHostNetwork, destinationsEgress, destinationsKubeSystem[:], destinationsTest[:], destinationsOther[:])
 
 	// ===== clean-up =====
-	cleanUp(t, namespaceName, deploymentName, serviceName, podName, deploymentNameKubeSystem, serviceNameKubeSystem, namespaceNameOther, deploymentNameOther, serviceNameOther)
+	cleanUp(t, deploymentNameKubeSystem, serviceNameKubeSystem)
 }
 
 func setUpTestNamespace(t *testing.T) (*corev1.Namespace, string) {
@@ -222,60 +222,18 @@ func setUpService(t *testing.T, namespaceName string, serviceName string, deploy
 	return service.ObjectMeta.Name, destinations[:]
 }
 
-func cleanUp(t *testing.T, namespaceName string, deploymentName string, serviceName string, podName string, deploymentNameKubeSystem string, serviceNameKubeSystem string, namespaceNameOther string, deploymentNameOther string, serviceNameOther string) {
-	// delete test pod
-	err := f.KubeClientset.CoreV1().Pods(namespaceName).Delete(podName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Pod (test) could not be deleted", err.Error())
-	}
+func cleanUp(t *testing.T, deploymentNameKubeSystem string, serviceNameKubeSystem string) {
+        // delete kube-system deployment
+        err := f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentNameKubeSystem, &metav1.DeleteOptions{})
+        if err != nil {
+                t.Log("Deployment (kube-system) could not be deleted", err.Error())
+        }
 
-	// delete test deployment
-	err = f.KubeClientset.AppsV1().Deployments(namespaceName).Delete(deploymentName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Deployment (test) could not be deleted", err.Error())
-	}
-
-	// delete test service
-	err = f.KubeClientset.CoreV1().Services(namespaceName).Delete(serviceName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Service (test) could not be deleted", err.Error())
-	}
-
-	// delete test namespace
-	err = f.KubeClientset.CoreV1().Namespaces().Delete(namespaceName, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Namespace (test) could not be deleted", err.Error())
-	}
-
-	// delete kube-system deployment
-	err = f.KubeClientset.AppsV1().Deployments("kube-system").Delete(deploymentNameKubeSystem, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Deployment (kube-system) could not be deleted", err.Error())
-	}
-
-	// delete kube-system service
-	err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceNameKubeSystem, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Service (kube-system) could not be deleted", err.Error())
-	}
-
-	// delete other deployment
-	err = f.KubeClientset.AppsV1().Deployments(namespaceNameOther).Delete(deploymentNameOther, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Deployment (other) could not be deleted", err.Error())
-	}
-
-	// delete other service
-	err = f.KubeClientset.CoreV1().Services(namespaceNameOther).Delete(serviceNameOther, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Service (other) could not be deleted", err.Error())
-	}
-
-	// delete other namespace
-	err = f.KubeClientset.CoreV1().Namespaces().Delete(namespaceNameOther, &metav1.DeleteOptions{})
-	if err != nil {
-		t.Log("Namespace (other) could not be deleted", err.Error())
-	}
+        // delete kube-system service
+        err = f.KubeClientset.CoreV1().Services("kube-system").Delete(serviceNameKubeSystem, &metav1.DeleteOptions{})
+        if err != nil {
+                t.Log("Service (kube-system) could not be deleted", err.Error())
+        }
 }
 
 func testNetworkPolicyLevel1(t *testing.T, testPodName string, namespaceTest *corev1.Namespace, testNamespaceName string, destinationsMetadata [1]string, destinationsHostNetwork [3]string, destinationsEgress [3]string, destinationsKubeSystem []string, destinationsTest []string, destinationsOther []string) *corev1.Namespace {

@@ -40,6 +40,10 @@ rules:
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "get", "patch"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "delete", "patch"]
+
 
 ---
 
