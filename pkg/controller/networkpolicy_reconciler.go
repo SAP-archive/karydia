@@ -271,7 +271,7 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicy(namespaceName strin
 		}
 	}
 
-	if npName == reconciler.defaultNetworkPolicies[npName].GetName() && stringInSlice(npName, expectedNpNames) {
+	if stringInSlice(npName, expectedNpNames) && npName == reconciler.defaultNetworkPolicies[npName].GetName() {
 		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(npName)
 		if err != nil {
 			if errors.IsNotFound(err) {
