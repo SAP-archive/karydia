@@ -260,14 +260,15 @@ func (reconciler *NetworkpolicyReconciler) syncNetworkPolicyHandler(key string) 
 }
 
 func (reconciler *NetworkpolicyReconciler) syncNetworkPolicy(namespaceName string, npName string, setting Setting) error {
-	if _, ok := reconciler.defaultNetworkPolicies[npName]; !ok {
-		if err := reconciler.updateBuffer(npName); err != nil {
-			reconciler.log.Warnf("Failed to get default network policy '%s'", npName)
-			return nil
-		}
-	}
+        expectedNpNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
 
-	expectedNpNames := strings.Split(setting.value, defaultNetworkPoiliciesDelimiter)
+	for _, expectedNpName := range expectedNpNames {
+		if _, ok := reconciler.defaultNetworkPolicies[expectedNpName]; !ok {
+			if err := reconciler.updateBuffer(expectedNpName); err != nil {
+				reconciler.log.Warnf("Failed to get default network policy '%s'", expectedNpName)
+				return nil
+			}
+		}
 
 	if npName == reconciler.defaultNetworkPolicies[npName].GetName() && stringInSlice(npName, expectedNpNames) {
 		networkPolicy, err := reconciler.networkPolicyLister.NetworkPolicies(namespaceName).Get(npName)
