@@ -37,7 +37,7 @@ import (
 var (
 	alwaysReady               = func() bool { return true }
 	noResyncPeriodFunc        = func() time.Duration { return 0 }
-	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
+	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy-l1", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
 )
 
 type fixture struct {

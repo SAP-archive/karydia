@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
+	defaultNetworkPolicyNames = [3]string{"karydia-default-network-policy-l1", "karydia-default-network-policy-l2", "karydia-default-network-policy-l3"}
 )
 
 // e2e tests for single network policy

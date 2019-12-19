@@ -21,7 +21,7 @@ First, register the Karydia config Custom Resource Definition (CRD) followed by 
 kubectl apply -f manifests/karydia/templates/crd-config.yaml
 kubectl apply -f manifests/karydia/templates/config.yaml
 kubectl apply -f manifests/karydia/templates/crd-karydia-network-policy.yaml
-kubectl apply -f manifests/karydia/templates/karydia-network-policy.yaml
+kubectl apply -f manifests/karydia/templates/karydia-network-policy-l1.yaml
 kubectl apply -f manifests/karydia/templates/karydia-network-policy-l2.yaml
 kubectl apply -f manifests/karydia/templates/karydia-network-policy-l3.yaml
 ```

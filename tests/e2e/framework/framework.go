@@ -221,3 +221,37 @@ func (f *Framework) WaitNetworkPolicyCreated(ns string, name string, timeout tim
 		return true, nil
 	})
 }
+
+func (f *Framework) WaitDeploymentCreated(ns string, name string, timeout time.Duration) error {
+	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.AppsV1().Deployments(ns).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return false, nil
+		}
+
+		f.WaitPodRunning(ns, name, timeout)
+
+		return true, nil
+	})
+}
+
+func (f *Framework) WaitEndpointCreated(ns string, name string, timeout time.Duration) error {
+	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
+		endpoint, err := f.KubeClientset.CoreV1().Endpoints(ns).Get(name, metav1.GetOptions{})
+		if err != nil {
+			return false, fmt.Errorf("failed to get endpoint: %v", err)
+		}
+
+		if len(endpoint.Subsets) == 0 {
+			return false, nil
+		}
+
+		for _, subset := range endpoint.Subsets {
+			if len(subset.Addresses) <= 0 {
+				return false, nil
+			}
+		}
+
+		return true, nil
+	})
+}

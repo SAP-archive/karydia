@@ -22,11 +22,31 @@ metadata:
   name: "karydia-default-network-policy-l3"
   namespace: "default"
 spec:
-  podSelector: {} # Block access to Internet
+  podSelector:
+    matchLabels: {}
   policyTypes:
   - Egress
+  - Ingress
   egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
   - to:
     - namespaceSelector:
+        matchLabels: {}
+      podSelector:
         matchLabels:
-          project: default # block all communication between pods of different namespaces
+          k8s-app: kube-dns
+    - podSelector:
+        matchLabels: {}
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    - podSelector:
+        matchLabels: {}

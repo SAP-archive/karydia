@@ -88,4 +88,4 @@ spec:
       containers:
         - name: {{ .Values.metadata.name }}-cleanup-container
           image: "lachlanevenson/k8s-kubectl"
-          command: ['sh', '-c', 'kubectl annotate namespace kube-system karydia.gardener.cloud/workaroundForIssue-; kubectl delete mutatingwebhookconfigurations/karydia-webhook validatingwebhookconfigurations/karydia-webhook customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud namespace/karydia']
+          command: ['sh', '-c', 'kubectl label namespace kube-system karydia.gardener.cloud/name-; kubectl annotate namespace kube-system karydia.gardener.cloud/workaroundForIssue-; kubectl delete mutatingwebhookconfigurations/karydia-webhook validatingwebhookconfigurations/karydia-webhook customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud namespace/karydia']

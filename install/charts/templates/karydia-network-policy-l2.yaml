@@ -22,6 +22,33 @@ metadata:
   name: karydia-default-network-policy-l2
   namespace: "default"
 spec:
-  podSelector: {} # Block access to Internet
+  podSelector:
+    matchLabels: {}
   policyTypes:
   - Egress
+  - Ingress
+  egress:
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  - to:
+    - namespaceSelector: 
+        matchExpressions:
+          - {key: karydia.gardener.cloud/name, operator: NotIn, values: [kube-system]}
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+  ingress:
+  - from:
+    - namespaceSelector: 
+        matchExpressions:
+          - {key: karydia.gardener.cloud/name, operator: NotIn, values: [kube-system]}
+    - namespaceSelector:
+        matchLabels: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
