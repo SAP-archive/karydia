@@ -180,7 +180,6 @@ func (reconciler *NetworkpolicyReconciler) processNextNetworkPolicyWorkItem() bo
 		}
 
 		reconciler.networkPolicyworkqueue.Forget(obj)
-		reconciler.log.Infof("Successfully synced network policy '%s'", key)
 		return nil
 	}(obj)
 
@@ -217,7 +216,6 @@ func (reconciler *NetworkpolicyReconciler) processNextNamespaceWorkItem() bool {
 		}
 
 		reconciler.namespaceWorkqueue.Forget(obj)
-		reconciler.log.Infof("Successfully synced workitem '%s'", key)
 		return nil
 	}(obj)
 
