@@ -9,13 +9,19 @@ The manual process consists of the following steps:
 First, generate the manifests from the helm templates:
 ```
 mkdir manifests
-helm template ./install/charts/ --output-dir manifests --namespace karydia
+helm template karydia ./install/charts/ --output-dir manifests --namespace karydia
 ```
 
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
+## Create Namespace
+Now create the `karydia` namespace:
+```
+kubectl create namespace karydia
+```
+
 ## Deploy Manifests
-First, register the Karydia config Custom Resource Definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
+Next, register the Karydia config Custom Resource Definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  annotations:
-    "helm.sh/hook": pre-install
-    "helm.sh/hook-delete-policy": before-hook-creation, hook-failed
-    "helm.sh/hook-weight": "-1"
-    "helm.sh/resource-policy": keep
-  name: {{ .Values.metadata.namespace }}

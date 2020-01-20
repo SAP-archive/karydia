@@ -5,20 +5,11 @@ The installation processes uses [Helm](https://github.com/helm/helm) to get Kary
 
 You can also do an [installation by hand](../docs/manualInstallation.md) without Tiller.
 
-## Prepare Helm and Tiller
-First, create a Helm service account and initiate Tiller on the cluster. Thus, run:
-```
-kubectl apply -f ./install/helm-service-account.yaml
-```
-and afterwards execute:
-```
-helm init --service-account tiller
-```
-
 ## Delpoy Karydia
-Next, to deploy Karydia simply run:
+To deploy Karydia first create the specified namespace and install Karydia:
 ```
-helm install ./install/charts --name karydia --namespace karydia
+kubectl create namespace karydia
+helm install karydia ./install/charts --namespace karydia
 ```
 
 ## Make sure that Karydia is runnning
