@@ -27,6 +27,7 @@ Karydia is up and running, if the following information is logged:
 ## Development
 If you want to install the development image, simply run:
 ```
-helm install ./install/charts --name karydia --namespace karydia --set dev.active=true
+kubectl create namespace karydia
+helm install karydia ./install/charts --namespace karydia --set dev.active=true
 ```
 Otherwise, you can set `dev.active` to `true` in the `values.yaml` file.
