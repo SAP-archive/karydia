@@ -3,7 +3,7 @@ Karydia can be installed as a webhook into any Kubernetes cluster.
 
 The installation processes uses [Helm](https://github.com/helm/helm) to get Karydia up and running and is split up into two parts.
 
-You can also do an [installation by hand](../docs/manualInstallation.md) without Tiller.
+You can also do an [installation by hand](../docs/manualInstallation.md) without Helm.
 
 ## Delpoy Karydia
 To deploy Karydia first create the specified namespace and install Karydia:
