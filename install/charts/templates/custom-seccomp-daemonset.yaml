@@ -20,11 +20,11 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ .Values.metadata.name }}-seccomp
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.metadata.namespace }}
   labels:
     security: seccomp
     app: {{ .Values.metadata.labelApp }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.metadata.namespace }}
 spec:
   selector:
     matchLabels:

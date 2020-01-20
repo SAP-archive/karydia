@@ -20,7 +20,7 @@ metadata:
   name: {{ .Values.metadata.name }}-tmp
   labels:
     app: {{ .Values.metadata.labelApp }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.metadata.namespace }}
 data:
   configure-karydia-webhook.sh: |-
     {{- include "configure-karydia-webhook.sh.tpl" . | indent 4}}

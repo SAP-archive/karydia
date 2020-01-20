@@ -39,7 +39,7 @@ webhooks:
     clientConfig:
       service:
         name: {{ .Values.metadata.name }}
-        namespace: {{ .Release.Namespace }}
+        namespace: {{ .Values.metadata.namespace }}
         path: "/webhook/validating"
       caBundle: §CA_BUNDLE§
     rules:
@@ -106,7 +106,7 @@ webhooks:
     clientConfig:
       service:
         name: {{ .Values.metadata.name }}
-        namespace: {{ .Release.Namespace }}
+        namespace: {{ .Values.metadata.namespace }}
         path: "/webhook/mutating"
       caBundle: §CA_BUNDLE§
     rules:

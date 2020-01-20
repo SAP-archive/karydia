@@ -17,30 +17,14 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: karydiaconfigs.{{ .Values.metadata.apiGroup }}
-  annotations:
-    "helm.sh/hook": crd-install
-    "helm.sh/hook-delete-policy": "before-hook-creation"
+  name: karydianetworkpolicies.karydia.gardener.cloud
 spec:
-  group: {{ .Values.metadata.apiGroup }}
+  group: karydia.gardener.cloud
   version: v1alpha1
   scope: Cluster
   names:
-    plural: karydiaconfigs
-    singular: karydiaconfig
-    kind: KarydiaConfig
+    plural: karydianetworkpolicies
+    singular: karydianetworkpolicy
+    kind: KarydiaNetworkPolicy
     shortNames:
-      - kc
-  validation:
-    openAPIV3Schema:
-      properties:
-        spec:
-          properties:
-            enforcement:
-              type: boolean
-            automountServiceAccountToken:
-              type: string
-            seccompProfile:
-              type: string
-            networkPolicies:
-              type: string
+      - knp

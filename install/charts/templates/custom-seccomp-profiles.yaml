@@ -20,7 +20,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: custom-seccomp-profiles
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.metadata.namespace }}
 data:
 {{ $root := . }}
 {{ range $path, $bytes := $customSeccompProfiles }}

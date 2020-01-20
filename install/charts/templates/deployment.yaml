@@ -20,7 +20,7 @@ metadata:
   name: {{ .Values.metadata.name }}
   labels:
     app: {{ .Values.metadata.labelApp }}
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.metadata.namespace }}
 spec:
   replicas: 1
   selector:
