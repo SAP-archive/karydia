@@ -18,9 +18,8 @@ A description of each feature can be found [here](docs/features.md) and an overv
 ## Installing Karydia
 To install Karydia using Helm run the following commands:
 ```
-kubectl apply -f ./install/helm-service-account.yaml
-helm init --service-account tiller
-helm install ./install/charts --name karydia --namespace karydia
+kubectl create namespace karydia
+helm install karydia ./install/charts --namespace karydia
 ```
 
 A detailed description of the installation process can be found in the [corresponding readme](install/README.md).
@@ -31,9 +30,8 @@ A detailed description of the installation process can be found in the [correspo
 
 ##### Install Karydia Dev
 ```
-kubectl apply -f ./install/helm-service-account.yaml
-helm init --service-account tiller
-helm install ./install/charts --name karydia --namespace karydia --set dev.active=true
+kubectl create namespace karydia
+helm install karydia ./install/charts --namespace karydia --set dev.active=true
 ```
 
 ##### Build, Swap and Test

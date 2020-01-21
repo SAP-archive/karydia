@@ -41,7 +41,8 @@ dev:
   timeoutIncreaseValue: 0
 metadata:
   name: "karydia"
-  apiGroup: "karydia.gardener.cloud"
+  namespace: "karydia"
+  apiGroup: karydia.gardener.cloud
   labelApp: "karydia"
 rbac:
   apiGroup: "rbac.authorization.k8s.io"

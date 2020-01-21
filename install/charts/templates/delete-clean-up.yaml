@@ -20,7 +20,7 @@ metadata:
   name: {{ .Values.rbac.serviceAccount }}-cleanup
   namespace: {{ .Release.Namespace }}
   annotations:
-    "helm.sh/hook": pre-delete
+    "helm.sh/hook": post-delete
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "1"
 
@@ -31,7 +31,7 @@ apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
   name: {{ .Values.metadata.name }}-delete
   annotations:
-    "helm.sh/hook": pre-delete
+    "helm.sh/hook": post-delete
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "2"
 rules:
@@ -55,7 +55,7 @@ apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
   name: {{ .Values.metadata.name }}-delete
   annotations:
-    "helm.sh/hook": pre-delete
+    "helm.sh/hook": post-delete
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "3"
 subjects:
@@ -77,7 +77,7 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
   namespace: {{ .Release.Namespace }}
   annotations:
-    "helm.sh/hook": pre-delete
+    "helm.sh/hook": post-delete
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "4"
 spec:
@@ -88,4 +88,4 @@ spec:
       containers:
         - name: {{ .Values.metadata.name }}-cleanup-container
           image: "lachlanevenson/k8s-kubectl"
-          command: ['sh', '-c', 'kubectl label namespace kube-system karydia.gardener.cloud/name-; kubectl annotate namespace kube-system karydia.gardener.cloud/workaroundForIssue-; kubectl delete mutatingwebhookconfigurations/karydia-webhook validatingwebhookconfigurations/karydia-webhook customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud namespace/karydia']
+          command: ['sh', '-c', 'kubectl label namespace kube-system karydia.gardener.cloud/name-; kubectl annotate namespace kube-system karydia.gardener.cloud/workaroundForIssue-; kubectl delete mutatingwebhookconfigurations/karydia-webhook validatingwebhookconfigurations/karydia-webhook customresourcedefinitions/karydianetworkpolicies.karydia.gardener.cloud customresourcedefinitions/karydiaconfigs.karydia.gardener.cloud']

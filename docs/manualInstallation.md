@@ -1,5 +1,5 @@
 # Install Karydia by hand
-It is possible to install Karydia manually without the need of Tiller. This process is quite more complex and needs patience. If you just want to install Karydia have a look at the automated [installation with Helm and Tiller](../install/README.md).
+It is possible to install Karydia manually without the need of Helm This process is quite more complex and needs patience. If you just want to install Karydia have a look at the automated [installation with Helm](../install/README.md).
 
 The manual process consists of the following steps:
 - Prepare the manual installation
@@ -9,13 +9,13 @@ The manual process consists of the following steps:
 First, generate the manifests from the helm templates:
 ```
 mkdir manifests
-helm template ./install/charts/ --output-dir manifests --namespace karydia
+helm template karydia ./install/charts/ --output-dir manifests --namespace karydia --includeCrds
 ```
 
 The files for the manual installation will be stored in folder `/manifests/karydia/templates/`.
 
 ## Deploy Manifests
-First, register the Karydia config Custom Resource Definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
+Next, register the Karydia config Custom Resource Definition (CRD) followed by the creation of a Karydia config custom resource that holds the Karydia default config which should be used.
 
 ```
 kubectl apply -f manifests/karydia/templates/crd-config.yaml

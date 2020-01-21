@@ -14,11 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-apiVersion: v1
+apiVersion: v2
 name: karydia
-version: 0.2.2
+type: application
+version: 0.3.0
 kubeVersion: ">= 1.15"
-description: A Helm chart for karydia
+description: A Helm chart for Karydia
 keywords:
   - karydia
   - kubernetes
