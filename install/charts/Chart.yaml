@@ -27,4 +27,4 @@ keywords:
 sources:
   - https://github.com/karydia/karydia
 engine: gotpl
-icon: https://raw.githubusercontent.com/karydia/karydia/simple-install-option/logo/Karydia%400.5x.png
+icon: https://github.com/karydia/karydia/blob/master/logo/Karydia@1x.png?raw=true
