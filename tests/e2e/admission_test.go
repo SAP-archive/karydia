@@ -47,8 +47,9 @@ func TestTerminatingPod(t *testing.T) {
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:  "nginx",
-					Image: "nginx",
+					Name:    "alpine",
+					Image:   "alpine",
+					Command: []string{"tail", "-f", "/dev/null"},
 				},
 			},
 		},
@@ -59,7 +60,7 @@ func TestTerminatingPod(t *testing.T) {
 		t.Fatal("failed to create pod:", err)
 	}
 
-	timeout := 2 * time.Minute
+	timeout := 1 * time.Minute
 	if err = f.WaitPodRunning(ns, pod.ObjectMeta.Name, timeout); err != nil {
 		t.Fatal("pod never reached state running")
 	}
@@ -69,7 +70,7 @@ func TestTerminatingPod(t *testing.T) {
 		t.Fatalf("expected seccomp profile to be %v but is %v", "unconfined", profile)
 	}
 
-	if createdPod.Spec.SecurityContext != nil {
+	if createdPod.Spec.SecurityContext.RunAsUser != nil || createdPod.Spec.SecurityContext.RunAsGroup != nil {
 		t.Fatal("expected security context not to be defined by admission")
 	}
 
@@ -100,7 +101,7 @@ func setAdmission(admission bool) error {
 	}
 
 	// This does not disable the admission but does not change the pod
-	if admission {
+	if !admission {
 		curKarydiaConfig.Spec.SeccompProfile = "unconfined"
 		curKarydiaConfig.Spec.PodSecurityContext = "none"
 		curKarydiaConfig.Spec.AutomountServiceAccountToken = "no-change"
@@ -118,7 +119,7 @@ func setAdmission(admission bool) error {
 		return newErr
 	}
 
-	if admission {
+	if !admission {
 		if newKarydiaConfig.Spec.SeccompProfile != "unconfined" && newKarydiaConfig.Spec.PodSecurityContext != "none" && newKarydiaConfig.Spec.AutomountServiceAccountToken != "no-change" {
 			return fmt.Errorf("admission in karydiaConfig did not change but should")
 		}
