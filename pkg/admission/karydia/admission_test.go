@@ -30,6 +30,88 @@ import (
 )
 
 /* Admission with ´mutating and validating webhook */
+func TestTerminatingPod(t *testing.T) {
+	var kubeobjects []runtime.Object
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "normal"
+	kubeobjects = append(kubeobjects, namespace)
+
+	kubeclient := k8sfake.NewSimpleClientset(kubeobjects...)
+
+	karydiaAdmission, err := New(&Config{
+		KubeClientset: kubeclient,
+	})
+	if err != nil {
+		t.Fatal("Failed to load karydia admission:", err)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: "normal",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: "Terminating",
+		},
+	}
+	rawPod, _ := json.Marshal(pod)
+
+	oldPod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: "normal",
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+				},
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: "Running",
+		},
+	}
+	rawOldPod, _ := json.Marshal(oldPod)
+
+	ar := v1beta1.AdmissionReview{
+		Request: &v1beta1.AdmissionRequest{
+			Operation: "UPDATE",
+			Namespace: "normal",
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object: runtime.RawExtension{
+				Raw: rawPod,
+			},
+			OldObject: runtime.RawExtension{
+				Raw: rawOldPod,
+			},
+		},
+	}
+
+	mutationResponse := karydiaAdmission.Admit(ar, true)
+	if !mutationResponse.Allowed {
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
+	}
+
+	var patches []patchOperation
+	err = json.Unmarshal(mutationResponse.Patch, &patches)
+	if len(patches) != 0 {
+		t.Error("expected number of patches to be 0 but is", len(patches))
+	}
+
+	t.Log(patches)
+}
+
 func TestPodPlainSeccomp(t *testing.T) {
 	var kubeobjects []runtime.Object
 

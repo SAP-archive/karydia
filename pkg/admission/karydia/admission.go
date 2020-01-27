@@ -88,15 +88,14 @@ func (k *KarydiaAdmission) Admit(ar v1beta1.AdmissionReview, mutationAllowed boo
 			return k8sutil.ErrToAdmissionResponse(err)
 		}
 
+		if getPodStatus(pod) == "Terminating" {
+			return k8sutil.AllowAdmissionResponse()
+		}
+
 		namespace, err := k.getNamespaceFromAdmissionRequest(*req)
 		if err != nil {
 			k.logger.Errorln(err)
 			return k8sutil.ErrToAdmissionResponse(err)
-		}
-
-		k.logger.Infoln("POD STATUS (CALC): ", getPodStatus(pod)) 
-		if (getPodStatus(pod) == "Terminating") {
-			return k8sutil.AllowAdmissionResponse()
 		}
 
 		if mutationAllowed {
@@ -161,6 +160,8 @@ func shouldIgnoreEvent(ar v1beta1.AdmissionReview) bool {
 	return false
 }
 
+// As the value in pod.Status.Phase is not always accurate, this function computes the "actual" pod status
+// It outputs the same value as "kubectl describe pod":
 // https://github.com/kubernetes/kubernetes/blob/a38096a0696514a034de7f8d0cc5a3ec5e7da8ff/pkg/printers/internalversion/printers.go#L659-L781
 func getPodStatus(pod *v1.Pod) string {
 	reason := string(pod.Status.Phase)
