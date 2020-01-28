@@ -202,6 +202,16 @@ func (f *Framework) WaitPodRunning(namespace, name string, timeout time.Duration
 	})
 }
 
+func (f *Framework) WaitPodDeleted(namespace, name string, timeout time.Duration) error {
+	return wait.Poll(3*time.Second, timeout, func() (bool, error) {
+		_, err := f.KubeClientset.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		if err == nil {
+			return true, nil
+		}
+		return false, nil
+	})
+}
+
 func (f *Framework) WaitDefaultServiceAccountCreated(ns string, timeout time.Duration) error {
 	return wait.Poll(200*time.Millisecond, timeout, func() (bool, error) {
 		_, err := f.KubeClientset.CoreV1().ServiceAccounts(ns).Get("default", metav1.GetOptions{})
