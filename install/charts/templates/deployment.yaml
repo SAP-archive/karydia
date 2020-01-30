@@ -22,7 +22,7 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
   namespace: {{ .Release.Namespace }}
 spec:
-  replicas: 3
+  replicas: {{ .Values.setup.replicas }}
   selector:
     matchLabels:
       app: {{ .Values.metadata.labelApp }}
