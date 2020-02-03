@@ -103,6 +103,7 @@ metadata:
 webhooks:
   - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
+    timeoutSeconds: 10
     clientConfig:
       service:
         name: {{ .Values.metadata.name }}

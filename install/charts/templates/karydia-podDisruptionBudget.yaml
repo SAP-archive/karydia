@@ -3,7 +3,7 @@ kind: PodDisruptionBudget
 metadata:
   name: {{ .Values.metadata.name }}
 spec:
-  minAvailable: 1
+  minAvailable: {{ .Values.setup.minReplicas }}
   selector:
     matchLabels:
       app: {{ .Values.metadata.labelApp }}
