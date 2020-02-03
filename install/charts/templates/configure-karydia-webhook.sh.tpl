@@ -55,7 +55,6 @@ webhooks:
         - pods
         - pods/status
         - serviceaccounts
-        - endpoints
         - persistentvolumes
         - validatingwebhookconfigurations
         - mutatingwebhookconfigurations
@@ -103,6 +102,7 @@ metadata:
 webhooks:
   - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
+    timeoutSeconds: 10
     clientConfig:
       service:
         name: {{ .Values.metadata.name }}
@@ -122,7 +122,6 @@ webhooks:
         - pods
         - pods/status
         - serviceaccounts
-        - endpoints
         - persistentvolumes
         - validatingwebhookconfigurations
         - mutatingwebhookconfigurations
