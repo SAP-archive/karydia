@@ -50,14 +50,9 @@ webhooks:
         apiGroups: ["*"]
         apiVersions: ["*"]
         resources:
-        - nodes
-        - namespaces
         - pods
         - pods/status
         - serviceaccounts
-        - persistentvolumes
-        - validatingwebhookconfigurations
-        - mutatingwebhookconfigurations
     {{- if .Values.exclusionNamespaceLabels }}
     namespaceSelector:
       matchExpressions:
@@ -117,14 +112,9 @@ webhooks:
         apiGroups: ["*"]
         apiVersions: ["*"]
         resources:
-        - nodes
-        - namespaces
         - pods
         - pods/status
         - serviceaccounts
-        - persistentvolumes
-        - validatingwebhookconfigurations
-        - mutatingwebhookconfigurations
     {{- if .Values.exclusionNamespaceLabels }}
     namespaceSelector:
       matchExpressions:
