@@ -50,15 +50,9 @@ webhooks:
         apiGroups: ["*"]
         apiVersions: ["*"]
         resources:
-        - nodes
-        - namespaces
         - pods
         - pods/status
         - serviceaccounts
-        - endpoints
-        - persistentvolumes
-        - validatingwebhookconfigurations
-        - mutatingwebhookconfigurations
     {{- if .Values.exclusionNamespaceLabels }}
     namespaceSelector:
       matchExpressions:
@@ -103,6 +97,7 @@ metadata:
 webhooks:
   - name: {{ .Values.metadata.apiGroup }}
     failurePolicy: Ignore
+    timeoutSeconds: 10
     clientConfig:
       service:
         name: {{ .Values.metadata.name }}
@@ -117,15 +112,9 @@ webhooks:
         apiGroups: ["*"]
         apiVersions: ["*"]
         resources:
-        - nodes
-        - namespaces
         - pods
         - pods/status
         - serviceaccounts
-        - endpoints
-        - persistentvolumes
-        - validatingwebhookconfigurations
-        - mutatingwebhookconfigurations
     {{- if .Values.exclusionNamespaceLabels }}
     namespaceSelector:
       matchExpressions:
