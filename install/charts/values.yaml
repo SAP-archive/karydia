@@ -44,6 +44,9 @@ metadata:
   namespace: "karydia"
   apiGroup: karydia.gardener.cloud
   labelApp: "karydia"
+setup:
+  replicas: 3
+  minReplicas: 1
 rbac:
   apiGroup: "rbac.authorization.k8s.io"
   apiVersion: "/v1"

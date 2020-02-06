@@ -49,7 +49,9 @@ container-dev:
 
 .PHONY: deploy-dev
 deploy-dev:
-	kubectl cp bin/karydia -n karydia $(shell kubectl get pods -n=karydia --selector=app=karydia --output=jsonpath='{.items[0].metadata.name}'):/usr/local/bin/karydia$(DEV_POSTFIX)
+	for i in $(shell kubectl get pods -n=karydia --selector=app=karydia --output=jsonpath='{.items[*].metadata.name}'); do \
+		kubectl cp bin/karydia -n karydia $$i:/usr/local/bin/karydia$(DEV_POSTFIX); \
+	done
 
 .PHONY: debug-dev
 debug-dev:
