@@ -82,4 +82,4 @@ test-coverage:
 
 .PHONY: e2e-test
 e2e-test:
-	go test -v ./tests/e2e/... --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)
+	go test -v ./tests/e2e/... -timeout 30m --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)
