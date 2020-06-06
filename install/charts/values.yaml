@@ -30,6 +30,9 @@ exclusionNamespaceLabels:
   - key: "app"
     values:
       - "karydia"
+  - key: "karydia.gardener.cloud/name"
+    values:
+      - "kube-system"
 exclusionObjectLabels:
   - key: "app"
     values:
