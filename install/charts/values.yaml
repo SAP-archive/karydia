@@ -27,9 +27,6 @@ config:
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
 exclusionNamespaceLabels:
-  - key: "app"
-    values:
-      - "karydia"
   - key: "karydia.gardener.cloud/excludeFromKarydia"
     values:
       - "true"
