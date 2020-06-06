@@ -101,7 +101,7 @@ spec:
       initContainers:
       - name: pre-install-{{ .Values.metadata.name }}
         image: lachlanevenson/k8s-kubectl
-        command: ['sh', '-c', 'apk add --update --no-cache openssl && kubectl label --overwrite namespace kube-system karydia.gardener.cloud/name=kube-system && sh /tmp/create-karydia-certificate.sh && sh /tmp/create-karydia-tls-secret.sh']
+        command: ['sh', '-c', 'apk add --update --no-cache openssl && kubectl label --overwrite namespace kube-system karydia.gardener.cloud/name=kube-system && kubectl label --overwrite namespace kube-system {{ .Release.Namespace }} karydia.gardener.cloud/excludeFromKarydia=true && sh /tmp/create-karydia-certificate.sh && sh /tmp/create-karydia-tls-secret.sh']
         volumeMounts:
         - name: workdir
           mountPath: "/tmp"
