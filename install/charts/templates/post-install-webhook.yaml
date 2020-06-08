@@ -20,7 +20,7 @@ metadata:
   name: {{ .Values.rbac.serviceAccount }}-post-install
   namespace: {{ .Release.Namespace }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "1"
 
@@ -31,7 +31,7 @@ apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
   name: {{ .Values.metadata.name }}-post
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "2"
 rules:
@@ -52,7 +52,7 @@ apiVersion: {{ .Values.rbac.apiGroup }}{{ .Values.rbac.apiVersion }}
 metadata:
   name: {{ .Values.metadata.name }}-post
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "3"
 subjects:
@@ -74,7 +74,7 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
   namespace: {{ .Release.Namespace }}
   annotations:
-    "helm.sh/hook": post-install
+    "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     "helm.sh/hook-weight": "4"
 spec:
