@@ -50,6 +50,7 @@ container-dev:
 .PHONY: deploy-dev
 deploy-dev:
 	for i in $(shell kubectl get pods -n=karydia --selector=app=karydia --output=jsonpath='{.items[*].metadata.name}'); do \
+		echo "(" $$i ")" \
 		kubectl cp bin/karydia -n karydia $$i:/usr/local/bin/karydia$(DEV_POSTFIX); \
 	done
 
@@ -82,4 +83,4 @@ test-coverage:
 
 .PHONY: e2e-test
 e2e-test:
-	go test -v ./tests/e2e/... --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)
+	go test -v ./tests/e2e/... -timeout 30m --server $(KUBERNETES_SERVER) --kubeconfig $(KUBECONFIG_PATH)

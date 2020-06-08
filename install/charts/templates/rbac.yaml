@@ -37,6 +37,12 @@ rules:
 - apiGroups: ["certificates.k8s.io"]
   resources: ["certificatesigningrequests/approval"]
   verbs: ["update"]
+- apiGroups: ["certificates.k8s.io"]
+  resources:
+    - "signers"
+  resourceNames:
+    - "kubernetes.io/legacy-unknown"
+  verbs: ["approve"]
 - apiGroups: [""]
   resources: ["secrets"]
   verbs: ["create", "get", "patch"]
