@@ -30,6 +30,22 @@ exclusionNamespaceLabels:
   - key: "karydia.gardener.cloud/excludeFromKarydia"
     values:
       - "true"
+  - key: "shoot.gardener.cloud/no-cleanup"
+    values:
+      - "true"
+  - key: "origin"
+    values:
+      - "gardener"
+exclusionObjectLabels:
+  - key: "app"
+    values:
+      - "karydia"
+  - key: "shoot.gardener.cloud/no-cleanup"
+    values:
+      - "true"
+  - key: "origin"
+    values:
+      - "gardener"
 log:
   level: "info"
 dev:
