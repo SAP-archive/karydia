@@ -27,13 +27,25 @@ config:
   podSecurityContext: "nobody"
   defaultNetworkPolicyExcludes: ""
 exclusionNamespaceLabels:
-  - key: "app"
+  - key: "karydia.gardener.cloud/excludeFromKarydia"
     values:
-      - "karydia"
+      - "true"
+  - key: "shoot.gardener.cloud/no-cleanup"
+    values:
+      - "true"
+  - key: "origin"
+    values:
+      - "gardener"
 exclusionObjectLabels:
   - key: "app"
     values:
       - "karydia"
+  - key: "shoot.gardener.cloud/no-cleanup"
+    values:
+      - "true"
+  - key: "origin"
+    values:
+      - "gardener"
 log:
   level: "info"
 dev:
