@@ -38,7 +38,7 @@ spec:
         {{- else }}
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: {{ .Values.setup.podAntiAffinityWeight }}
+          - weight: {{ .Values.setup.podAntiAffinityWeight | default 100 }}
             podAffinityTerm:
               labelSelector:
                 matchExpressions:
