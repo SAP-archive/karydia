@@ -53,11 +53,7 @@ spec:
       {{- end }}
       {{- if .Values.setup.tolerations }}
       tolerations:
-      {{- range .Values.setup.tolerations }}
-      - key: {{ .key | quote }}
-        operator: {{ .operator | quote }}
-        effect: {{ .effect | quote }}
-      {{- end }}
+{{ toYaml .Values.setup.tolerations | indent 8 }}
       {{- end }}
       containers:
       - name: {{ .Values.metadata.name }}
