@@ -53,7 +53,7 @@ spec:
       {{- end }}
       {{- if .Values.setup.tolerations }}
       tolerations:
-{{ toYaml .Values.setup.tolerations | indent 8 }}
+{{ toYaml .Values.setup.tolerations | indent 6 }}
       {{- end }}
       containers:
       - name: {{ .Values.metadata.name }}
