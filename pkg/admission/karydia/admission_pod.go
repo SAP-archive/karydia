@@ -118,7 +118,7 @@ func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) 
 		var gid int64 = 65534
 		var privilegeEscalation = false
 		secCtx := pod.Spec.SecurityContext
-		if secCtx == nil || (secCtx.RunAsUser == nil && secCtx.RunAsGroup == nil) {
+		if secCtx == nil {
 			patches.operations = append(patches.operations, patchOperation{
 				Op:   "add",
 				Path: "/spec/securityContext",
@@ -128,17 +128,35 @@ func mutatePodSecurityContext(pod corev1.Pod, setting Setting, patches Patches) 
 				},
 			})
 			annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
+		} else if secCtx.RunAsUser == nil && secCtx.RunAsGroup == nil {
+			patches.operations = append(patches.operations, patchOperation{
+				Op:    "add",
+				Path:  "/spec/securityContext/runAsUser",
+				Value: uid,
+			})
+			patches.operations = append(patches.operations, patchOperation{
+				Op:    "add",
+				Path:  "/spec/securityContext/runAsGroup",
+				Value: gid,
+			})
+			annotatePod(pod, &patches, "karydia.gardener.cloud/podSecurityContext.internal", setting.src+"/"+setting.value)
 		}
 		containers := pod.Spec.Containers
 		for i := range containers {
 			secCtxContainers := pod.Spec.Containers[i].SecurityContext
-			if secCtxContainers == nil || secCtxContainers.AllowPrivilegeEscalation == nil {
+			if secCtxContainers == nil {
 				patches.operations = append(patches.operations, patchOperation{
 					Op:   "add",
 					Path: "/spec/containers/" + strconv.Itoa(i) + "/securityContext",
 					Value: corev1.SecurityContext{
 						AllowPrivilegeEscalation: &privilegeEscalation,
 					},
+				})
+			} else if secCtxContainers.AllowPrivilegeEscalation == nil {
+				patches.operations = append(patches.operations, patchOperation{
+					Op:    "add",
+					Path:  "/spec/containers/" + strconv.Itoa(i) + "/securityContext/allowPrivilegeEscalation",
+					Value: privilegeEscalation,
 				})
 			}
 		}
