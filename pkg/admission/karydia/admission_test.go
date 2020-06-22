@@ -356,6 +356,139 @@ func TestPodDefinedSecContext(t *testing.T) {
 
 }
 
+func TestPodDefinedSecContext2(t *testing.T) {
+	var kubeobjects []runtime.Object
+
+	namespace := &coreV1.Namespace{}
+	namespace.Name = "special"
+	namespace.Annotations = map[string]string{
+		"karydia.gardener.cloud/podSecurityContext": "nobody",
+	}
+	kubeobjects = append(kubeobjects, namespace)
+
+	kubeclient := k8sfake.NewSimpleClientset(kubeobjects...)
+
+	karydiaAdmission, err := New(&Config{
+		KubeClientset: kubeclient,
+	})
+	if err != nil {
+		t.Fatal("Failed to load karydia admission:", err)
+	}
+
+	var uid int64 = 1000
+	var fsgid int64 = 2000
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "karydia-e2e-test-pod",
+			Namespace: "special",
+		},
+		Spec: corev1.PodSpec{
+			SecurityContext: &corev1.PodSecurityContext{
+				FSGroup: &fsgid,
+			},
+			Containers: []corev1.Container{
+				{
+					Name:  "nginx",
+					Image: "nginx",
+					SecurityContext: &corev1.SecurityContext{
+						RunAsUser: &uid,
+					},
+				},
+			},
+		},
+	}
+	rawPod, _ := json.Marshal(pod)
+
+	ar := v1beta1.AdmissionReview{
+		Request: &v1beta1.AdmissionRequest{
+			Operation: "CREATE",
+			Namespace: "special",
+			Kind:      metav1.GroupVersionKind{Group: "", Version: "v1", Kind: "Pod"},
+			Object: runtime.RawExtension{
+				Raw: rawPod,
+			},
+		},
+	}
+
+	mutationResponse := karydiaAdmission.Admit(ar, true)
+	if !mutationResponse.Allowed {
+		t.Error("expected mutation response to be true but is", mutationResponse.Allowed)
+	}
+
+	var patches []patchOperation
+	err = json.Unmarshal(mutationResponse.Patch, &patches)
+	if len(patches) != 4 {
+		t.Error("expected number of patches to be 4 but is", len(patches))
+	}
+
+	t.Log(patches)
+
+	mutatedPod, err := patchPodRaw(*pod, mutationResponse.Patch)
+	if err != nil {
+		t.Error("failed to apply patches:", err)
+	}
+
+	validationResponse := karydiaAdmission.Admit(ar, false)
+	if validationResponse.Allowed {
+		t.Error("expected validation response to be false but is", validationResponse.Allowed)
+	}
+
+	ar.Request.Object.Raw, _ = json.Marshal(mutatedPod)
+
+	validationResponse = karydiaAdmission.Admit(ar, false)
+	if !validationResponse.Allowed {
+		t.Error("expected validation response to be true but is", validationResponse.Allowed)
+	}
+
+	if mutatedPod.Spec.SecurityContext == nil {
+		t.Error("expected security context to be defined but is nil")
+	} else {
+		if mutatedPod.Spec.SecurityContext.RunAsUser == nil {
+			t.Error("expected security context user id to be defined but is nil")
+		} else {
+			if *mutatedPod.Spec.SecurityContext.RunAsUser != 65534 {
+				t.Errorf("expected security context user id to be %v but is %v", 65534, *mutatedPod.Spec.SecurityContext.RunAsUser)
+			}
+		}
+		if mutatedPod.Spec.SecurityContext.RunAsGroup == nil {
+			t.Error("expected security context group id to be defined but is nil")
+		} else {
+			if *mutatedPod.Spec.SecurityContext.RunAsGroup != 65534 {
+				t.Errorf("expected security context group id to be %v but is %v", 65534, *mutatedPod.Spec.SecurityContext.RunAsGroup)
+			}
+		}
+		if mutatedPod.Spec.SecurityContext.FSGroup == nil {
+			t.Error("expected security context fs group id to be defined but is nil")
+		} else {
+			if *mutatedPod.Spec.SecurityContext.FSGroup != fsgid {
+				t.Errorf("expected security context fs group id to be %v but is %v", fsgid, *mutatedPod.Spec.SecurityContext.FSGroup)
+			}
+		}
+	}
+
+	mutatedContainer := mutatedPod.Spec.Containers[0]
+
+	if mutatedContainer.SecurityContext == nil {
+		t.Error("expected container security context to be defined but is nil")
+	} else {
+		if mutatedContainer.SecurityContext.RunAsUser == nil {
+			t.Error("expected container security context user id to be defined but is nil")
+		} else {
+			if *mutatedContainer.SecurityContext.RunAsUser != uid {
+				t.Errorf("expected container security context user id to be %v but is %v", uid, *mutatedContainer.SecurityContext.RunAsUser)
+			}
+		}
+		if mutatedContainer.SecurityContext.AllowPrivilegeEscalation == nil {
+			t.Error("expected container security context allow privilege escalation to be defined but is nil")
+		} else {
+			if *mutatedContainer.SecurityContext.AllowPrivilegeEscalation {
+				t.Errorf("expected container security context allow privilege escalation to be %v but is %v", false, *mutatedContainer.SecurityContext.AllowPrivilegeEscalation)
+			}
+		}
+	}
+}
+
 func TestPodCorrectSeccomp(t *testing.T) {
 	var kubeobjects []runtime.Object
 
