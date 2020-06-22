@@ -34,7 +34,8 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
 webhooks:
   - name: {{ .Values.metadata.apiGroup }}
-    failurePolicy: Ignore
+    failurePolicy: Fail
+    reinvocationPolicy: IfNeeded
     timeoutSeconds: 10
     clientConfig:
       service:
@@ -96,7 +97,8 @@ metadata:
     app: {{ .Values.metadata.labelApp }}
 webhooks:
   - name: {{ .Values.metadata.apiGroup }}
-    failurePolicy: Ignore
+    failurePolicy: Fail
+    reinvocationPolicy: IfNeeded
     timeoutSeconds: 10
     clientConfig:
       service:
