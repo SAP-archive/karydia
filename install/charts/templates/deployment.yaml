@@ -33,9 +33,12 @@ spec:
     spec:
       serviceAccount: {{ .Values.rbac.serviceAccount }}
       affinity:
+        {{- if .Values.setup.affinity }}
+{{ toYaml .Values.setup.affinity | indent 8 }} 
+        {{- else }}
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
+          - weight: {{ .Values.setup.podAntiAffinityWeight | default 100 }}
             podAffinityTerm:
               labelSelector:
                 matchExpressions:
@@ -44,6 +47,14 @@ spec:
                   values:
                   - {{ .Values.metadata.labelApp }}
               topologyKey: "node"
+        {{- end }}
+      {{- if .Values.setup.priorityClassName }}
+      priorityClassName: {{ .Values.setup.priorityClassName }}
+      {{- end }}
+      {{- if .Values.setup.tolerations }}
+      tolerations:
+{{ toYaml .Values.setup.tolerations | indent 6 }}
+      {{- end }}
       containers:
       - name: {{ .Values.metadata.name }}
         {{- if .Values.dev.active }}
